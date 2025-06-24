@@ -15,18 +15,18 @@ function Sidebar({ activeSection = 'dashboard', onSectionChange }) {
 
   return (
     <div 
-      className={`h-full bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex-shrink-0 ${
+      className={`h-full bg-ios-bg-primary border-r border-ios-gray-2 transition-all duration-300 ease-in-out flex-shrink-0 font-ios shadow-ios ${
         isExpanded ? 'w-64' : 'w-12'
       }`}
     >
       {/* Expand/Collapse Button */}
-      <div className="p-2">
+      <div className="p-ios-sm">
         <button 
           onClick={toggleExpanded}
-          className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded"
+          className="w-8 h-8 flex items-center justify-center hover:bg-ios-gray-1 rounded-ios transition-colors duration-200"
         >
           <svg 
-            className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${
+            className={`w-4 h-4 text-ios-text-tertiary transition-transform duration-300 ${
               isExpanded ? 'rotate-180' : ''
             }`} 
             fill="none" 
@@ -39,13 +39,13 @@ function Sidebar({ activeSection = 'dashboard', onSectionChange }) {
       </div>
 
       {/* Navigation Links */}
-      <nav className="mt-4">
+      <nav className="mt-ios-md">
         <ul className="space-y-1">
           <li>
             <button
               onClick={() => handleSectionChange('dashboard')}
-              className={`w-full flex items-center px-3 py-2 text-left hover:bg-gray-100 ${
-                activeSection === 'dashboard' ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
+              className={`w-full flex items-center px-ios-sm py-ios-sm text-left hover:bg-ios-gray-1 rounded-ios mx-ios-xs transition-all duration-200 ${
+                activeSection === 'dashboard' ? 'bg-ios-blue/10 text-ios-blue border-r-2 border-ios-blue' : 'text-ios-text-secondary'
               }`}
             >
               <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
@@ -54,15 +54,15 @@ function Sidebar({ activeSection = 'dashboard', onSectionChange }) {
                 </svg>
               </div>
               {isExpanded && (
-                <span className="ml-3 whitespace-nowrap">Dashboard</span>
+                <span className="ml-ios-sm whitespace-nowrap font-medium">Dashboard</span>
               )}
             </button>
           </li>
           <li>
             <button
               onClick={() => handleSectionChange('admin')}
-              className={`w-full flex items-center px-3 py-2 text-left hover:bg-gray-100 ${
-                activeSection === 'admin' ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
+              className={`w-full flex items-center px-ios-sm py-ios-sm text-left hover:bg-ios-gray-1 rounded-ios mx-ios-xs transition-all duration-200 ${
+                activeSection === 'admin' ? 'bg-ios-blue/10 text-ios-blue border-r-2 border-ios-blue' : 'text-ios-text-secondary'
               }`}
             >
               <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
@@ -71,7 +71,7 @@ function Sidebar({ activeSection = 'dashboard', onSectionChange }) {
                 </svg>
               </div>
               {isExpanded && (
-                <span className="ml-3 whitespace-nowrap">Admin Config</span>
+                <span className="ml-ios-sm whitespace-nowrap font-medium">Admin Config</span>
               )}
             </button>
           </li>

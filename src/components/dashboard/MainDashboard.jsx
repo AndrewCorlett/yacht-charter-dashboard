@@ -44,13 +44,18 @@ function MainDashboard() {
         return (
           <div className="flex flex-1 overflow-x-hidden">
             {/* Sidebar - Takes remaining 60% */}
-            <aside className="flex-1 bg-gray-50 p-4 overflow-y-auto overflow-x-hidden border-r border-gray-200">
+            <aside className="flex-1 p-4 overflow-y-auto overflow-x-hidden border-r" style={{ 
+              backgroundColor: 'var(--color-ios-bg-grouped)', 
+              borderColor: 'var(--color-ios-gray-3)' 
+            }}>
               <SitRepSection />
               <CreateBookingSection onCreateBooking={handleCreateBooking} />
             </aside>
 
             {/* Main Content - Fixed 40% of viewport */}
-            <main className="w-[40vw] p-6 flex flex-col overflow-x-hidden">
+            <main className="w-[40vw] p-6 flex flex-col overflow-x-hidden" style={{ 
+              backgroundColor: 'var(--color-ios-bg-secondary)' 
+            }}>
               <YachtTimelineCalendar onCreateBooking={handleCreateBooking} />
             </main>
           </div>
@@ -59,7 +64,7 @@ function MainDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--color-ios-bg-secondary)' }}>
       {/* Sidebar - Fixed width, no overlay */}
       <Sidebar 
         activeSection={activeSection}

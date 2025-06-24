@@ -23,13 +23,13 @@ function CalendarHeader({
   const viewModes = ['day', 'week', 'month']
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+    <div className="flex flex-col sm:flex-row justify-between items-center mb-ios-sm gap-ios-md font-ios">
       {/* Navigation Controls */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-ios-md">
+        <div className="flex items-center gap-ios-sm">
         <button
           onClick={onPrevious}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          className="ios-button-secondary"
           aria-label="Previous period"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,14 +39,14 @@ function CalendarHeader({
         
         <button
           onClick={onToday}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+          className="ios-button"
         >
           Today
         </button>
         
         <button
           onClick={onNext}
-          className="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          className="ios-button-secondary"
           aria-label="Next period"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +57,7 @@ function CalendarHeader({
         
         {/* Current Period Display */}
         {currentPeriodText && (
-          <div className="text-lg font-semibold text-gray-800 min-w-[200px] text-center">
+          <div className="text-lg font-semibold text-ios-text-primary min-w-[200px] text-center">
             {currentPeriodText}
           </div>
         )}

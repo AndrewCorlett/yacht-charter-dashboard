@@ -14,12 +14,12 @@ function AdminConfigLayout({ children, title, description, sidebarContent, heade
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden font-ios">
       {/* Mobile Sidebar Toggle */}
       {sidebarContent && (
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="lg:hidden fixed top-4 right-4 z-50 bg-blue-600 text-white p-2 rounded-md shadow-lg"
+          className="ios-button lg:hidden fixed top-4 right-4 z-50 shadow-ios-lg"
           aria-label="Toggle sidebar"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,17 +33,17 @@ function AdminConfigLayout({ children, title, description, sidebarContent, heade
         <aside className={`
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:static absolute inset-y-0 left-0 z-40
-          w-80 bg-white border-r border-gray-200 shadow-lg lg:shadow-none
+          w-80 bg-ios-bg-primary border-r border-ios-gray-2 shadow-ios-lg lg:shadow-none
           transform transition-transform duration-300 ease-in-out
         `}>
           <div className="h-full flex flex-col">
             {/* Sidebar Header */}
-            <div className="flex-shrink-0 p-4 border-b border-gray-200">
+            <div className="flex-shrink-0 p-ios-lg border-b border-ios-gray-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Configuration Tools</h3>
+                <h3 className="text-lg font-semibold text-ios-text-primary">Configuration Tools</h3>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="lg:hidden text-gray-400 hover:text-gray-600"
+                  className="lg:hidden text-ios-text-tertiary hover:text-ios-text-secondary transition-colors"
                   aria-label="Close sidebar"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +54,7 @@ function AdminConfigLayout({ children, title, description, sidebarContent, heade
             </div>
             
             {/* Sidebar Content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-ios-lg">
               {sidebarContent}
             </div>
           </div>
@@ -73,20 +73,20 @@ function AdminConfigLayout({ children, title, description, sidebarContent, heade
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header Section */}
-        <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <header className="flex-shrink-0 bg-ios-bg-primary border-b border-ios-gray-2 px-ios-lg py-ios-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-ios-md">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-ios-text-primary truncate">
                 {title}
               </h1>
               {description && (
-                <p className="mt-1 text-sm sm:text-base text-gray-600 line-clamp-2">
+                <p className="mt-1 text-sm sm:text-base text-ios-text-secondary line-clamp-2">
                   {description}
                 </p>
               )}
             </div>
             {headerActions && (
-              <div className="flex-shrink-0 flex items-center gap-2">
+              <div className="flex-shrink-0 flex items-center gap-ios-sm">
                 {headerActions}
               </div>
             )}
@@ -95,7 +95,7 @@ function AdminConfigLayout({ children, title, description, sidebarContent, heade
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8">
+          <div className="p-ios-lg">
             {children}
           </div>
         </div>
@@ -107,17 +107,17 @@ function AdminConfigLayout({ children, title, description, sidebarContent, heade
 // Configuration Section Component
 function ConfigSection({ title, description, children, className = "" }) {
   return (
-    <section className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
-      <div className="p-4 sm:p-6">
+    <section className={`ios-card ${className}`}>
+      <div className="p-ios-lg">
         {(title || description) && (
-          <div className="mb-4 sm:mb-6">
+          <div className="mb-ios-lg">
             {title && (
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-ios-text-primary mb-ios-sm">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-sm sm:text-base text-gray-600">
+              <p className="text-sm sm:text-base text-ios-text-secondary">
                 {description}
               </p>
             )}
@@ -160,20 +160,20 @@ function ConfigCard({ title, description, icon, children, onClick, isActive = fa
     <CardComponent
       onClick={onClick}
       className={`
-        block p-4 sm:p-6 rounded-lg border-2 transition-all duration-200
-        ${onClick ? 'cursor-pointer hover:shadow-md' : 'cursor-default'}
+        block p-ios-lg rounded-ios-lg border-2 transition-all duration-200
+        ${onClick ? 'cursor-pointer hover:shadow-ios-md' : 'cursor-default'}
         ${isActive 
-          ? 'border-blue-500 bg-blue-50 shadow-sm' 
-          : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+          ? 'border-ios-blue bg-ios-blue/10 shadow-ios' 
+          : 'border-ios-gray-2 bg-ios-bg-primary hover:border-ios-gray-3'
         }
-        ${onClick && !isActive ? 'hover:bg-white hover:shadow-sm' : ''}
+        ${onClick && !isActive ? 'hover:bg-ios-gray-1 hover:shadow-ios' : ''}
       `}
     >
-      <div className="flex items-start space-x-3">
+      <div className="flex items-start space-x-ios-sm">
         {icon && (
           <div className={`
-            flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-lg sm:text-xl
-            ${isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}
+            flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-ios flex items-center justify-center text-lg sm:text-xl
+            ${isActive ? 'bg-ios-blue/20 text-ios-blue' : 'bg-ios-gray-1 text-ios-text-tertiary'}
           `}>
             {icon}
           </div>
@@ -182,7 +182,7 @@ function ConfigCard({ title, description, icon, children, onClick, isActive = fa
           {title && (
             <h3 className={`
               text-sm sm:text-base font-semibold truncate
-              ${isActive ? 'text-blue-900' : 'text-gray-900'}
+              ${isActive ? 'text-ios-blue' : 'text-ios-text-primary'}
             `}>
               {title}
             </h3>
@@ -190,7 +190,7 @@ function ConfigCard({ title, description, icon, children, onClick, isActive = fa
           {description && (
             <p className={`
               mt-1 text-xs sm:text-sm line-clamp-2
-              ${isActive ? 'text-blue-700' : 'text-gray-600'}
+              ${isActive ? 'text-ios-blue-dark' : 'text-ios-text-secondary'}
             `}>
               {description}
             </p>
@@ -198,7 +198,7 @@ function ConfigCard({ title, description, icon, children, onClick, isActive = fa
         </div>
       </div>
       {children && (
-        <div className="mt-4">
+        <div className="mt-ios-md">
           {children}
         </div>
       )}
@@ -226,16 +226,16 @@ function ActionButton({
   ...props 
 }) {
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-    secondary: 'bg-gray-600 hover:bg-gray-700 text-white',
-    outline: 'border border-gray-300 hover:bg-gray-50 text-gray-700',
-    danger: 'bg-red-600 hover:bg-red-700 text-white'
+    primary: 'bg-ios-blue hover:bg-ios-blue-dark text-white',
+    secondary: 'bg-ios-gray-5 hover:bg-ios-gray-6 text-white',
+    outline: 'border border-ios-gray-3 hover:bg-ios-gray-1 text-ios-text-primary',
+    danger: 'bg-ios-red hover:bg-ios-red-dark text-white'
   }
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base'
+    sm: 'px-ios-sm py-1.5 text-sm',
+    md: 'px-ios-md py-ios-sm text-sm',
+    lg: 'px-ios-lg py-ios-sm text-base'
   }
 
   return (
@@ -243,8 +243,8 @@ function ActionButton({
       onClick={onClick}
       disabled={disabled}
       className={`
-        inline-flex items-center justify-center font-medium rounded-md 
-        transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+        inline-flex items-center justify-center font-medium rounded-ios 
+        transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ios-blue
         ${variants[variant]} ${sizes[size]}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         ${className}

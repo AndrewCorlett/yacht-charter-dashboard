@@ -21,14 +21,14 @@ const BookingCell = memo(function BookingCell({ date, yachtId, booking, onClick,
   const getCellStyles = () => {
     if (booking) {
       if (booking.status === 'confirmed') {
-        return 'bg-green-200 hover:bg-green-300'
+        return 'bg-ios-green/20 hover:bg-ios-green/30 border-ios-green/20'
       }
       if (booking.customerName === 'Cardiff') {
-        return 'bg-pink-300 hover:bg-pink-400'
+        return 'bg-ios-pink/20 hover:bg-ios-pink/30 border-ios-pink/20'
       }
-      return 'bg-red-200 hover:bg-red-300'
+      return 'bg-ios-red/20 hover:bg-ios-red/30 border-ios-red/20'
     }
-    return 'bg-white hover:bg-gray-50'
+    return 'bg-ios-bg-primary hover:bg-ios-gray-1'
   }
 
   const handleClick = () => {
@@ -50,8 +50,8 @@ const BookingCell = memo(function BookingCell({ date, yachtId, booking, onClick,
       onMouseLeave={() => setIsHovered(false)}
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
-      className={`border-b border-r border-gray-300 p-2 cursor-pointer transition-colors relative ${getCellStyles()} ${
-        isFocused ? 'ring-2 ring-blue-500 ring-inset z-10' : ''
+      className={`border-b border-r border-ios-gray-2 p-ios-sm cursor-pointer transition-all duration-200 relative font-ios ${getCellStyles()} ${
+        isFocused ? 'ring-2 ring-ios-blue ring-inset z-10' : ''
       }`}
       style={{ height: '60px' }}
       tabIndex={tabIndex}
@@ -60,18 +60,18 @@ const BookingCell = memo(function BookingCell({ date, yachtId, booking, onClick,
     >
       {booking ? (
         <div className="text-xs overflow-hidden">
-          <div className="font-bold text-gray-800 truncate" title={booking.customerName}>
+          <div className="font-medium text-ios-text-primary truncate" title={booking.customerName}>
             {booking.customerName}
           </div>
-          <div className="text-gray-600 text-xs mt-0.5 truncate" title={`${booking.customerNo} • ${booking.tripNo}`}>
+          <div className="text-ios-text-tertiary text-xs mt-0.5 truncate" title={`${booking.customerNo} • ${booking.tripNo}`}>
             {booking.customerNo} • {booking.tripNo}
           </div>
         </div>
       ) : (
         isHovered && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-6 h-6 rounded-full bg-ios-blue/10 flex items-center justify-center">
+              <svg className="w-4 h-4 text-ios-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </div>
