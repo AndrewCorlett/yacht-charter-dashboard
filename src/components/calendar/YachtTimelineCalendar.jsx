@@ -218,15 +218,27 @@ function YachtTimelineCalendar({ onCreateBooking }) {
           </div>
           
           {/* Fixed Header Row Outside Scroll Area */}
-          <div className="border-b border-ios-gray-2 flex-shrink-0 bg-ios-bg-primary shadow-ios" style={{ position: 'sticky', top: '0', zIndex: 40 }}>
+          <div className="border-b calendar-header-border flex-shrink-0 shadow-ios" style={{ 
+            position: 'sticky', 
+            top: '0', 
+            zIndex: 40,
+            backgroundColor: 'var(--color-ios-bg-primary)'
+          }}>
             <div className="grid w-full" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
-              <div className="bg-ios-gray-1 border-r border-ios-gray-2 h-[50px] flex items-center justify-center font-medium text-ios-text-secondary">
+              <div className="border-r calendar-header-border h-[50px] flex items-center justify-center font-medium" style={{ 
+                backgroundColor: 'var(--color-ios-gray-1)',
+                color: 'var(--color-ios-text-secondary)'
+              }}>
                 Date
               </div>
               {yachts.map((yacht) => (
                 <div
                   key={`fixed-header-${yacht.id}`}
-                  className="bg-ios-bg-primary border-r border-ios-gray-2 flex items-center justify-center font-medium text-ios-text-primary px-1 h-[50px]"
+                  className="border-r calendar-header-border flex items-center justify-center font-medium px-1 h-[50px]"
+                  style={{ 
+                    backgroundColor: 'var(--color-ios-bg-primary)',
+                    color: 'var(--color-ios-text-primary)'
+                  }}
                 >
                   <span className="truncate text-sm">{yacht.name}</span>
                 </div>
@@ -243,7 +255,11 @@ function YachtTimelineCalendar({ onCreateBooking }) {
                   {/* Date cell */}
                   <div
                     key={`date-${dateIndex}`}
-                    className="bg-ios-gray-1 border-b border-r border-ios-gray-2 flex items-center justify-center font-medium text-sm text-ios-text-secondary h-[60px]"
+                    className="border-b border-r calendar-grid-border flex items-center justify-center font-medium text-sm h-[60px]"
+                    style={{ 
+                      backgroundColor: 'var(--color-ios-gray-1)',
+                      color: 'var(--color-ios-text-secondary)'
+                    }}
                   >
                     <span className="text-xs">{formatDate(date)}</span>
                   </div>
