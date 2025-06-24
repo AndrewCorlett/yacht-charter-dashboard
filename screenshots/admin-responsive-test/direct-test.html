@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Layout Direct Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .test-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .button:hover {
+            background: #2563eb;
+        }
+        iframe {
+            width: 100%;
+            height: 800px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h1>Admin Layout Direct Test</h1>
+        <p>Use this page to directly test the admin configuration layout.</p>
+        <button class="button" onclick="loadAdmin()">Load Admin Config</button>
+        <button class="button" onclick="openDevTools()">Open Dev Tools</button>
+        <button class="button" onclick="testResponsive()">Test Responsive</button>
+    </div>
+    
+    <iframe id="testFrame" src="about:blank"></iframe>
+    
+    <script>
+        function loadAdmin() {
+            document.getElementById('testFrame').src = 'http://localhost:5173/';
+            setTimeout(() => {
+                alert('Navigate to Admin Config using the sidebar menu (expand it first by clicking the arrow, then click "Admin Config")');
+            }, 1000);
+        }
+        
+        function openDevTools() {
+            alert('Press F12 to open browser dev tools, then use Ctrl+Shift+M to toggle device toolbar for responsive testing');
+        }
+        
+        function testResponsive() {
+            const sizes = [
+                { name: 'Mobile', width: '375px' },
+                { name: 'Tablet', width: '768px' },
+                { name: 'Desktop', width: '1024px' },
+                { name: 'Large', width: '1920px' }
+            ];
+            
+            let current = 0;
+            const frame = document.getElementById('testFrame');
+            
+            function nextSize() {
+                if (current < sizes.length) {
+                    const size = sizes[current];
+                    frame.style.width = size.width;
+                    frame.style.maxWidth = size.width;
+                    console.log(`Testing ${size.name} (${size.width})`);
+                    current++;
+                    setTimeout(nextSize, 3000);
+                } else {
+                    frame.style.width = '100%';
+                    frame.style.maxWidth = '100%';
+                    alert('Responsive testing cycle complete!');
+                }
+            }
+            
+            nextSize();
+        }
+    </script>
+</body>
+</html>
+    

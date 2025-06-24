@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Pricing Configuration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+        }
+        .test-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+        }
+        .test-button:hover {
+            background: #1d4ed8;
+        }
+        .test-button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .status {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { border-color: #10b981; background: #ecfdf5; }
+        .error { border-color: #ef4444; background: #fef2f2; }
+        .warning { border-color: #f59e0b; background: #fffbeb; }
+        .console-output {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .iframe-container {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .iframe-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .result-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            background: white;
+        }
+        .result-card.passed {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+        .result-card.failed {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        .result-card.pending {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+        .result-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .result-status.passed { background: #10b981; color: white; }
+        .result-status.failed { background: #ef4444; color: white; }
+        .result-status.pending { background: #f59e0b; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Pricing Configuration Test Runner</h1>
+            <p>Automated testing of the newly implemented pricing configuration functionality</p>
+        </div>
+
+        <div class="status" id="status">
+            <strong>Status:</strong> Ready to run tests. Make sure the application is running on http://localhost:5173/
+        </div>
+
+        <div>
+            <button class="test-button" onclick="runFullTest()">Run Full Test Suite</button>
+            <button class="test-button" onclick="runTestStep('navigation')">Test Navigation</button>
+            <button class="test-button" onclick="runTestStep('overview')">Test Overview</button>
+            <button class="test-button" onclick="runTestStep('pricingRules')">Test Pricing Rules</button>
+            <button class="test-button" onclick="runTestStep('seasonalPricing')">Test Seasonal Pricing</button>
+            <button class="test-button" onclick="runTestStep('specialOffers')">Test Special Offers</button>
+            <button class="test-button" onclick="openApp()">Open Application</button>
+        </div>
+
+        <div class="iframe-container">
+            <iframe id="appFrame" src="http://localhost:5173/"></iframe>
+        </div>
+
+        <div class="container">
+            <h3>Test Results</h3>
+            <div class="results-grid" id="resultsGrid">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+
+        <div class="container">
+            <h3>Console Output</h3>
+            <div class="console-output" id="consoleOutput">Ready to start testing...</div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            navigation: { status: 'pending', details: 'Not started' },
+            overview: { status: 'pending', details: 'Not started' },
+            pricingRules: { status: 'pending', details: 'Not started' },
+            seasonalPricing: { status: 'pending', details: 'Not started' },
+            specialOffers: { status: 'pending', details: 'Not started' },
+            backNavigation: { status: 'pending', details: 'Not started' },
+            consoleErrors: { status: 'pending', details: 'Not started' }
+        };
+
+        function logToConsole(message) {
+            const consoleOutput = document.getElementById('consoleOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleOutput.textContent += `[${timestamp}] ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.innerHTML = `<strong>Status:</strong> ${message}`;
+            logToConsole(message);
+        }
+
+        function updateResults() {
+            const resultsGrid = document.getElementById('resultsGrid');
+            resultsGrid.innerHTML = '';
+            
+            Object.entries(testResults).forEach(([testName, result]) => {
+                const card = document.createElement('div');
+                card.className = `result-card ${result.status}`;
+                card.innerHTML = `
+                    <div class="result-title">${testName.replace(/([A-Z])/g, ' $1').trim()}</div>
+                    <div class="result-status ${result.status}">${result.status.toUpperCase()}</div>
+                    <div class="result-details">${result.details}</div>
+                `;
+                resultsGrid.appendChild(card);
+            });
+        }
+
+        function updateTestResult(testName, status, details) {
+            testResults[testName] = { status, details };
+            updateResults();
+            logToConsole(`${testName.toUpperCase()}: ${status.toUpperCase()} - ${details}`);
+        }
+
+        function injectTestScript() {
+            const iframe = document.getElementById('appFrame');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            // Load the test script into the iframe
+            return fetch('test-pricing-functionality.js')
+                .then(response => response.text())
+                .then(scriptContent => {
+                    const script = iframeDoc.createElement('script');
+                    script.textContent = scriptContent;
+                    iframeDoc.head.appendChild(script);
+                    return iframe.contentWindow;
+                });
+        }
+
+        async function runFullTest() {
+            updateStatus('Running full test suite...', 'warning');
+            
+            try {
+                const appWindow = await injectTestScript();
+                
+                // Wait for the test to complete
+                await new Promise(resolve => {
+                    const checkInterval = setInterval(() => {
+                        if (appWindow.pricingTest) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                });
+
+                // Run the test
+                await appWindow.pricingTest.runFullTest();
+                
+                // Get results
+                const results = appWindow.pricingTest.getResults();
+                const errors = appWindow.pricingTest.getConsoleErrors();
+                
+                // Update our results
+                Object.entries(results).forEach(([testName, result]) => {
+                    updateTestResult(testName, result.status, result.details);
+                });
+                
+                const passedTests = Object.values(results).filter(r => r.status === 'passed').length;
+                const totalTests = Object.keys(results).length;
+                
+                if (passedTests === totalTests) {
+                    updateStatus(`All tests passed! (${passedTests}/${totalTests})`, 'success');
+                } else {
+                    updateStatus(`Tests completed: ${passedTests}/${totalTests} passed`, 'error');
+                }
+                
+            } catch (error) {
+                updateStatus(`Test failed: ${error.message}`, 'error');
+                logToConsole(`Error: ${error.message}`);
+            }
+        }
+
+        async function runTestStep(stepName) {
+            updateStatus(`Running ${stepName} test...`, 'warning');
+            
+            try {
+                const appWindow = await injectTestScript();
+                
+                // Wait for the test to load
+                await new Promise(resolve => {
+                    const checkInterval = setInterval(() => {
+                        if (appWindow.pricingTest) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                });
+
+                // Run the specific test
+                const testMethodName = `test${stepName.charAt(0).toUpperCase() + stepName.slice(1)}`;
+                if (appWindow.pricingTest[testMethodName]) {
+                    await appWindow.pricingTest[testMethodName]();
+                    
+                    const results = appWindow.pricingTest.getResults();
+                    if (results[stepName]) {
+                        updateTestResult(stepName, results[stepName].status, results[stepName].details);
+                        updateStatus(`${stepName} test completed: ${results[stepName].status}`, 
+                                   results[stepName].status === 'passed' ? 'success' : 'error');
+                    }
+                } else {
+                    updateStatus(`Test method ${testMethodName} not found`, 'error');
+                }
+                
+            } catch (error) {
+                updateStatus(`Test failed: ${error.message}`, 'error');
+                updateTestResult(stepName, 'failed', error.message);
+            }
+        }
+
+        function openApp() {
+            window.open('http://localhost:5173/', '_blank');
+        }
+
+        // Initialize results display
+        updateResults();
+
+        // Handle iframe load
+        document.getElementById('appFrame').addEventListener('load', () => {
+            updateStatus('Application loaded successfully', 'success');
+        });
+
+        // Handle iframe load errors
+        document.getElementById('appFrame').addEventListener('error', () => {
+            updateStatus('Failed to load application - ensure it is running on http://localhost:5173/', 'error');
+        });
+    </script>
+</body>
+</html>

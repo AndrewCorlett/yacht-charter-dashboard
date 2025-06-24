@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Configuration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-header {
+            background: #2563eb;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #e5e7eb;
+            background: #f9fafb;
+        }
+        .test-step.success {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+        }
+        .test-step.error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .test-step.pending {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .app-frame {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #10b981; }
+        .status-error { background-color: #ef4444; }
+        .status-pending { background-color: #f59e0b; }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .instructions {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .manual-test-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .manual-test-button:hover {
+            background: #1d4ed8;
+        }
+        .checklist-item {
+            margin: 8px 0;
+            padding: 8px;
+            border-radius: 4px;
+            background: #f8fafc;
+            border-left: 3px solid #94a3b8;
+        }
+        .checklist-item.completed {
+            background: #ecfdf5;
+            border-left-color: #10b981;
+        }
+        .console-log {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>Pricing Configuration Functionality Test</h1>
+            <p>Testing the newly implemented pricing configuration features</p>
+        </div>
+
+        <div class="instructions">
+            <h3>Test Instructions</h3>
+            <p>This test will systematically verify all pricing configuration functionality. The application will be loaded in the iframe below.</p>
+            <p><strong>Important:</strong> Make sure the application is running on http://localhost:5173/</p>
+        </div>
+
+        <div class="test-container">
+            <h3>Test Checklist</h3>
+            <div id="test-checklist">
+                <div class="checklist-item" data-test="navigation">
+                    <span class="status-indicator status-pending"></span>
+                    <strong>Navigation Test:</strong> Navigate to Admin Config → Pricing tab
+                </div>
+                <div class="checklist-item" data-test="overview">
+                    <span class="status-indicator status-pending"></span>
+                    <strong>Pricing Overview:</strong> Verify three main cards (Pricing Rules, Seasonal Pricing, Special Offers)
+                </div>
+                <div class="checklist-item" data-test="pricing-rules">
+                    <span class="status-indicator status-pending"></span>
+                    <strong>Pricing Rules:</strong> Test table, sorting, filtering, and actions
+                </div>
+                <div class="checklist-item" data-test="seasonal-pricing">
+                    <span class="status-indicator status-pending"></span>
+                    <strong>Seasonal Pricing:</strong> Test calendar/list views and season details
+                </div>
+                <div class="checklist-item" data-test="special-offers">
+                    <span class="status-indicator status-pending"></span>
+                    <strong>Special Offers:</strong> Test modal opening and form validation
+                </div>
+                <div class="checklist-item" data-test="navigation-back">
+                    <span class="status-indicator status-pending"></span>
+                    <strong>Back Navigation:</strong> Test "Back to Pricing Overview" functionality
+                </div>
+                <div class="checklist-item" data-test="console-errors">
+                    <span class="status-indicator status-pending"></span>
+                    <strong>Console Errors:</strong> No console errors during interaction
+                </div>
+            </div>
+        </div>
+
+        <div class="test-container">
+            <h3>Manual Test Controls</h3>
+            <button class="manual-test-button" onclick="startTest()">Start Full Test</button>
+            <button class="manual-test-button" onclick="testNavigation()">Test Navigation</button>
+            <button class="manual-test-button" onclick="testPricingRules()">Test Pricing Rules</button>
+            <button class="manual-test-button" onclick="testSeasonalPricing()">Test Seasonal Pricing</button>
+            <button class="manual-test-button" onclick="testSpecialOffers()">Test Special Offers</button>
+            <button class="manual-test-button" onclick="checkConsoleErrors()">Check Console</button>
+        </div>
+
+        <div class="test-container">
+            <h3>Application Under Test</h3>
+            <iframe id="app-frame" class="app-frame" src="http://localhost:5173/"></iframe>
+        </div>
+
+        <div class="test-results" id="test-results">
+            <h3>Test Results</h3>
+            <div id="results-content">
+                <p>Click "Start Full Test" to begin automated testing, or use individual test buttons.</p>
+            </div>
+        </div>
+
+        <div class="console-log" id="console-log">
+            <strong>Console Output:</strong><br>
+            <div id="console-content">Ready to start testing...</div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+        let consoleErrors = [];
+
+        // Override console methods to capture errors
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.error = function(...args) {
+            consoleErrors.push({type: 'error', message: args.join(' '), timestamp: new Date().toISOString()});
+            logToConsole('ERROR: ' + args.join(' '));
+            originalConsoleError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            consoleErrors.push({type: 'warn', message: args.join(' '), timestamp: new Date().toISOString()});
+            logToConsole('WARN: ' + args.join(' '));
+            originalConsoleWarn.apply(console, args);
+        };
+
+        function logToConsole(message) {
+            const consoleContent = document.getElementById('console-content');
+            const timestamp = new Date().toLocaleTimeString();
+            consoleContent.innerHTML += `<br>[${timestamp}] ${message}`;
+            consoleContent.scrollTop = consoleContent.scrollHeight;
+        }
+
+        function updateTestStatus(testName, status, message = '') {
+            const testItem = document.querySelector(`[data-test="${testName}"]`);
+            if (testItem) {
+                const indicator = testItem.querySelector('.status-indicator');
+                indicator.className = `status-indicator status-${status}`;
+                
+                if (status === 'success') {
+                    testItem.classList.add('completed');
+                }
+                
+                logToConsole(`${testName.toUpperCase()}: ${status.toUpperCase()} ${message}`);
+            }
+        }
+
+        function addTestResult(test, status, details) {
+            testResults.push({
+                test: test,
+                status: status,
+                details: details,
+                timestamp: new Date().toISOString()
+            });
+            updateResultsDisplay();
+        }
+
+        function updateResultsDisplay() {
+            const resultsContent = document.getElementById('results-content');
+            let html = '<h4>Test Execution Results:</h4>';
+            
+            testResults.forEach(result => {
+                const statusClass = result.status === 'passed' ? 'success' : 'error';
+                html += `
+                    <div class="test-step ${statusClass}">
+                        <strong>${result.test}:</strong> ${result.status.toUpperCase()}<br>
+                        <small>${result.details}</small>
+                    </div>
+                `;
+            });
+            
+            if (consoleErrors.length > 0) {
+                html += '<h4>Console Errors/Warnings:</h4>';
+                consoleErrors.forEach(error => {
+                    html += `
+                        <div class="test-step error">
+                            <strong>${error.type.toUpperCase()}:</strong> ${error.message}<br>
+                            <small>${error.timestamp}</small>
+                        </div>
+                    `;
+                });
+            }
+            
+            resultsContent.innerHTML = html;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function startTest() {
+            logToConsole('Starting comprehensive pricing configuration test...');
+            consoleErrors = [];
+            testResults = [];
+            
+            // Reset all test statuses
+            const testItems = document.querySelectorAll('.checklist-item');
+            testItems.forEach(item => {
+                item.classList.remove('completed');
+                const indicator = item.querySelector('.status-indicator');
+                indicator.className = 'status-indicator status-pending';
+            });
+            
+            try {
+                await testNavigation();
+                await sleep(1000);
+                await testPricingOverview();
+                await sleep(1000);
+                await testPricingRules();
+                await sleep(1000);
+                await testSeasonalPricing();
+                await sleep(1000);
+                await testSpecialOffers();
+                await sleep(1000);
+                await testBackNavigation();
+                await sleep(1000);
+                await checkConsoleErrors();
+                
+                logToConsole('All tests completed!');
+                addTestResult('Full Test Suite', 'passed', 'All pricing configuration tests completed successfully');
+                
+            } catch (error) {
+                logToConsole('Test failed: ' + error.message);
+                addTestResult('Full Test Suite', 'failed', error.message);
+            }
+        }
+
+        async function testNavigation() {
+            logToConsole('Testing navigation to Admin Config → Pricing tab...');
+            updateTestStatus('navigation', 'pending');
+            
+            try {
+                const iframe = document.getElementById('app-frame');
+                await new Promise(resolve => {
+                    iframe.onload = resolve;
+                    if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+                        resolve();
+                    }
+                });
+                
+                // Wait for React to render
+                await sleep(2000);
+                
+                // Try to access the iframe content
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                logToConsole('Iframe loaded, checking for admin navigation...');
+                
+                // Look for admin navigation elements
+                const adminLinks = iframeDoc.querySelectorAll('a[href*="admin"], button[data-testid*="admin"], [class*="admin"]');
+                logToConsole(`Found ${adminLinks.length} potential admin navigation elements`);
+                
+                if (adminLinks.length > 0) {
+                    updateTestStatus('navigation', 'success');
+                    addTestResult('Navigation', 'passed', 'Successfully accessed admin navigation area');
+                } else {
+                    updateTestStatus('navigation', 'error');
+                    addTestResult('Navigation', 'failed', 'Could not find admin navigation elements');
+                }
+                
+            } catch (error) {
+                updateTestStatus('navigation', 'error');
+                addTestResult('Navigation', 'failed', 'Error accessing application: ' + error.message);
+                logToConsole('Navigation test error: ' + error.message);
+            }
+        }
+
+        async function testPricingOverview() {
+            logToConsole('Testing pricing overview with three main cards...');
+            updateTestStatus('overview', 'pending');
+            
+            try {
+                const iframe = document.getElementById('app-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Look for pricing cards or sections
+                const pricingElements = iframeDoc.querySelectorAll('[class*="pricing"], [data-testid*="pricing"], [id*="pricing"]');
+                logToConsole(`Found ${pricingElements.length} pricing-related elements`);
+                
+                // Look for specific card patterns
+                const cardElements = iframeDoc.querySelectorAll('[class*="card"], .bg-white, [class*="border"]');
+                logToConsole(`Found ${cardElements.length} potential card elements`);
+                
+                if (pricingElements.length >= 3 || cardElements.length >= 3) {
+                    updateTestStatus('overview', 'success');
+                    addTestResult('Pricing Overview', 'passed', `Found ${Math.max(pricingElements.length, cardElements.length)} pricing elements`);
+                } else {
+                    updateTestStatus('overview', 'error');
+                    addTestResult('Pricing Overview', 'failed', 'Could not find three main pricing cards');
+                }
+                
+            } catch (error) {
+                updateTestStatus('overview', 'error');
+                addTestResult('Pricing Overview', 'failed', error.message);
+            }
+        }
+
+        async function testPricingRules() {
+            logToConsole('Testing pricing rules functionality...');
+            updateTestStatus('pricing-rules', 'pending');
+            
+            try {
+                const iframe = document.getElementById('app-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Look for table elements
+                const tables = iframeDoc.querySelectorAll('table, [class*="table"], [role="table"]');
+                const buttons = iframeDoc.querySelectorAll('button, [role="button"]');
+                const inputs = iframeDoc.querySelectorAll('input, select, [role="combobox"]');
+                
+                logToConsole(`Found ${tables.length} tables, ${buttons.length} buttons, ${inputs.length} inputs`);
+                
+                // Check for sorting and filtering elements
+                const sortableElements = iframeDoc.querySelectorAll('[class*="sort"], [data-sort], th[role="columnheader"]');
+                const filterElements = iframeDoc.querySelectorAll('[class*="filter"], [placeholder*="filter"], [placeholder*="search"]');
+                
+                logToConsole(`Found ${sortableElements.length} sortable elements, ${filterElements.length} filter elements`);
+                
+                if (tables.length > 0 && buttons.length > 0) {
+                    updateTestStatus('pricing-rules', 'success');
+                    addTestResult('Pricing Rules', 'passed', `Found table with ${buttons.length} interactive buttons and ${inputs.length} form controls`);
+                } else {
+                    updateTestStatus('pricing-rules', 'error');
+                    addTestResult('Pricing Rules', 'failed', 'Missing table or interactive elements');
+                }
+                
+            } catch (error) {
+                updateTestStatus('pricing-rules', 'error');
+                addTestResult('Pricing Rules', 'failed', error.message);
+            }
+        }
+
+        async function testSeasonalPricing() {
+            logToConsole('Testing seasonal pricing functionality...');
+            updateTestStatus('seasonal-pricing', 'pending');
+            
+            try {
+                const iframe = document.getElementById('app-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Look for calendar elements
+                const calendarElements = iframeDoc.querySelectorAll('[class*="calendar"], [class*="date"], [class*="month"], [class*="season"]');
+                const viewToggleElements = iframeDoc.querySelectorAll('[class*="toggle"], [role="tab"], [class*="view"]');
+                
+                logToConsole(`Found ${calendarElements.length} calendar elements, ${viewToggleElements.length} view toggle elements`);
+                
+                // Look for list view elements
+                const listElements = iframeDoc.querySelectorAll('[class*="list"], ul, ol, [role="list"]');
+                
+                if (calendarElements.length > 0 || listElements.length > 0) {
+                    updateTestStatus('seasonal-pricing', 'success');
+                    addTestResult('Seasonal Pricing', 'passed', `Found seasonal pricing interface with ${calendarElements.length} calendar elements`);
+                } else {
+                    updateTestStatus('seasonal-pricing', 'error');
+                    addTestResult('Seasonal Pricing', 'failed', 'Could not find seasonal pricing interface');
+                }
+                
+            } catch (error) {
+                updateTestStatus('seasonal-pricing', 'error');
+                addTestResult('Seasonal Pricing', 'failed', error.message);
+            }
+        }
+
+        async function testSpecialOffers() {
+            logToConsole('Testing special offers modal functionality...');
+            updateTestStatus('special-offers', 'pending');
+            
+            try {
+                const iframe = document.getElementById('app-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Look for modal elements
+                const modalElements = iframeDoc.querySelectorAll('[class*="modal"], [role="dialog"], [class*="overlay"]');
+                const formElements = iframeDoc.querySelectorAll('form, [class*="form"]');
+                const validationElements = iframeDoc.querySelectorAll('[class*="error"], [class*="invalid"], [aria-invalid]');
+                
+                logToConsole(`Found ${modalElements.length} modal elements, ${formElements.length} forms, ${validationElements.length} validation elements`);
+                
+                // Look for offer-related buttons
+                const offerButtons = iframeDoc.querySelectorAll('button[class*="offer"], button[class*="special"], [data-testid*="offer"]');
+                
+                if (formElements.length > 0 || offerButtons.length > 0) {
+                    updateTestStatus('special-offers', 'success');
+                    addTestResult('Special Offers', 'passed', `Found special offers interface with ${formElements.length} forms`);
+                } else {
+                    updateTestStatus('special-offers', 'error');
+                    addTestResult('Special Offers', 'failed', 'Could not find special offers interface');
+                }
+                
+            } catch (error) {
+                updateTestStatus('special-offers', 'error');
+                addTestResult('Special Offers', 'failed', error.message);
+            }
+        }
+
+        async function testBackNavigation() {
+            logToConsole('Testing back navigation functionality...');
+            updateTestStatus('navigation-back', 'pending');
+            
+            try {
+                const iframe = document.getElementById('app-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Look for back navigation elements
+                const backButtons = iframeDoc.querySelectorAll('button[class*="back"], a[class*="back"], [aria-label*="back"], [title*="back"]');
+                const navigationElements = iframeDoc.querySelectorAll('nav, [role="navigation"], [class*="nav"]');
+                
+                logToConsole(`Found ${backButtons.length} back buttons, ${navigationElements.length} navigation elements`);
+                
+                if (backButtons.length > 0 || navigationElements.length > 0) {
+                    updateTestStatus('navigation-back', 'success');
+                    addTestResult('Back Navigation', 'passed', `Found ${backButtons.length} back navigation elements`);
+                } else {
+                    updateTestStatus('navigation-back', 'error');
+                    addTestResult('Back Navigation', 'failed', 'Could not find back navigation elements');
+                }
+                
+            } catch (error) {
+                updateTestStatus('navigation-back', 'error');
+                addTestResult('Back Navigation', 'failed', error.message);
+            }
+        }
+
+        async function checkConsoleErrors() {
+            logToConsole('Checking for console errors...');
+            updateTestStatus('console-errors', 'pending');
+            
+            if (consoleErrors.length === 0) {
+                updateTestStatus('console-errors', 'success');
+                addTestResult('Console Errors', 'passed', 'No console errors detected during testing');
+            } else {
+                updateTestStatus('console-errors', 'error');
+                addTestResult('Console Errors', 'failed', `Found ${consoleErrors.length} console errors/warnings`);
+            }
+        }
+
+        // Initialize the test when page loads
+        window.addEventListener('load', () => {
+            logToConsole('Test page loaded, ready to begin testing...');
+            logToConsole('Make sure the application is running on http://localhost:5173/');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Navigation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-item.pass {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .test-item.fail {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .iframe-container {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 4px;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .checklist {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 5px 0;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            font-size: 16px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Sidebar Navigation Test</h1>
+        
+        <div class="instructions">
+            <h3>Test Instructions</h3>
+            <p>The application is embedded below. Please verify the following functionality:</p>
+            <ul class="checklist">
+                <li>Sidebar shows both Dashboard and Admin Config menu items</li>
+                <li>Click on Admin Config switches to admin section</li>
+                <li>Dashboard menu item returns to main dashboard</li>
+                <li>Expand/collapse functionality works with both menu items</li>
+                <li>Active state highlighting works (blue background for active item)</li>
+                <li>Admin Config section shows placeholder content</li>
+            </ul>
+        </div>
+
+        <div class="iframe-container">
+            <iframe src="http://localhost:5173/" title="Yacht Charter Dashboard"></iframe>
+        </div>
+
+        <div class="test-results">
+            <h3>Expected Behavior</h3>
+            <div class="test-item">
+                <strong>Initial State:</strong> Sidebar should be collapsed (12px width) showing only icons. Dashboard should be the active section with blue highlighting.
+            </div>
+            <div class="test-item">
+                <strong>Expand Sidebar:</strong> Click the chevron icon to expand sidebar to 64px width, revealing text labels "Dashboard" and "Admin Config".
+            </div>
+            <div class="test-item">
+                <strong>Admin Config Navigation:</strong> Click "Admin Config" item - should highlight in blue and show admin placeholder content: "Admin Configuration" heading with "Admin configuration page coming soon..." text.
+            </div>
+            <div class="test-item">
+                <strong>Dashboard Navigation:</strong> Click "Dashboard" item - should highlight in blue and return to main dashboard with SitRep section and calendar.
+            </div>
+            <div class="test-item">
+                <strong>Collapse Sidebar:</strong> Click chevron again to collapse sidebar while maintaining active state highlighting.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add click handlers to checklist items to mark them as completed
+        document.querySelectorAll('.checklist li').forEach(item => {
+            item.addEventListener('click', function() {
+                if (this.style.textDecoration === 'line-through') {
+                    this.style.textDecoration = 'none';
+                    this.style.color = 'inherit';
+                    this.innerHTML = this.innerHTML.replace('☑', '☐');
+                } else {
+                    this.style.textDecoration = 'line-through';
+                    this.style.color = '#6c757d';
+                    this.innerHTML = this.innerHTML.replace('☐', '☑');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

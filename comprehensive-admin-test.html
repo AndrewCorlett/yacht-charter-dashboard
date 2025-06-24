@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Admin Configuration Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .test-section { border-left: 4px solid #3b82f6; padding-left: 1rem; margin: 1rem 0; }
+        .passed { border-color: #10b981; background-color: #f0fdf4; }
+        .failed { border-color: #ef4444; background-color: #fef2f2; }
+        .pending { border-color: #f59e0b; background-color: #fffbeb; }
+        .iframe-container { border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                🚢 Yacht Charter Dashboard - Admin Configuration Test Suite
+            </h1>
+            <p class="text-gray-600 mb-4">
+                Comprehensive testing of the admin configuration system workflow
+            </p>
+            <div class="flex items-center gap-4 text-sm">
+                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">Test Date: June 24, 2025</span>
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full">Status: Ready for Testing</span>
+                <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">URL: http://localhost:5173</span>
+            </div>
+        </div>
+
+        <!-- Application Iframe -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">🎯 Live Application Testing</h2>
+            <div class="iframe-container">
+                <iframe 
+                    src="http://localhost:5173" 
+                    width="100%" 
+                    height="800"
+                    frameborder="0"
+                    title="Yacht Charter Dashboard Application">
+                </iframe>
+            </div>
+        </div>
+
+        <!-- Test Plan -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Phase 1: Navigation Tests -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold mb-4">📍 Phase 1: Navigation Testing</h2>
+                
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 1.1: Sidebar Access</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Click sidebar expand arrow</li>
+                        <li>□ Verify "Admin Config" option appears</li>
+                        <li>□ Confirm sidebar animations work smoothly</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 1.2: Admin Config Access</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Click "Admin Config" in sidebar</li>
+                        <li>□ Verify page loads with "Admin Configuration" header</li>
+                        <li>□ Confirm active state highlighting</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 1.3: Tab Navigation</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Verify 4 tabs present: Pricing 💰, Yachts ⛵, Documents 📄, Policies 📋</li>
+                        <li>□ Click each tab and verify content changes</li>
+                        <li>□ Confirm tab highlighting works</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 2: Pricing System Tests -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold mb-4">💰 Phase 2: Pricing System Testing</h2>
+                
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 2.1: Pricing Overview</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Verify 3 main cards: Pricing Rules, Seasonal Pricing, Special Offers</li>
+                        <li>□ Click each card and verify navigation</li>
+                        <li>□ Test back navigation to overview</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 2.2: Pricing Rules Management</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Access pricing rules table</li>
+                        <li>□ Test sorting on all columns</li>
+                        <li>□ Test filtering by yacht, rule type, status</li>
+                        <li>□ Test edit, copy, delete actions</li>
+                        <li>□ Test active/inactive toggle</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 2.3: Seasonal Pricing</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Test calendar view display</li>
+                        <li>□ Test list view display</li>
+                        <li>□ Toggle between calendar/list views</li>
+                        <li>□ Click on seasonal periods</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 2.4: Special Offers Modal</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Open special offers modal</li>
+                        <li>□ Test form validation</li>
+                        <li>□ Test all form fields</li>
+                        <li>□ Test save functionality</li>
+                        <li>□ Test modal close</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 3: Other Sections -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold mb-4">⛵ Phase 3: Other Admin Sections</h2>
+                
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 3.1: Yacht Management</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Access Yachts tab</li>
+                        <li>□ Verify 4 cards: Yacht Specifications, Amenities & Equipment, Photo Gallery, Marketing Content</li>
+                        <li>□ Click each card (console.log verification)</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 3.2: Document Templates</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Access Documents tab</li>
+                        <li>□ Verify 3 cards: Contract Templates, Invoice Templates, Quote Templates</li>
+                        <li>□ Click each card (console.log verification)</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 3.3: Business Policies</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Access Policies tab</li>
+                        <li>□ Verify 4 cards: Payment Terms, Booking Rules, Cancellation Policy, Contact Information</li>
+                        <li>□ Click each card (console.log verification)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Phase 4: System Tests -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold mb-4">🔧 Phase 4: System Testing</h2>
+                
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 4.1: Console Error Check</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Open Developer Tools (F12)</li>
+                        <li>□ Navigate through all sections</li>
+                        <li>□ Verify no red error messages</li>
+                        <li>□ Check for any warnings</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 4.2: Responsive Design</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Test mobile view (375px width)</li>
+                        <li>□ Test tablet view (768px width)</li>
+                        <li>□ Test desktop view (1024px+ width)</li>
+                        <li>□ Verify layout doesn't break</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 4.3: Performance Check</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Test page load speed</li>
+                        <li>□ Test navigation responsiveness</li>
+                        <li>□ Test modal open/close speed</li>
+                        <li>□ Verify smooth animations</li>
+                    </ul>
+                </div>
+
+                <div class="test-section pending">
+                    <h3 class="font-semibold text-lg mb-2">Test 4.4: Return Navigation</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>□ Navigate to Dashboard from Admin Config</li>
+                        <li>□ Return to Admin Config from Dashboard</li>
+                        <li>□ Verify state preservation</li>
+                        <li>□ Test multiple navigation cycles</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Results Summary -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">📊 Test Results Summary</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-blue-600" id="total-tests">0</div>
+                    <div class="text-sm text-blue-800">Total Tests</div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-green-600" id="passed-tests">0</div>
+                    <div class="text-sm text-green-800">Passed</div>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-red-600" id="failed-tests">0</div>
+                    <div class="text-sm text-red-800">Failed</div>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-yellow-600" id="pending-tests">0</div>
+                    <div class="text-sm text-yellow-800">Pending</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-blue-50 rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold text-blue-900 mb-4">📋 Testing Instructions</h2>
+            <div class="space-y-3 text-blue-800">
+                <p><strong>1. Open Developer Tools:</strong> Press F12 to monitor console for errors</p>
+                <p><strong>2. Follow Test Sequence:</strong> Complete tests in order from Phase 1 to Phase 4</p>
+                <p><strong>3. Check Boxes:</strong> Mark completed tests by clicking checkboxes</p>
+                <p><strong>4. Note Issues:</strong> Document any problems or unexpected behavior</p>
+                <p><strong>5. Verify Functionality:</strong> Ensure all interactive elements work as expected</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize test counters
+        function updateTestCounts() {
+            const totalTests = document.querySelectorAll('input[type="checkbox"]').length;
+            const passedTests = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const pendingTests = totalTests - passedTests;
+            
+            document.getElementById('total-tests').textContent = totalTests;
+            document.getElementById('passed-tests').textContent = passedTests;
+            document.getElementById('failed-tests').textContent = 0; // Manual tracking
+            document.getElementById('pending-tests').textContent = pendingTests;
+        }
+
+        // Convert list items to checkboxes
+        document.addEventListener('DOMContentLoaded', function() {
+            const listItems = document.querySelectorAll('ul li');
+            listItems.forEach(item => {
+                if (item.textContent.startsWith('□')) {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'mr-2';
+                    checkbox.addEventListener('change', updateTestCounts);
+                    
+                    item.textContent = item.textContent.substring(2);
+                    item.insertBefore(checkbox, item.firstChild);
+                }
+            });
+            updateTestCounts();
+        });
+
+        // Test section status management
+        function updateSectionStatus(section, status) {
+            section.classList.remove('passed', 'failed', 'pending');
+            section.classList.add(status);
+        }
+    </script>
+</body>
+</html>

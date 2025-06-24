@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Navigation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .failure {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .test-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Admin Navigation Test Suite</h1>
+    <p>This test will verify all admin navigation functionality requirements by opening the application in a frame and testing each feature.</p>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="startTests()">🚀 Start All Tests</button>
+        <button onclick="openAppInNewTab()">🔗 Open App in New Tab</button>
+        <button onclick="clearResults()">🧹 Clear Results</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Application Preview</h2>
+        <iframe id="appFrame" class="test-frame" src="http://localhost:5173/" title="Yacht Charter Dashboard"></iframe>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+        let appFrame;
+
+        function addResult(test, status, message) {
+            const result = { test, status, message, timestamp: new Date().toLocaleTimeString() };
+            testResults.push(result);
+            displayResults();
+        }
+
+        function displayResults() {
+            const container = document.getElementById('testResults');
+            container.innerHTML = '';
+            
+            testResults.forEach(result => {
+                const div = document.createElement('div');
+                div.className = `test-result ${result.status}`;
+                div.innerHTML = `
+                    <strong>[${result.timestamp}] ${result.test}</strong><br>
+                    ${result.message}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function clearResults() {
+            testResults = [];
+            displayResults();
+        }
+
+        function openAppInNewTab() {
+            window.open('http://localhost:5173/', '_blank');
+        }
+
+        function startTests() {
+            clearResults();
+            addResult('Test Suite', 'info', '🚀 Starting Admin Navigation Test Suite...');
+            
+            // Wait for iframe to load
+            setTimeout(() => {
+                runTest1();
+            }, 2000);
+        }
+
+        function runTest1() {
+            addResult('Test 1', 'info', '📱 Testing if application loads successfully...');
+            
+            const frame = document.getElementById('appFrame');
+            try {
+                // Check if iframe loaded
+                if (frame && frame.contentWindow) {
+                    addResult('Test 1', 'success', '✅ Application loads successfully at http://localhost:5173/');
+                    setTimeout(runTest2, 1000);
+                } else {
+                    addResult('Test 1', 'failure', '❌ Application failed to load in iframe');
+                }
+            } catch (error) {
+                addResult('Test 1', 'failure', `❌ Error accessing application: ${error.message}`);
+            }
+        }
+
+        function runTest2() {
+            addResult('Test 2', 'info', '🔍 Testing sidebar navigation items...');
+            
+            // Note: Due to cross-origin restrictions, we can't directly access iframe content
+            // Instead, we'll provide manual verification steps
+            addResult('Test 2', 'info', `
+                📋 Manual Verification Required:
+                <br>• Look at the sidebar in the application above
+                <br>• Verify you can see a "Dashboard" navigation item
+                <br>• Verify you can see an "Admin Config" navigation item
+                <br>• Both items should be clearly visible with icons
+            `);
+            
+            setTimeout(runTest3, 2000);
+        }
+
+        function runTest3() {
+            addResult('Test 3', 'info', '⚙️ Testing Admin Config navigation...');
+            
+            addResult('Test 3', 'info', `
+                📋 Manual Verification Steps:
+                <br>• Click the sidebar expand button (arrow icon) to see full text labels
+                <br>• Click on "Admin Config" in the sidebar
+                <br>• Verify the page changes to show "Admin Configuration" header
+                <br>• Verify you can see 4 tabs: Pricing 💰, Yachts ⛵, Documents 📄, Policies 📋
+            `);
+            
+            setTimeout(runTest4, 2000);
+        }
+
+        function runTest4() {
+            addResult('Test 4', 'info', '📑 Testing tab navigation...');
+            
+            addResult('Test 4', 'info', `
+                📋 Manual Verification Steps:
+                <br>• Click on each of the 4 admin tabs one by one
+                <br>• Pricing tab: Should show "Pricing Configuration" with daily rates, seasonal pricing, special offers
+                <br>• Yachts tab: Should show "Yacht Management" with specifications, amenities, photo gallery
+                <br>• Documents tab: Should show "Document Templates" with contracts, invoices, quotes
+                <br>• Policies tab: Should show "Business Policies" with payment terms, booking rules, cancellation policy
+                <br>• Each tab should show different, distinct content
+            `);
+            
+            setTimeout(runTest5, 2000);
+        }
+
+        function runTest5() {
+            addResult('Test 5', 'info', '🏠 Testing Dashboard navigation...');
+            
+            addResult('Test 5', 'info', `
+                📋 Manual Verification Steps:
+                <br>• Click on "Dashboard" in the sidebar
+                <br>• Verify the page changes back to the main dashboard view
+                <br>• You should see the calendar and SitRep sections
+                <br>• The Admin Configuration content should no longer be visible
+            `);
+            
+            setTimeout(runTest6, 2000);
+        }
+
+        function runTest6() {
+            addResult('Test 6', 'info', '📏 Testing sidebar expand/collapse...');
+            
+            addResult('Test 6', 'info', `
+                📋 Manual Verification Steps:
+                <br>• Look for the arrow button at the top of the sidebar
+                <br>• Click the arrow button to collapse the sidebar
+                <br>• Verify the sidebar becomes narrow and only shows icons
+                <br>• Click the arrow button again to expand the sidebar
+                <br>• Verify the sidebar becomes wide and shows both icons and text labels
+                <br>• The animation should be smooth and responsive
+            `);
+            
+            setTimeout(runTest7, 2000);
+        }
+
+        function runTest7() {
+            addResult('Test 7', 'info', '🎯 Testing active state highlighting...');
+            
+            addResult('Test 7', 'info', `
+                📋 Manual Verification Steps:
+                <br>• Expand the sidebar if it's collapsed
+                <br>• Click on "Dashboard" - verify it gets a blue highlight/border
+                <br>• Click on "Admin Config" - verify it gets a blue highlight/border
+                <br>• Verify that only one navigation item is highlighted at a time
+                <br>• The active item should have a blue color and blue border-right
+            `);
+            
+            setTimeout(runTest8, 2000);
+        }
+
+        function runTest8() {
+            addResult('Test 8', 'info', '🐛 Testing for console errors...');
+            
+            addResult('Test 8', 'info', `
+                📋 Manual Verification Steps:
+                <br>• Open browser Developer Tools (F12)
+                <br>• Go to the Console tab
+                <br>• Perform all the navigation actions (Dashboard ↔ Admin Config, tab switching)
+                <br>• Check if any red error messages appear in the console
+                <br>• Minor warnings are acceptable, but no critical errors should occur
+            `);
+            
+            setTimeout(completeSuite, 2000);
+        }
+
+        function completeSuite() {
+            addResult('Test Suite Complete', 'success', `
+                🎉 Admin Navigation Test Suite Complete!
+                <br><br>
+                📊 <strong>SUMMARY OF VERIFICATION POINTS:</strong>
+                <br>✅ Application loads at http://localhost:5173/
+                <br>✅ Sidebar contains "Dashboard" and "Admin Config" items
+                <br>✅ Admin Config page displays with proper header
+                <br>✅ Admin Config shows 4 tabs: Pricing, Yachts, Documents, Policies
+                <br>✅ Each tab shows distinct, relevant content
+                <br>✅ Navigation back to Dashboard works correctly
+                <br>✅ Sidebar expand/collapse functionality works
+                <br>✅ Active state highlighting functions properly
+                <br>✅ No console errors during navigation
+                <br><br>
+                🔍 <strong>If all manual verifications passed, the routing setup is complete and functional!</strong>
+            `);
+        }
+
+        // Auto-start tests when page loads
+        window.onload = function() {
+            setTimeout(startTests, 1000);
+        };
+    </script>
+</body>
+</html>

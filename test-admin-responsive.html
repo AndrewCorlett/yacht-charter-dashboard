@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Layout Responsive Testing</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .test-header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 20px;
+        }
+        .test-header h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        .test-header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #f9fafb;
+        }
+        .test-section h2 {
+            color: #1f2937;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .test-section h2::before {
+            content: "🔍";
+            margin-right: 10px;
+        }
+        .test-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #d1d5db;
+        }
+        .test-item.pending {
+            border-left-color: #fbbf24;
+        }
+        .test-item.pass {
+            border-left-color: #10b981;
+        }
+        .test-item.fail {
+            border-left-color: #ef4444;
+        }
+        .test-checkbox {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+        .test-description {
+            flex: 1;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        .screen-size-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .screen-size-btn {
+            padding: 10px 20px;
+            border: 2px solid #3b82f6;
+            background: white;
+            color: #3b82f6;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .screen-size-btn:hover {
+            background: #3b82f6;
+            color: white;
+        }
+        .screen-size-btn.active {
+            background: #1d4ed8;
+            color: white;
+            border-color: #1d4ed8;
+        }
+        .iframe-container {
+            width: 100%;
+            height: 800px;
+            border: 3px solid #374151;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .instructions {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .instructions h3 {
+            color: #1e40af;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .control-btn {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 0 5px;
+            transition: background 0.2s;
+        }
+        .control-btn:hover {
+            background: #047857;
+        }
+        .control-btn.secondary {
+            background: #6b7280;
+        }
+        .control-btn.secondary:hover {
+            background: #4b5563;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-pending { background-color: #fbbf24; }
+        .status-pass { background-color: #10b981; }
+        .status-fail { background-color: #ef4444; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .test-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            .screen-size-buttons {
+                flex-direction: column;
+            }
+            .screen-size-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>Admin Layout Responsive Testing</h1>
+            <p>Systematic testing of the responsive admin configuration layout</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>Testing Instructions</h3>
+            <ol>
+                <li>Click "Open Admin Config" to launch the application in the iframe below</li>
+                <li>Use the screen size buttons to test different viewport sizes</li>
+                <li>Navigate through all 4 admin tabs (Pricing, Yachts, Documents, Policies)</li>
+                <li>Check each test item as you verify the responsive behavior</li>
+                <li>Look for layout issues, overflow problems, or accessibility concerns</li>
+                <li>Test hover states and click interactions on all cards</li>
+            </ol>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" onclick="openAdminConfig()">Open Admin Config</button>
+            <button class="control-btn secondary" onclick="refreshIframe()">Refresh</button>
+            <button class="control-btn secondary" onclick="resetTests()">Reset Tests</button>
+        </div>
+
+        <div class="screen-size-buttons">
+            <button class="screen-size-btn" onclick="setScreenSize(375, 'Mobile')">📱 Mobile (375px)</button>
+            <button class="screen-size-btn" onclick="setScreenSize(768, 'Tablet')">📱 Tablet (768px)</button>
+            <button class="screen-size-btn" onclick="setScreenSize(1024, 'Desktop')">💻 Desktop (1024px)</button>
+            <button class="screen-size-btn active" onclick="setScreenSize(1920, 'Full Width')">🖥️ Full Width (1920px)</button>
+        </div>
+
+        <div class="iframe-container" id="iframeContainer">
+            <iframe id="testIframe" src="about:blank"></iframe>
+        </div>
+
+        <div class="test-section">
+            <h2>Desktop Layout Tests (1920px)</h2>
+            <div class="test-item pending" data-test="desktop-grid-layout">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Grid Layout:</strong> Verify proper grid layouts display correctly (3-column for pricing/documents, 2-column for yachts/policies)
+                </div>
+            </div>
+            <div class="test-item pending" data-test="desktop-spacing">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Spacing:</strong> Check adequate spacing between cards and sections
+                </div>
+            </div>
+            <div class="test-item pending" data-test="desktop-header-actions">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Header Actions:</strong> Export Config and Save Changes buttons are properly positioned
+                </div>
+            </div>
+            <div class="test-item pending" data-test="desktop-tab-navigation">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Tab Navigation:</strong> All 4 tabs (Pricing, Yachts, Documents, Policies) are fully visible and accessible
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Tablet Layout Tests (768px)</h2>
+            <div class="test-item pending" data-test="tablet-grid-adaptation">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Grid Adaptation:</strong> 3-column grids adapt to 2-column layout, 2-column grids remain responsive
+                </div>
+            </div>
+            <div class="test-item pending" data-test="tablet-header-responsive">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Header Responsive:</strong> Header title and actions stack properly on smaller screens
+                </div>
+            </div>
+            <div class="test-item pending" data-test="tablet-tab-scroll">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Tab Scrolling:</strong> Tab navigation allows horizontal scrolling if needed
+                </div>
+            </div>
+            <div class="test-item pending" data-test="tablet-card-sizing">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Card Sizing:</strong> ConfigCard components resize appropriately for tablet view
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Mobile Layout Tests (375px)</h2>
+            <div class="test-item pending" data-test="mobile-single-column">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Single Column:</strong> All cards stack in single column layout on mobile
+                </div>
+            </div>
+            <div class="test-item pending" data-test="mobile-header-stack">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Header Stacking:</strong> Header title and actions stack vertically for mobile
+                </div>
+            </div>
+            <div class="test-item pending" data-test="mobile-tab-accessibility">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Tab Accessibility:</strong> Tab navigation remains usable and accessible on small screens
+                </div>
+            </div>
+            <div class="test-item pending" data-test="mobile-no-overflow">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>No Overflow:</strong> No horizontal scrolling or layout overflow issues
+                </div>
+            </div>
+            <div class="test-item pending" data-test="mobile-touch-targets">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Touch Targets:</strong> All interactive elements are properly sized for touch interaction
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Interactive Behavior Tests</h2>
+            <div class="test-item pending" data-test="card-hover-states">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Card Hover States:</strong> ConfigCard hover effects work correctly across all screen sizes
+                </div>
+            </div>
+            <div class="test-item pending" data-test="card-click-interaction">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Click Interactions:</strong> All cards respond to click events with console log output
+                </div>
+            </div>
+            <div class="test-item pending" data-test="tab-switching">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Tab Switching:</strong> Tab switching works smoothly between all 4 configuration sections
+                </div>
+            </div>
+            <div class="test-item pending" data-test="button-interactions">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Button Interactions:</strong> Header action buttons (Export/Save) maintain proper styling and positioning
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Cross-Screen Size Verification</h2>
+            <div class="test-item pending" data-test="consistent-design">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Consistent Design:</strong> Design language remains consistent across all screen sizes
+                </div>
+            </div>
+            <div class="test-item pending" data-test="content-accessibility">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Content Accessibility:</strong> All content remains accessible and readable at different sizes
+                </div>
+            </div>
+            <div class="test-item pending" data-test="performance-smooth">
+                <input type="checkbox" class="test-checkbox" onchange="updateTestStatus(this)">
+                <div class="test-description">
+                    <strong>Performance:</strong> Responsive transitions are smooth without layout jumping
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScreenSize = 1920;
+        let currentSizeName = 'Full Width';
+
+        function openAdminConfig() {
+            const iframe = document.getElementById('testIframe');
+            iframe.src = 'http://localhost:5173/#admin';
+            
+            // Wait a moment then try to navigate to admin section
+            setTimeout(() => {
+                try {
+                    // Try to access iframe content and trigger navigation
+                    const iframeWindow = iframe.contentWindow;
+                    if (iframeWindow) {
+                        // This might not work due to CORS, but worth trying
+                        console.log('Opened admin config page');
+                    }
+                } catch (e) {
+                    console.log('Admin config opened (CORS prevents direct access)');
+                }
+            }, 1000);
+        }
+
+        function refreshIframe() {
+            const iframe = document.getElementById('testIframe');
+            if (iframe.src !== 'about:blank') {
+                iframe.src = iframe.src;
+            }
+        }
+
+        function setScreenSize(width, name) {
+            currentScreenSize = width;
+            currentSizeName = name;
+            
+            const container = document.getElementById('iframeContainer');
+            container.style.width = width + 'px';
+            container.style.maxWidth = '100%';
+            
+            // Update active button
+            document.querySelectorAll('.screen-size-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            console.log(`Screen size set to: ${name} (${width}px)`);
+        }
+
+        function updateTestStatus(checkbox) {
+            const testItem = checkbox.closest('.test-item');
+            const testId = testItem.dataset.test;
+            
+            if (checkbox.checked) {
+                testItem.classList.remove('pending', 'fail');
+                testItem.classList.add('pass');
+                console.log(`✅ Test passed: ${testId}`);
+            } else {
+                testItem.classList.remove('pass', 'fail');
+                testItem.classList.add('pending');
+                console.log(`⏳ Test reset: ${testId}`);
+            }
+            
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const totalTests = document.querySelectorAll('.test-item').length;
+            const passedTests = document.querySelectorAll('.test-item.pass').length;
+            const progress = (passedTests / totalTests) * 100;
+            
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            if (progress === 100) {
+                console.log('🎉 All tests completed!');
+                alert('🎉 Congratulations! All responsive layout tests have been completed successfully.');
+            }
+        }
+
+        function resetTests() {
+            document.querySelectorAll('.test-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            document.querySelectorAll('.test-item').forEach(item => {
+                item.classList.remove('pass', 'fail');
+                item.classList.add('pending');
+            });
+            
+            updateProgress();
+            console.log('🔄 All tests reset');
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        setScreenSize(375, 'Mobile');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        setScreenSize(768, 'Tablet');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        setScreenSize(1024, 'Desktop');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        setScreenSize(1920, 'Full Width');
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        refreshIframe();
+                        break;
+                }
+            }
+        });
+
+        // Initialize
+        console.log('🚀 Admin Layout Responsive Testing Tool Loaded');
+        console.log('💡 Keyboard shortcuts: Ctrl+1-4 for screen sizes, Ctrl+R to refresh');
+        updateProgress();
+    </script>
+</body>
+</html>
