@@ -1,3 +1,211 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Dusk Theme Colors - Enhanced iOS palette for twilight aesthetic */
+  --color-ios-blue: #4A9EFF;
+  --color-ios-blue-light: #7BB8FF;
+  --color-ios-blue-dark: #2B7CE6;
+  --color-ios-green: #52D973;
+  --color-ios-green-light: #7EE699;
+  --color-ios-green-dark: #30B84A;
+  --color-ios-orange: #FF9F33;
+  --color-ios-orange-light: #FFB866;
+  --color-ios-orange-dark: #E6850A;
+  --color-ios-red: #FF5C52;
+  --color-ios-red-light: #FF8A82;
+  --color-ios-red-dark: #E6342B;
+  --color-ios-purple: #C470F0;
+  --color-ios-purple-light: #D99BF5;
+  --color-ios-purple-dark: #A445D9;
+  --color-ios-pink: #FF5CAD;
+  --color-ios-pink-light: #FF8CC7;
+  --color-ios-pink-dark: #E6367A;
+  
+  /* Dusk Gray Scale - Darker grays for twilight feel */
+  --color-ios-gray-1: #3C3C3E;
+  --color-ios-gray-2: #48484A;
+  --color-ios-gray-3: #545458;
+  --color-ios-gray-4: #636366;
+  --color-ios-gray-5: #8E8E93;
+  --color-ios-gray-6: #AEAEB2;
+  
+  /* Enhanced grid borders for calendar */
+  --color-ios-border-grid: #5A5A5C;
+  --color-ios-border-grid-light: #6A6A6C;
+  
+  /* Dusk Background Colors - Twilight palette */
+  --color-ios-bg-primary: #2C2C2E;
+  --color-ios-bg-secondary: #1C1C1E;
+  --color-ios-bg-tertiary: #3A3A3C;
+  --color-ios-bg-grouped: #242426;
+  --color-ios-bg-card: #383838;
+  --color-ios-bg-section: #323234;
+  
+  /* Dusk Text Colors - Light text for dark backgrounds */
+  --color-ios-text-primary: #FFFFFF;
+  --color-ios-text-secondary: #E5E5E7;
+  --color-ios-text-tertiary: #AEAEB2;
+  --color-ios-text-quaternary: #8E8E93;
+  
+  /* iOS Border Radius */
+  --radius-ios: 8px;
+  --radius-ios-lg: 12px;
+  --radius-ios-xl: 16px;
+  --radius-ios-2xl: 20px;
+  
+  /* iOS Spacing */
+  --spacing-ios-xs: 4px;
+  --spacing-ios-sm: 8px;
+  --spacing-ios-md: 16px;
+  --spacing-ios-lg: 24px;
+  --spacing-ios-xl: 32px;
+  --spacing-ios-2xl: 48px;
+  
+  /* Dusk Shadows - Enhanced for dark theme */
+  --shadow-ios: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-ios-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-ios-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-ios-xl: 0 16px 32px rgba(0, 0, 0, 0.4);
+  
+  /* iOS Font Family */
+  --font-family-ios: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+  font-family: var(--font-family-ios);
+  background-color: var(--color-ios-bg-secondary);
+  color: var(--color-ios-text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Enhanced for dusk theme */
+  background-image: linear-gradient(135deg, var(--color-ios-bg-secondary) 0%, #171719 100%);
+}
+
+@layer components {
+  .ios-card {
+    background-color: var(--color-ios-bg-card);
+    border-radius: var(--radius-ios-lg);
+    box-shadow: var(--shadow-ios);
+    border: 1px solid var(--color-ios-gray-2);
+    padding: var(--spacing-ios-md);
+    /* Dusk theme enhancement */
+    background-image: linear-gradient(145deg, var(--color-ios-bg-card) 0%, #2E2E30 100%);
+  }
+  
+  .ios-card-section {
+    background-color: var(--color-ios-bg-section);
+    border-radius: var(--radius-ios);
+    border: 1px solid var(--color-ios-gray-3);
+    padding: var(--spacing-ios-sm);
+  }
+  
+  .ios-button {
+    background: linear-gradient(135deg, var(--color-ios-blue) 0%, var(--color-ios-blue-dark) 100%);
+    color: white;
+    padding: var(--spacing-ios-sm) var(--spacing-ios-md);
+    border-radius: var(--radius-ios);
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(74, 158, 255, 0.3);
+  }
+  
+  .ios-button:hover {
+    background: linear-gradient(135deg, var(--color-ios-blue-light) 0%, var(--color-ios-blue) 100%);
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(74, 158, 255, 0.4);
+  }
+  
+  .ios-button-secondary {
+    background: linear-gradient(135deg, var(--color-ios-gray-1) 0%, var(--color-ios-gray-2) 100%);
+    color: var(--color-ios-text-primary);
+    border: 1px solid var(--color-ios-gray-3);
+    padding: var(--spacing-ios-sm) var(--spacing-ios-md);
+    border-radius: var(--radius-ios);
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .ios-button-secondary:hover {
+    background: linear-gradient(135deg, var(--color-ios-gray-2) 0%, var(--color-ios-gray-3) 100%);
+    transform: scale(1.05);
+  }
+  
+  .ios-input {
+    background-color: var(--color-ios-bg-tertiary);
+    border: 1px solid var(--color-ios-gray-3);
+    border-radius: var(--radius-ios);
+    padding: var(--spacing-ios-sm) var(--spacing-ios-md);
+    color: var(--color-ios-text-primary);
+    transition: all 0.2s ease;
+    width: 100%;
+  }
+  
+  .ios-input::placeholder {
+    color: var(--color-ios-text-tertiary);
+  }
+  
+  .ios-input:focus {
+    outline: none;
+    border-color: var(--color-ios-blue);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+  }
+  
+  .ios-select {
+    background-color: var(--color-ios-bg-tertiary);
+    border: 1px solid var(--color-ios-gray-3);
+    border-radius: var(--radius-ios);
+    padding: var(--spacing-ios-sm) var(--spacing-ios-md);
+    color: var(--color-ios-text-primary);
+    transition: all 0.2s ease;
+    width: 100%;
+  }
+  
+  .ios-select:focus {
+    outline: none;
+    border-color: var(--color-ios-blue);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+  }
+  
+  .ios-textarea {
+    background-color: var(--color-ios-bg-tertiary);
+    border: 1px solid var(--color-ios-gray-3);
+    border-radius: var(--radius-ios);
+    padding: var(--spacing-ios-sm) var(--spacing-ios-md);
+    color: var(--color-ios-text-primary);
+    transition: all 0.2s ease;
+    width: 100%;
+    resize: vertical;
+  }
+  
+  .ios-textarea::placeholder {
+    color: var(--color-ios-text-tertiary);
+  }
+  
+  .ios-textarea:focus {
+    outline: none;
+    border-color: var(--color-ios-blue);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+  }
+  
+  /* Enhanced calendar grid styling */
+  .calendar-grid-border {
+    border-color: var(--color-ios-border-grid) !important;
+    border-width: 1px;
+  }
+  
+  .calendar-grid-border-thick {
+    border-color: var(--color-ios-border-grid-light) !important;
+    border-width: 2px;
+  }
+  
+  .calendar-header-border {
+    border-color: var(--color-ios-border-grid-light) !important;
+    border-width: 1px;
+  }
+}

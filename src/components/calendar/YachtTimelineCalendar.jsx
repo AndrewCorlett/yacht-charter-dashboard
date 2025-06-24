@@ -181,16 +181,21 @@ function YachtTimelineCalendar({ onCreateBooking }) {
   }
 
   return (
-    <div className="w-full bg-white rounded-lg shadow flex flex-col overflow-x-hidden" style={{ height: 'calc(100vh - 80px)' }}>
+    <div className="w-full ios-card flex flex-col overflow-x-hidden" style={{ 
+      height: 'calc(100vh - 80px)', 
+      fontFamily: 'var(--font-family-ios)' 
+    }}>
       {/* Fixed Header */}
-      <div className="p-4 border-b border-gray-200 flex-shrink-0 overflow-x-hidden">
+      <div className="p-4 border-b flex-shrink-0 overflow-x-hidden" style={{ 
+        borderColor: 'var(--color-ios-gray-2)' 
+      }}>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-800">Yacht Timeline Calendar</h2>
+          <h2 className="text-xl font-semibold" style={{ color: 'var(--color-ios-text-primary)' }}>Yacht Timeline Calendar</h2>
           <div className="flex items-center gap-2">
             <input
               type="text"
               placeholder="Search..."
-              className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="ios-input text-sm w-48"
             />
           </div>
         </div>
@@ -201,7 +206,7 @@ function YachtTimelineCalendar({ onCreateBooking }) {
       ) : (
         <>
           {/* Fixed Calendar Controls */}
-          <div className="p-4 border-b border-gray-200 flex-shrink-0 overflow-x-hidden">
+          <div className="p-ios-lg border-b border-ios-gray-2 flex-shrink-0 overflow-x-hidden">
             <CalendarHeader
               onPrevious={handlePrevious}
               onNext={handleNext}
@@ -213,15 +218,27 @@ function YachtTimelineCalendar({ onCreateBooking }) {
           </div>
           
           {/* Fixed Header Row Outside Scroll Area */}
-          <div className="border-b border-gray-300 flex-shrink-0 bg-white" style={{ position: 'sticky', top: '0', zIndex: 40 }}>
+          <div className="border-b calendar-header-border flex-shrink-0 shadow-ios" style={{ 
+            position: 'sticky', 
+            top: '0', 
+            zIndex: 40,
+            backgroundColor: 'var(--color-ios-bg-primary)'
+          }}>
             <div className="grid w-full" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
-              <div className="bg-gray-100 border-r border-gray-300 h-[50px] flex items-center justify-center font-semibold text-gray-700">
+              <div className="border-r calendar-header-border h-[50px] flex items-center justify-center font-medium" style={{ 
+                backgroundColor: 'var(--color-ios-gray-1)',
+                color: 'var(--color-ios-text-secondary)'
+              }}>
                 Date
               </div>
               {yachts.map((yacht) => (
                 <div
                   key={`fixed-header-${yacht.id}`}
-                  className="bg-white border-r border-gray-300 flex items-center justify-center font-semibold text-gray-800 px-1 h-[50px]"
+                  className="border-r calendar-header-border flex items-center justify-center font-medium px-1 h-[50px]"
+                  style={{ 
+                    backgroundColor: 'var(--color-ios-bg-primary)',
+                    color: 'var(--color-ios-text-primary)'
+                  }}
                 >
                   <span className="truncate text-sm">{yacht.name}</span>
                 </div>
@@ -238,7 +255,11 @@ function YachtTimelineCalendar({ onCreateBooking }) {
                   {/* Date cell */}
                   <div
                     key={`date-${dateIndex}`}
-                    className="bg-gray-50 border-b border-r border-gray-300 flex items-center justify-center font-medium text-sm text-gray-700 h-[60px]"
+                    className="border-b border-r calendar-grid-border flex items-center justify-center font-medium text-sm h-[60px]"
+                    style={{ 
+                      backgroundColor: 'var(--color-ios-gray-1)',
+                      color: 'var(--color-ios-text-secondary)'
+                    }}
                   >
                     <span className="text-xs">{formatDate(date)}</span>
                   </div>
@@ -262,7 +283,7 @@ function YachtTimelineCalendar({ onCreateBooking }) {
             </div>
           </div>
           
-          <CalendarLegend className="flex-shrink-0 p-4" />
+          <CalendarLegend className="flex-shrink-0 p-ios-lg border-t border-ios-gray-2" />
         </>
       )}
     </div>
