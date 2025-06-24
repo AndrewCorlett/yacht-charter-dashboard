@@ -17,7 +17,10 @@ import { useState } from 'react'
 function CreateBookingSection({ onCreateBooking }) {
   // Form state
   const [formData, setFormData] = useState({
-    customerName: '',
+    firstName: '',
+    surname: '',
+    email: '',
+    phone: '',
     customerNumber: '',
     yachtId: '',
     startDate: '',
@@ -75,11 +78,19 @@ function CreateBookingSection({ onCreateBooking }) {
     
     // Basic validation
     const newErrors = {}
-    if (!formData.customerName.trim()) newErrors.customerName = 'Customer name is required'
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
+    if (!formData.surname.trim()) newErrors.surname = 'Surname is required'
+    if (!formData.email.trim()) newErrors.email = 'Email is required'
+    if (!formData.phone.trim()) newErrors.phone = 'Phone is required'
     if (!formData.customerNumber.trim()) newErrors.customerNumber = 'Customer number is required'
     if (!formData.yachtId) newErrors.yachtId = 'Please select a yacht'
     if (!formData.startDate) newErrors.startDate = 'Start date is required'
     if (!formData.endDate) newErrors.endDate = 'End date is required'
+    
+    // Email validation
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address'
+    }
     
     // Date validation
     if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
@@ -101,7 +112,10 @@ function CreateBookingSection({ onCreateBooking }) {
       
       // Reset form on success
       setFormData({
-        customerName: '',
+        firstName: '',
+        surname: '',
+        email: '',
+        phone: '',
         customerNumber: '',
         yachtId: '',
         startDate: '',
@@ -125,7 +139,10 @@ function CreateBookingSection({ onCreateBooking }) {
   // Handle form reset
   const handleReset = () => {
     setFormData({
-      customerName: '',
+      firstName: '',
+      surname: '',
+      email: '',
+      phone: '',
       customerNumber: '',
       yachtId: '',
       startDate: '',
@@ -143,65 +160,160 @@ function CreateBookingSection({ onCreateBooking }) {
       <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-ios-text-primary)' }}>CREATE BOOKING</h2>
       
       <form onSubmit={handleSubmit} className="space-y-2">
-        {/* Customer Information */}
-        <div>
-          <label htmlFor="customerName" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
-            Customer Name *
-          </label>
-          <input
-            type="text"
-            id="customerName"
-            name="customerName"
-            value={formData.customerName}
-            onChange={handleInputChange}
-            className={`ios-input text-sm ${
-              errors.customerName ? 'border-red-500' : ''
-            }`}
-            placeholder="Enter customer name"
-          />
-          {errors.customerName && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.customerName}</p>}
+        {/* Customer Information - Following framework layout */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="customerNumber" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Customer Number *
+            </label>
+            <input
+              type="text"
+              id="customerNumber"
+              name="customerNumber"
+              value={formData.customerNumber}
+              onChange={handleInputChange}
+              className={`ios-input text-sm ${
+                errors.customerNumber ? 'border-red-500' : ''
+              }`}
+              placeholder="e.g., C2401"
+            />
+            {errors.customerNumber && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.customerNumber}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="bookingNumber" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Booking Number
+            </label>
+            <input
+              type="text"
+              id="bookingNumber"
+              className="ios-input text-sm"
+              placeholder="Auto-generated"
+              disabled
+              style={{ opacity: 0.6 }}
+            />
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="customerNumber" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
-            Customer Number *
-          </label>
-          <input
-            type="text"
-            id="customerNumber"
-            name="customerNumber"
-            value={formData.customerNumber}
-            onChange={handleInputChange}
-            className={`ios-input text-sm ${
-              errors.customerNumber ? 'border-red-500' : ''
-            }`}
-            placeholder="e.g., C2401"
-          />
-          {errors.customerNumber && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.customerNumber}</p>}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="firstName" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              First Name *
+            </label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              className={`ios-input text-sm ${
+                errors.firstName ? 'border-red-500' : ''
+              }`}
+              placeholder="First name"
+            />
+            {errors.firstName && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.firstName}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="surname" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Surname *
+            </label>
+            <input
+              type="text"
+              id="surname"
+              name="surname"
+              value={formData.surname}
+              onChange={handleInputChange}
+              className={`ios-input text-sm ${
+                errors.surname ? 'border-red-500' : ''
+              }`}
+              placeholder="Surname"
+            />
+            {errors.surname && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.surname}</p>}
+          </div>
         </div>
 
-        {/* Yacht Selection */}
-        <div>
-          <label htmlFor="yachtId" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
-            Yacht *
-          </label>
-          <select
-            id="yachtId"
-            name="yachtId"
-            value={formData.yachtId}
-            onChange={handleInputChange}
-            className={`ios-select text-sm ${
-              errors.yachtId ? 'border-red-500' : ''
-            }`}
-          >
-            <option value="">Select a yacht</option>
-            {yachts.map(yacht => (
-              <option key={yacht.id} value={yacht.id}>
-                {yacht.name}
-              </option>
-            ))}
-          </select>
-          {errors.yachtId && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.yachtId}</p>}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Email *
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className={`ios-input text-sm ${
+                errors.email ? 'border-red-500' : ''
+              }`}
+              placeholder="customer@email.com"
+            />
+            {errors.email && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.email}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Phone *
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              className={`ios-input text-sm ${
+                errors.phone ? 'border-red-500' : ''
+              }`}
+              placeholder="+44 7XXX XXXXXX"
+            />
+            {errors.phone && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.phone}</p>}
+          </div>
+        </div>
+
+        {/* Yacht and Trip Type */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="yachtId" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Yacht *
+            </label>
+            <select
+              id="yachtId"
+              name="yachtId"
+              value={formData.yachtId}
+              onChange={handleInputChange}
+              className={`ios-select text-sm ${
+                errors.yachtId ? 'border-red-500' : ''
+              }`}
+            >
+              <option value="">Select a yacht</option>
+              {yachts.map(yacht => (
+                <option key={yacht.id} value={yacht.id}>
+                  {yacht.name}
+                </option>
+              ))}
+            </select>
+            {errors.yachtId && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.yachtId}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="tripType" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Trip Type
+            </label>
+            <select
+              id="tripType"
+              name="tripType"
+              value={formData.tripType}
+              onChange={handleInputChange}
+              className="ios-select text-sm"
+            >
+              {tripTypes.map(type => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Date Selection */}
@@ -241,25 +353,6 @@ function CreateBookingSection({ onCreateBooking }) {
           </div>
         </div>
 
-        {/* Trip Type */}
-        <div>
-          <label htmlFor="tripType" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
-            Trip Type
-          </label>
-          <select
-            id="tripType"
-            name="tripType"
-            value={formData.tripType}
-            onChange={handleInputChange}
-            className="ios-select text-sm"
-          >
-            {tripTypes.map(type => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {/* Notes */}
         <div>
@@ -296,11 +389,19 @@ function CreateBookingSection({ onCreateBooking }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-2 space-y-2">
+        <div className="pt-2 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            className="ios-button-secondary"
+            style={{ backgroundColor: 'var(--color-ios-blue)', color: 'white' }}
+          >
+            Import CSV
+          </button>
+          
           <button
             type="submit"
             disabled={isSubmitting}
-            className="ios-button w-full"
+            className="ios-button"
           >
             <span className="flex items-center justify-center">
               {isSubmitting && (
@@ -309,17 +410,8 @@ function CreateBookingSection({ onCreateBooking }) {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              {isSubmitting ? 'Creating Booking...' : 'Create Booking'}
+              {isSubmitting ? 'Creating...' : 'Create Booking'}
             </span>
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled={isSubmitting}
-            className="ios-button-secondary w-full"
-          >
-            Reset Form
           </button>
         </div>
 

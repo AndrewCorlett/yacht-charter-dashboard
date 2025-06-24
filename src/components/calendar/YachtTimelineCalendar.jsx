@@ -181,21 +181,20 @@ function YachtTimelineCalendar({ onCreateBooking }) {
   }
 
   return (
-    <div className="w-full ios-card flex flex-col overflow-x-hidden" style={{ 
-      height: 'calc(100vh - 80px)', 
+    <div className="w-full h-full ios-card flex flex-col overflow-x-hidden" style={{ 
       fontFamily: 'var(--font-family-ios)' 
     }}>
       {/* Fixed Header */}
-      <div className="p-4 border-b flex-shrink-0 overflow-x-hidden" style={{ 
+      <div className="px-4 py-2 border-b flex-shrink-0 overflow-x-hidden" style={{ 
         borderColor: 'var(--color-ios-gray-2)' 
       }}>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold" style={{ color: 'var(--color-ios-text-primary)' }}>Yacht Timeline Calendar</h2>
+          <h2 className="text-lg font-medium" style={{ color: 'var(--color-ios-text-primary)' }}>Yacht Timeline Calendar</h2>
           <div className="flex items-center gap-2">
             <input
               type="text"
               placeholder="Search..."
-              className="ios-input text-sm w-48"
+              className="ios-input text-sm w-40"
             />
           </div>
         </div>
@@ -206,7 +205,7 @@ function YachtTimelineCalendar({ onCreateBooking }) {
       ) : (
         <>
           {/* Fixed Calendar Controls */}
-          <div className="p-ios-lg border-b border-ios-gray-2 flex-shrink-0 overflow-x-hidden">
+          <div className="px-4 py-2 border-b border-ios-gray-2 flex-shrink-0 overflow-x-hidden">
             <CalendarHeader
               onPrevious={handlePrevious}
               onNext={handleNext}

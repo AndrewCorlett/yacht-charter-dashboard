@@ -15,7 +15,7 @@ function Sidebar({ activeSection = 'dashboard', onSectionChange }) {
 
   return (
     <div 
-      className={`h-full bg-ios-bg-primary border-r border-ios-gray-2 transition-all duration-300 ease-in-out flex-shrink-0 font-ios shadow-ios ${
+      className={`fixed left-0 top-0 h-screen z-40 bg-ios-bg-primary border-r border-ios-gray-2 transition-all duration-300 ease-in-out flex-shrink-0 font-ios shadow-ios ${
         isExpanded ? 'w-64' : 'w-12'
       }`}
     >
