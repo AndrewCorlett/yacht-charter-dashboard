@@ -9,7 +9,7 @@
 
 function Navigation() {
   return (
-    <nav className="text-white" style={{
+    <nav className="fixed top-0 left-12 right-0 z-30 text-white" style={{
       background: 'linear-gradient(135deg, var(--color-ios-blue) 0%, var(--color-ios-blue-dark) 100%)',
       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
     }}>

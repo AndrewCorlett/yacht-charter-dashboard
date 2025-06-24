@@ -208,4 +208,22 @@ body {
     border-color: var(--color-ios-border-grid-light) !important;
     border-width: 1px;
   }
+  
+  /* Dashboard scaling for better screen utilization */
+  .dashboard-scaled {
+    transform: scale(0.5);
+    transform-origin: top left;
+    width: 200%;
+    height: 200%;
+  }
+  
+  /* Fixed calendar container to viewport */
+  .calendar-container-fixed {
+    position: fixed !important;
+    top: 4rem !important;
+    right: 0 !important;
+    width: 50vw !important;
+    height: calc(100vh - 4rem) !important;
+    z-index: 20 !important;
+  }
 }

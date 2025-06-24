@@ -43,8 +43,8 @@ function MainDashboard() {
       default:
         return (
           <div className="flex flex-1 overflow-x-hidden">
-            {/* Sidebar - Takes remaining 60% */}
-            <aside className="flex-1 p-4 overflow-y-auto overflow-x-hidden border-r" style={{ 
+            {/* Left Widgets - Constrained to avoid calendar overlap */}
+            <aside className="w-[calc(50vw-3rem)] p-4 overflow-y-auto overflow-x-hidden border-r" style={{ 
               backgroundColor: 'var(--color-ios-bg-grouped)', 
               borderColor: 'var(--color-ios-gray-3)' 
             }}>
@@ -52,8 +52,8 @@ function MainDashboard() {
               <CreateBookingSection onCreateBooking={handleCreateBooking} />
             </aside>
 
-            {/* Main Content - Fixed 40% of viewport */}
-            <main className="w-[40vw] p-6 flex flex-col overflow-x-hidden" style={{ 
+            {/* Calendar - Fixed to viewport */}
+            <main className="calendar-container-fixed p-6 flex flex-col overflow-x-hidden" style={{ 
               backgroundColor: 'var(--color-ios-bg-secondary)' 
             }}>
               <YachtTimelineCalendar onCreateBooking={handleCreateBooking} />
@@ -64,18 +64,21 @@ function MainDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--color-ios-bg-secondary)' }}>
-      {/* Sidebar - Fixed width, no overlay */}
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-ios-bg-secondary)' }}>
+      {/* Fixed Sidebar */}
       <Sidebar 
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
       />
       
-      {/* Main content area - Takes remaining space */}
-      <div className="flex-1 min-h-screen flex flex-col">
+      {/* Main content area - Offset by sidebar width */}
+      <div className="ml-12 min-h-screen flex flex-col">
         <Navigation />
         
-        {renderMainContent()}
+        {/* Content with top padding for fixed header */}
+        <div className="pt-16">
+          {renderMainContent()}
+        </div>
       </div>
 
       {/* Booking Form Modal */}
