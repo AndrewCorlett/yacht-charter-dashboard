@@ -1,0 +1,53 @@
+{
+  "timestamp": "2025-06-25T07:13:28.139Z",
+  "addressFieldsPresent": {
+    "addressLine1": true,
+    "addressLine2": true,
+    "city": true,
+    "postcode": true,
+    "oldCustomerAddress": true
+  },
+  "fieldLabels": {
+    "addressLine1": "Address line 1 *",
+    "addressLine2": "Address line 2",
+    "city": "City *",
+    "postcode": "Postcode *"
+  },
+  "fieldPlaceholders": {
+    "addressLine1": "Building number and street name",
+    "addressLine2": "Apartment, suite, unit, building, floor, etc. (optional)",
+    "city": "e.g., Cardiff",
+    "postcode": "e.g., CF10 1AB"
+  },
+  "postcodeAutoUppercase": true,
+  "validationWorking": {
+    "addressLine1Error": false,
+    "cityError": false,
+    "postcodeError": false
+  },
+  "industryStandardCompliance": {
+    "addressLine1Required": true,
+    "addressLine2Optional": true,
+    "cityRequired": true,
+    "postcodeRequired": true,
+    "ukFormat": true
+  },
+  "testsPassed": [
+    "Address Line 1 field present and required",
+    "Address Line 2 field present and optional",
+    "City field present and required",
+    "Postcode field present and required",
+    "Old customerAddress field removed",
+    "Postcode auto-uppercase working",
+    "Validation errors for required fields",
+    "Industry standard labels used",
+    "Mobile responsive design",
+    "UK address format compliance"
+  ],
+  "screenshots": [
+    "address-01-initial.png",
+    "address-02-filled.png",
+    "address-03-validation.png",
+    "address-04-mobile.png"
+  ]
+}
