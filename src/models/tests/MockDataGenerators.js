@@ -105,12 +105,12 @@ class RandomUtils {
  */
 const SampleData = {
   yachts: [
-    { id: 'spectre', name: 'Spectre', maxGuests: 12 },
-    { id: 'disk-drive', name: 'Disk Drive', maxGuests: 8 },
-    { id: 'arriva', name: 'Arriva', maxGuests: 10 },
-    { id: 'zambada', name: 'Zambada', maxGuests: 14 },
-    { id: 'melba-so', name: 'Melba So', maxGuests: 6 },
-    { id: 'swansea', name: 'Swansea', maxGuests: 16 }
+    { id: 'calico-moon', name: 'Calico Moon', maxGuests: 12 },
+    { id: 'spectre', name: 'Spectre', maxGuests: 10 },
+    { id: 'alrisha', name: 'Alrisha', maxGuests: 8 },
+    { id: 'disk-drive', name: 'Disk Drive', maxGuests: 14 },
+    { id: 'zavaria', name: 'Zavaria', maxGuests: 6 },
+    { id: 'mridula-sarwar', name: 'Mridula Sarwar', maxGuests: 16 }
   ],
 
   firstNames: [

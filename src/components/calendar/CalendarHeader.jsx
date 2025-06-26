@@ -23,7 +23,10 @@ function CalendarHeader({
   const viewModes = ['day', 'week', 'month']
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-center mb-ios-sm gap-ios-md font-ios">
+    <div 
+      data-testid="calendar-header"
+      className="flex flex-col sm:flex-row justify-between items-center mb-ios-sm gap-ios-md font-ios"
+    >
       {/* Navigation Controls */}
       <div className="flex items-center gap-ios-md">
         <div className="flex items-center gap-ios-sm">

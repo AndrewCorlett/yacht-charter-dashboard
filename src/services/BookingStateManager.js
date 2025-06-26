@@ -8,7 +8,7 @@
  * @created 2025-06-24
  */
 
-import { BookingModel, BookingStatus } from '../models/core/BookingModel'
+import { BookingModel, BookingStatus } from '../models'
 import { BookingConflictService } from './BookingConflictService'
 
 export class BookingStateManager {

@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-06-25T06:54:24.065Z",
+  "tests": [
+    {
+      "name": "Initial Dashboard State",
+      "passed": true,
+      "details": "Sidebar present on initial load"
+    },
+    {
+      "name": "Bookings Navigation",
+      "passed": false,
+      "details": "Successfully navigated to bookings list"
+    },
+    {
+      "name": "Bookings List Components",
+      "passed": true,
+      "details": "Search: true, Filters: 4, Rows: 4"
+    },
+    {
+      "name": "Search Functionality",
+      "passed": true,
+      "details": "Found 2 results for 'John'"
+    },
+    {
+      "name": "Filter Tabs",
+      "passed": true,
+      "details": "Filter tabs show active state correctly"
+    },
+    {
+      "name": "Booking Panel Navigation",
+      "passed": false,
+      "details": "Panel loaded with all form sections: yacht=true, dates=2, address=true, crew=true"
+    },
+    {
+      "name": "Status Toggles",
+      "passed": true,
+      "details": "Found 6 toggles with 6/6 expected statuses"
+    },
+    {
+      "name": "Document Generation",
+      "passed": true,
+      "details": "Document section found with 6 buttons"
+    },
+    {
+      "name": "Update/Delete Buttons",
+      "passed": true,
+      "details": "Update button: true, Delete button: true"
+    },
+    {
+      "name": "Back Navigation",
+      "passed": false,
+      "details": "Back button not found"
+    },
+    {
+      "name": "Mobile Responsiveness",
+      "passed": true,
+      "details": "Mobile layout working: sidebar width 256px, content visible: true"
+    },
+    {
+      "name": "Dark Theme Consistency",
+      "passed": true,
+      "details": "Dark theme colors applied consistently across components"
+    }
+  ],
+  "screenshots": [
+    "final-01-initial-dashboard.png",
+    "final-02-bookings-list.png",
+    "final-03-search-test.png",
+    "final-04-filter-test.png",
+    "final-05-booking-panel.png",
+    "final-06-status-toggle.png",
+    "final-08-mobile-view.png"
+  ],
+  "summary": {
+    "totalTests": 12,
+    "passedTests": 9,
+    "score": 75,
+    "status": "GOOD"
+  }
+}

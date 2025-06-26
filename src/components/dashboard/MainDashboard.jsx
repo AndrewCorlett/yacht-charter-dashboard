@@ -17,7 +17,7 @@ import { CreateBookingSection } from '../booking'
 import AdminConfigPage from '../admin/AdminConfigPage'
 import BookingsList from '../booking/BookingsList'
 import BookingPanel from '../booking/BookingPanel'
-import { BookingModel, BookingStatus } from '../../models/core/BookingModel'
+import { BookingModel, BookingStatus } from '../../models'
 import { BookingProvider } from '../../contexts/BookingContext'
 import UndoManager from '../common/UndoManager'
 import KeyboardShortcuts from '../common/KeyboardShortcuts'
@@ -165,6 +165,21 @@ function MainDashboard() {
     handleBackToList()
   }
 
+  // Navigation handlers for breadcrumb
+  const handleSeascapeNavigation = () => {
+    // Navigate to main dashboard
+    setActiveSection('dashboard')
+    setSelectedBooking(null)
+    setCurrentView('list')
+  }
+
+  const handleBookingManagementNavigation = () => {
+    // Navigate back to bookings list
+    setActiveSection('bookings')
+    setSelectedBooking(null)
+    setCurrentView('list')
+  }
+
   const renderMainContent = () => {
     switch (activeSection) {
       case 'admin':
@@ -177,6 +192,8 @@ function MainDashboard() {
               onSave={handleBookingPanelSave}
               onDelete={handleBookingPanelDelete}
               onBack={handleBackToList}
+              onSeascapeClick={handleSeascapeNavigation}
+              onBookingManagementClick={handleBookingManagementNavigation}
             />
           )
         }

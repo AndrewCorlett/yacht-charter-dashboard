@@ -1,9 +1,15 @@
 import { useState } from 'react'
+import BreadcrumbHeader from '../common/BreadcrumbHeader'
+import UnsavedChangesModal from '../common/UnsavedChangesModal'
+import FileUpload from '../common/FileUpload'
+import DocumentGenerationModal from '../modals/DocumentGenerationModal'
+import PartialDownloadWarningModal from '../modals/PartialDownloadWarningModal'
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 
-function BookingPanel({ booking, onSave, onDelete, onBack }) {
+function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBookingManagementClick }) {
   const [formData, setFormData] = useState({
     yacht: booking?.yacht || '',
-    tripType: booking?.tripType || 'Charter',
+    tripType: booking?.tripType || 'bareboat',
     startDate: booking?.startDate || '',
     endDate: booking?.endDate || '',
     portOfDeparture: booking?.portOfDeparture || '',
@@ -17,9 +23,8 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
     city: booking?.address?.city || '',
     postcode: booking?.address?.postcode || '',
     country: booking?.address?.country || '',
-    // Crew experience
-    crewExperience: booking?.crewExperience || '',
-    crewDetails: booking?.crewDetails || ''
+    // Crew experience file
+    crewExperienceFile: booking?.crewExperienceFile || null
   })
 
   const [statusData, setStatusData] = useState({
@@ -31,10 +36,32 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
     receiptIssued: booking?.status?.receiptIssued || false
   })
 
+  // Document generation state
+  const [documentStates, setDocumentStates] = useState({
+    'Contract': { generated: false, downloaded: false, updated: false },
+    'Deposit Invoice': { generated: false, downloaded: false, updated: false },
+    'Deposit Receipt': { generated: false, downloaded: false, updated: false },
+    'Remaining Balance Invoice': { generated: false, downloaded: false, updated: false },
+    'Remaining Balance Receipt': { generated: false, downloaded: false, updated: false },
+    'Hand-over Notes': { generated: false, downloaded: false, updated: false }
+  })
+
+  // Modal states
+  const [documentModal, setDocumentModal] = useState({ isOpen: false, documentType: null })
+  const [partialDownloadModal, setPartialDownloadModal] = useState({ isOpen: false, missingDocuments: [] })
+  const [lastBulkDownload, setLastBulkDownload] = useState(null)
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }))
+  }
+
+  const handleFileUpload = (fileInfo) => {
+    setFormData(prev => ({
+      ...prev,
+      crewExperienceFile: fileInfo
     }))
   }
 
@@ -44,6 +71,17 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
       [field]: !prev[field]
     }))
   }
+
+  // Unsaved changes tracking
+  const {
+    isDirty,
+    showUnsavedModal,
+    handleNavigation,
+    handleSaveAndGo,
+    handleDiscardAndGo,
+    handleCancel,
+    resetDirtyState
+  } = useUnsavedChanges(formData, statusData, booking)
 
   const handleSave = () => {
     const updatedBooking = {
@@ -60,39 +98,131 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
     
     if (onSave) {
       onSave(updatedBooking)
+      resetDirtyState()
     }
   }
 
   const handleDelete = () => {
     if (onDelete && booking) {
-      onDelete(booking.id)
+      handleNavigation(() => onDelete(booking.id))
     }
   }
 
-  const generateDocument = (type) => {
-    console.log(`Generating ${type} document for booking ${booking?.id}`)
-    // Mock implementation
+  // Navigation handlers that check for unsaved changes
+  const handleBackNavigation = () => {
+    handleNavigation(() => onBack())
   }
+
+  const handleSeascapeNavigation = () => {
+    handleNavigation(() => onSeascapeClick && onSeascapeClick())
+  }
+
+  const handleBookingManagementNavigation = () => {
+    handleNavigation(() => onBookingManagementClick && onBookingManagementClick())
+  }
+
+  // Document generation functions
+  const handleGenerateDocument = (documentType) => {
+    setDocumentModal({ isOpen: true, documentType })
+  }
+
+  const handleDocumentGenerated = (documentType) => {
+    setDocumentStates(prev => ({
+      ...prev,
+      [documentType]: {
+        ...prev[documentType],
+        generated: true,
+        updated: lastBulkDownload ? new Date() > lastBulkDownload : false
+      }
+    }))
+  }
+
+  const handleDownloadDocument = (documentType) => {
+    // Mock download implementation
+    console.log(`Downloading ${documentType} for booking ${booking?.id}`)
+    
+    setDocumentStates(prev => ({
+      ...prev,
+      [documentType]: {
+        ...prev[documentType],
+        downloaded: true,
+        updated: false
+      }
+    }))
+    
+    // Mock file download
+    const element = document.createElement('a')
+    element.href = `data:text/plain;charset=utf-8,Mock ${documentType} content for booking ${booking?.id}`
+    element.download = `${documentType.replace(/\s+/g, '_')}_Booking_${booking?.id}.pdf`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
+  const handleDownloadAll = () => {
+    const allDocumentTypes = Object.keys(documentStates)
+    const generatedDocuments = allDocumentTypes.filter(type => documentStates[type].generated)
+    const missingDocuments = allDocumentTypes.filter(type => !documentStates[type].generated)
+    
+    if (missingDocuments.length > 0) {
+      setPartialDownloadModal({ isOpen: true, missingDocuments })
+    } else {
+      performBulkDownload(generatedDocuments)
+    }
+  }
+
+  const performBulkDownload = (documentsToDownload) => {
+    console.log(`Bulk downloading documents:`, documentsToDownload)
+    
+    // Update all documents as downloaded
+    const updatedStates = { ...documentStates }
+    documentsToDownload.forEach(docType => {
+      updatedStates[docType] = {
+        ...updatedStates[docType],
+        downloaded: true,
+        updated: false
+      }
+    })
+    setDocumentStates(updatedStates)
+    setLastBulkDownload(new Date())
+    
+    // Mock zip file download
+    const element = document.createElement('a')
+    const zipContent = documentsToDownload.map(doc => `${doc} content`).join('\n\n')
+    element.href = `data:application/zip;charset=utf-8,${encodeURIComponent(zipContent)}`
+    element.download = `Booking_${booking?.id}_Documents.zip`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
+  const handlePartialDownloadAnyway = () => {
+    const generatedDocuments = Object.keys(documentStates).filter(type => documentStates[type].generated)
+    performBulkDownload(generatedDocuments)
+    setPartialDownloadModal({ isOpen: false, missingDocuments: [] })
+  }
+
+  const handlePartialDownloadCancel = () => {
+    setPartialDownloadModal({ isOpen: false, missingDocuments: [] })
+  }
+
+  const getDocumentStatusIcon = (documentType) => {
+    const state = documentStates[documentType]
+    if (!state.generated) return null
+    if (state.updated) return '!'
+    return '✓'
+  }
+
 
   return (
     <div className="h-full bg-gray-900 text-white overflow-y-auto">
-      {/* Header */}
-      <div className="bg-blue-600 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={onBack}
-              className="text-white hover:text-gray-200 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-xl font-semibold">Seascape - Booking Panel</h1>
-          </div>
-          <div className="text-sm">Nav ↓</div>
-        </div>
-      </div>
+      {/* Header with Breadcrumb Navigation */}
+      <BreadcrumbHeader
+        bookingNumber={booking?.id}
+        onSeascapeClick={handleSeascapeNavigation}
+        onBookingManagementClick={handleBookingManagementNavigation}
+        onBack={handleBackNavigation}
+      />
 
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -120,9 +250,8 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
                   onChange={(e) => handleInputChange('tripType', e.target.value)}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                 >
-                  <option value="Charter">Charter</option>
-                  <option value="Day Trip">Day Trip</option>
-                  <option value="Corporate">Corporate</option>
+                  <option value="bareboat">bareboat</option>
+                  <option value="skippered charter">skippered charter</option>
                 </select>
               </div>
             </div>
@@ -212,7 +341,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
 
             {/* Address Entry Fields */}
             <div className="bg-gray-800 p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-4">Address Entry</h3>
+              <h3 className="text-lg font-medium mb-4">Address Entry - Charterer</h3>
               <div className="space-y-3">
                 <input
                   type="text"
@@ -247,30 +376,15 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
               </div>
             </div>
 
-            {/* Crew Experience */}
-            <div className="bg-gray-800 p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-4">Crew Experience</h3>
-              <div className="space-y-3">
-                <select
-                  value={formData.crewExperience}
-                  onChange={(e) => handleInputChange('crewExperience', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">Select experience level</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Professional">Professional</option>
-                </select>
-                <textarea
-                  value={formData.crewDetails}
-                  onChange={(e) => handleInputChange('crewDetails', e.target.value)}
-                  placeholder="Additional crew details and requirements..."
-                  rows={3}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                />
-              </div>
-            </div>
+            {/* Crew Experience File Upload */}
+            <FileUpload
+              title="Crew Experience"
+              description="Upload crew experience document (PDF or Word)"
+              acceptedTypes=".pdf,.doc,.docx"
+              maxSize={10 * 1024 * 1024} // 10MB
+              onFileUpload={handleFileUpload}
+              currentFile={formData.crewExperienceFile}
+            />
           </div>
 
           {/* Right Column - Status and Actions */}
@@ -322,15 +436,52 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
                   'Remaining Balance Invoice',
                   'Remaining Balance Receipt',
                   'Hand-over Notes'
-                ].map(docType => (
-                  <button
-                    key={docType}
-                    onClick={() => generateDocument(docType)}
-                    className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
-                  >
-                    <span className="text-sm">- {docType}</span>
-                  </button>
-                ))}
+                ].map(docType => {
+                  const statusIcon = getDocumentStatusIcon(docType)
+                  
+                  return (
+                    <div key={docType} className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleGenerateDocument(docType)}
+                        className="flex-1 text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                      >
+                        <span className="text-sm">- {docType}</span>
+                      </button>
+                      <button
+                        onClick={() => handleGenerateDocument(docType)}
+                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+                      >
+                        Generate
+                      </button>
+                      {statusIcon && (
+                        <button
+                          onClick={() => handleDownloadDocument(docType)}
+                          className={`w-8 h-8 rounded border-2 flex items-center justify-center font-bold text-sm transition-colors ${
+                            statusIcon === '!' 
+                              ? 'border-orange-400 bg-orange-400/20 text-orange-400 hover:bg-orange-400/30' 
+                              : 'border-green-400 bg-green-400/20 text-green-400 hover:bg-green-400/30'
+                          }`}
+                          title={statusIcon === '!' ? 'Document updated - click to download' : 'Document generated - click to download'}
+                        >
+                          {statusIcon}
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {/* Download All Button */}
+              <div className="mt-4 pt-4 border-t border-gray-600">
+                <button
+                  onClick={handleDownloadAll}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download All Files
+                </button>
               </div>
             </div>
 
@@ -340,9 +491,13 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
               <div className="flex gap-3">
                 <button
                   onClick={handleSave}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
+                  className={`flex-1 font-medium py-2 px-4 rounded transition-colors ${
+                    isDirty 
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
                 >
-                  Update Booking
+                  {isDirty ? 'Save Changes' : 'Update Booking'}
                 </button>
                 <button
                   onClick={handleDelete}
@@ -355,6 +510,38 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
           </div>
         </div>
       </div>
+
+      {/* Unsaved Changes Modal */}
+      <UnsavedChangesModal
+        isOpen={showUnsavedModal}
+        onSaveAndGo={() => handleSaveAndGo(handleSave)}
+        onDiscardAndGo={handleDiscardAndGo}
+        onCancel={handleCancel}
+      />
+
+      {/* Document Generation Modal */}
+      <DocumentGenerationModal
+        isOpen={documentModal.isOpen}
+        onClose={() => setDocumentModal({ isOpen: false, documentType: null })}
+        documentType={documentModal.documentType}
+        onDownload={(docType) => {
+          handleDocumentGenerated(docType)
+          handleDownloadDocument(docType)
+        }}
+        onNotNow={(docType) => {
+          handleDocumentGenerated(docType)
+          console.log(`Document ${docType} generated but not downloaded`)
+        }}
+      />
+
+      {/* Partial Download Warning Modal */}
+      <PartialDownloadWarningModal
+        isOpen={partialDownloadModal.isOpen}
+        onClose={() => setPartialDownloadModal({ isOpen: false, missingDocuments: [] })}
+        missingDocuments={partialDownloadModal.missingDocuments}
+        onDownloadAnyway={handlePartialDownloadAnyway}
+        onCancel={handlePartialDownloadCancel}
+      />
     </div>
   )
 }

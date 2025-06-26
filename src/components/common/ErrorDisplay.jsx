@@ -9,7 +9,10 @@
 
 function ErrorDisplay({ error, onRetry }) {
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-red-50 rounded-lg">
+    <div 
+      data-testid="error-display"
+      className="flex flex-col items-center justify-center p-8 bg-red-50 rounded-lg"
+    >
       <div className="w-16 h-16 mb-4">
         <svg
           className="w-full h-full text-red-600"

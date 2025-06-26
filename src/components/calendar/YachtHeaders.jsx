@@ -13,19 +13,17 @@
  */
 
 function YachtHeaders({ yachts }) {
-  const defaultYachts = [
-    { id: 'spectre', name: 'Spectre' },
-    { id: 'disk-drive', name: 'Disk Drive' },
-    { id: 'arriva', name: 'Arriva' },
-    { id: 'zambada', name: 'Zambada' },
-    { id: 'melba-so', name: 'Melba So' },
-    { id: 'swansea', name: 'Swansea' }
-  ]
+  // No fallback - always use the yachts passed from parent (which come from unified data)
+  const yachtsToDisplay = yachts || []
 
-  const yachtsToDisplay = yachts || defaultYachts
+  // Determine grid columns based on number of yachts
+  const gridCols = yachtsToDisplay.length <= 3 ? 'grid-cols-3' : 
+                   yachtsToDisplay.length <= 4 ? 'grid-cols-4' : 
+                   yachtsToDisplay.length <= 5 ? 'grid-cols-5' : 
+                   yachtsToDisplay.length <= 6 ? 'grid-cols-6' : 'grid-cols-7'
 
   return (
-    <div className="sticky top-0 z-20 grid grid-cols-6">
+    <div className={`sticky top-0 z-20 grid ${gridCols}`}>
       {yachtsToDisplay.map((yacht) => (
         <div
           key={yacht.id}
@@ -34,7 +32,7 @@ function YachtHeaders({ yachts }) {
             minHeight: '40px'
           }}
         >
-          <span className="truncate">{yacht.name}</span>
+          <span className="truncate text-sm">{yacht.name}</span>
         </div>
       ))}
     </div>

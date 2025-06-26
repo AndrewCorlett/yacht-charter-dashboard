@@ -21,24 +21,76 @@ import LoadingSpinner from '../common/LoadingSpinner'
 import ErrorDisplay from '../common/ErrorDisplay'
 import { generateDateRange, getWeekStart, formatDate } from '../../utils/dateHelpers'
 import { addDays, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, format } from 'date-fns'
+import { BookingModel, BookingStatus } from '../../models/core/BookingModel'
+import { useBookings } from '../../contexts/BookingContext'
+import useUnifiedData from '../../hooks/useUnifiedData'
 
-function YachtTimelineCalendar({ onCreateBooking }) {
+function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState('month')
-  const [isLoading] = useState(false)
-  const [error, setError] = useState(null)
   const [focusedCell, setFocusedCell] = useState({ dateIndex: 0, yachtIndex: 0 })
+  const [draggedBooking, setDraggedBooking] = useState(null)
   const gridRef = useRef(null)
   const [scrollbarWidth, setScrollbarWidth] = useState(0)
   
-  const yachts = [
-    { id: 'spectre', name: 'Spectre' },
-    { id: 'disk-drive', name: 'Disk Drive' },
-    { id: 'arriva', name: 'Arriva' },
-    { id: 'zambada', name: 'Zambada' },
-    { id: 'melba-so', name: 'Melba So' },
-    { id: 'swansea', name: 'Swansea' }
-  ]
+  // Use real-time booking state from context
+  const {
+    bookings,
+    loading: isLoading,
+    error,
+    operationStatus,
+    getAllBookings,
+    getBookingsInRange,
+    getDateAvailability,
+    moveBooking,
+    clearError
+  } = useBookings()
+  
+  // Get yacht data from unified data service (same source as SIT REP)
+  const { charters } = useUnifiedData()
+  
+  // Extract unique yacht names from unified charter data
+  const yachts = useMemo(() => {
+    // If no charters or bookings, use fallback with correct yacht names
+    if (charters.length === 0 && bookings.length === 0) {
+      return [
+        { id: 'calico-moon', name: 'Calico Moon' },
+        { id: 'spectre', name: 'Spectre' },
+        { id: 'alrisha', name: 'Alrisha' },
+        { id: 'disk-drive', name: 'Disk Drive' },
+        { id: 'zavaria', name: 'Zavaria' },
+        { id: 'mridula-sarwar', name: 'Mridula Sarwar' }
+      ]
+    }
+    
+    const uniqueYachts = new Map()
+    
+    // Add yachts from unified charter data
+    charters.forEach(charter => {
+      const yachtId = charter.yachtName.toLowerCase().replace(/\s+/g, '-')
+      uniqueYachts.set(yachtId, {
+        id: yachtId,
+        name: charter.yachtName
+      })
+    })
+    
+    // Add yachts from existing bookings (in case there are bookings without charters)
+    bookings.forEach(booking => {
+      if (booking.yacht_name || booking.yacht_id) {
+        const yachtName = booking.yacht_name || booking.yacht_id
+        const yachtId = yachtName.toLowerCase().replace(/\s+/g, '-')
+        if (!uniqueYachts.has(yachtId)) {
+          uniqueYachts.set(yachtId, {
+            id: yachtId,
+            name: yachtName
+          })
+        }
+      }
+    })
+    
+    // Convert to array and sort for consistent display
+    return Array.from(uniqueYachts.values()).sort((a, b) => a.name.localeCompare(b.name))
+  }, [charters, bookings])
 
   // Generate dates for full month view (including padding days)
   const dates = useMemo(() => {
@@ -105,22 +157,65 @@ function YachtTimelineCalendar({ onCreateBooking }) {
     setViewMode(mode)
   }, [])
 
-  const handleCellClick = useCallback(({ date, yachtId, booking }) => {
+  const handleCellClick = useCallback(({ date, yachtId, booking, availability }) => {
     if (booking) {
-      // Handle booking click - show details modal
-    } else {
+      // Handle booking click - show edit modal
+      if (onEditBooking) {
+        onEditBooking(booking)
+      }
+    } else if (availability?.isAvailable) {
       // Handle empty cell click - show create booking modal
       if (onCreateBooking) {
         onCreateBooking({ date, yachtId })
       }
+    } else {
+      // Cell is not available
+      console.log('Cell not available:', availability)
     }
-  }, [onCreateBooking])
+  }, [onCreateBooking, onEditBooking])
 
 
   const handleRetry = useCallback(() => {
-    setError(null)
-    // In a real app, this would refetch data
+    clearError()
+    // Error handling is managed by the booking context
+  }, [clearError])
+
+  // Handle drag and drop operations
+  const handleDragStart = useCallback((data) => {
+    setDraggedBooking(data.booking)
   }, [])
+
+  const handleDragOver = useCallback((data) => {
+    // Visual feedback handled in BookingCell
+  }, [])
+
+  const handleDrop = useCallback(async (data) => {
+    const { dragData, targetDate, targetYacht } = data
+    
+    if (!dragData.booking || !targetDate || !targetYacht) {
+      console.error('Invalid drag data:', data)
+      return
+    }
+
+    const { booking, sourceDate } = dragData
+    
+    // Calculate new end date based on original duration
+    const originalDuration = booking.getDurationDays()
+    const newEndDate = addDays(targetDate, originalDuration - 1)
+
+    try {
+      await moveBooking(booking.id, {
+        yachtId: targetYacht,
+        startDate: targetDate,
+        endDate: newEndDate
+      })
+    } catch (error) {
+      console.error('Failed to move booking:', error)
+      // Error handling is managed by the booking context
+    } finally {
+      setDraggedBooking(null)
+    }
+  }, [moveBooking])
 
   useEffect(() => {
     // Calculate scrollbar width
@@ -181,16 +276,37 @@ function YachtTimelineCalendar({ onCreateBooking }) {
   }
 
   return (
-    <div className="w-full h-full ios-card flex flex-col overflow-x-hidden" style={{ 
-      fontFamily: 'var(--font-family-ios)' 
-    }}>
+    <div 
+      data-testid="yacht-calendar"
+      className="w-full h-full ios-card flex flex-col overflow-x-hidden" 
+      style={{ 
+        fontFamily: 'var(--font-family-ios)' 
+      }}
+    >
       {/* Fixed Header */}
       <div className="px-4 py-2 border-b flex-shrink-0 overflow-x-hidden" style={{ 
         borderColor: 'var(--color-ios-gray-2)' 
       }}>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium" style={{ color: 'var(--color-ios-text-primary)' }}>Yacht Timeline Calendar</h2>
+          <h2 className="text-lg font-medium" style={{ color: 'var(--color-ios-text-primary)' }}>
+            Yacht Timeline Calendar
+            {operationStatus && (
+              <span className={`ml-2 text-sm ${
+                operationStatus.type === 'error' ? 'text-red-500' :
+                operationStatus.type === 'success' ? 'text-green-500' :
+                'text-blue-500'
+              }`}>
+                {operationStatus.message}
+              </span>
+            )}
+          </h2>
           <div className="flex items-center gap-2">
+            {isLoading && (
+              <div className="flex items-center gap-1 text-sm text-gray-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                <span>Updating...</span>
+              </div>
+            )}
             <input
               type="text"
               placeholder="Search..."
@@ -217,13 +333,17 @@ function YachtTimelineCalendar({ onCreateBooking }) {
           </div>
           
           {/* Fixed Header Row Outside Scroll Area */}
-          <div className="border-b calendar-header-border flex-shrink-0 shadow-ios" style={{ 
-            position: 'sticky', 
-            top: '0', 
-            zIndex: 40,
-            backgroundColor: 'var(--color-ios-bg-primary)'
-          }}>
-            <div className="grid w-full" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
+          <div 
+            data-testid="yacht-headers"
+            className="border-b calendar-header-border flex-shrink-0 shadow-ios" 
+            style={{ 
+              position: 'sticky', 
+              top: '0', 
+              zIndex: 40,
+              backgroundColor: 'var(--color-ios-bg-primary)'
+            }}
+          >
+            <div className="grid w-full" style={{ gridTemplateColumns: `120px repeat(${yachts.length}, minmax(120px, 1fr))` }}>
               <div className="border-r calendar-header-border h-[50px] flex items-center justify-center font-medium" style={{ 
                 backgroundColor: 'var(--color-ios-gray-1)',
                 color: 'var(--color-ios-text-secondary)'
@@ -247,7 +367,7 @@ function YachtTimelineCalendar({ onCreateBooking }) {
 
           {/* Calendar Container - Scrollable Content */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden" id="calendar-scroll-area">
-            <div className="grid w-full" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            <div className="grid w-full" style={{ gridTemplateColumns: `120px repeat(${yachts.length}, minmax(120px, 1fr))` }}>
               {/* Calendar Content */}
               {dates.map((date, dateIndex) => (
                 <>
@@ -272,8 +392,15 @@ function YachtTimelineCalendar({ onCreateBooking }) {
                         date={date}
                         yachtId={yacht.id}
                         booking={null}
+                        allBookings={bookings}
                         onClick={handleCellClick}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
                         tabIndex={tabIndex}
+                        isDragging={draggedBooking?.id && 
+                                   draggedBooking.yacht_id === yacht.id &&
+                                   getDateAvailability(date, yacht.id).booking?.id === draggedBooking.id}
                       />
                     )
                   })}

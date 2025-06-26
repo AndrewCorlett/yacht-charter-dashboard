@@ -1,0 +1,129 @@
+{
+  "overall": "PARTIAL_FAILURE",
+  "tests": [
+    {
+      "name": "Page Load",
+      "status": "PASS",
+      "details": "Page loaded in 964ms",
+      "timestamp": "2025-06-26T08:01:18.820Z"
+    },
+    {
+      "name": "Widget Structure",
+      "status": "FAIL",
+      "details": "this.page.$x is not a function",
+      "timestamp": "2025-06-26T08:01:18.918Z"
+    },
+    {
+      "name": "Card Click Navigation",
+      "status": "PASS",
+      "details": "Navigation log detected: Navigating to booking: charter-001",
+      "timestamp": "2025-06-26T08:01:20.958Z"
+    },
+    {
+      "name": "Card Clickability",
+      "status": "PASS",
+      "details": "Successfully clicked BOATS OUT card: \"SerenityJun 25, 2025 – Jun 28, 2025\"",
+      "timestamp": "2025-06-26T08:01:22.491Z"
+    },
+    {
+      "name": "Card Click Navigation",
+      "status": "PASS",
+      "details": "Navigation log detected: Navigating to booking: charter-001",
+      "timestamp": "2025-06-26T08:01:22.496Z"
+    },
+    {
+      "name": "Keyboard Navigation",
+      "status": "PASS",
+      "details": "Card responds to Enter key",
+      "timestamp": "2025-06-26T08:01:22.997Z"
+    },
+    {
+      "name": "UPCOMING CHARTERS Horizontal Scroll",
+      "status": "PASS",
+      "details": "Scrollable area: 1620px > 585px, scrolled to: 100px",
+      "timestamp": "2025-06-26T08:01:23.508Z"
+    },
+    {
+      "name": "Loading State",
+      "status": "PASS",
+      "details": "Loading skeleton displayed during data fetch",
+      "timestamp": "2025-06-26T08:01:27.094Z"
+    },
+    {
+      "name": "Loading and Empty States",
+      "status": "FAIL",
+      "details": "SyntaxError: Failed to execute 'querySelectorAll' on 'Document': '.flex.items-center.justify-center:contains(\"None at the moment\")' is not a valid selector.",
+      "timestamp": "2025-06-26T08:01:27.602Z"
+    },
+    {
+      "name": "Responsive Design",
+      "status": "PASS",
+      "details": "Widget tested across mobile (375px), tablet (768px), and desktop (1400px) viewports",
+      "timestamp": "2025-06-26T08:01:30.921Z"
+    },
+    {
+      "name": "Console Errors",
+      "status": "PASS",
+      "details": "No console errors detected",
+      "timestamp": "2025-06-26T08:01:30.923Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "Initial Load",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/initial-load-1400x900-2025-06-26T08-01-18-632Z.png",
+      "timestamp": "2025-06-26T08:01:18.820Z"
+    },
+    {
+      "name": "Error: Widget Structure",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/error-widget-structure-1400x900-2025-06-26T08-01-18-820Z.png",
+      "timestamp": "2025-06-26T08:01:18.918Z"
+    },
+    {
+      "name": "Card Interactions",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/card-interactions-1400x900-2025-06-26T08-01-21-959Z.png",
+      "timestamp": "2025-06-26T08:01:22.491Z"
+    },
+    {
+      "name": "Loading State",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/loading-state-1400x900-2025-06-26T08-01-23-673Z.png",
+      "timestamp": "2025-06-26T08:01:24.093Z"
+    },
+    {
+      "name": "Error: Loading & Empty States",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/error-loading-&-empty-states-1400x900-2025-06-26T08-01-27-097Z.png",
+      "timestamp": "2025-06-26T08:01:27.602Z"
+    },
+    {
+      "name": "Mobile Responsive",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/mobile-responsive-375x667-2025-06-26T08-01-28-634Z.png",
+      "timestamp": "2025-06-26T08:01:28.692Z"
+    },
+    {
+      "name": "Tablet Responsive",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/tablet-responsive-768x1024-2025-06-26T08-01-29-720Z.png",
+      "timestamp": "2025-06-26T08:01:29.802Z"
+    },
+    {
+      "name": "Responsive Design",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/responsive-design-1400x900-2025-06-26T08-01-30-827Z.png",
+      "timestamp": "2025-06-26T08:01:30.921Z"
+    },
+    {
+      "name": "Final State",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/sitrep-test/final-state-1400x900-2025-06-26T08-01-30-923Z.png",
+      "timestamp": "2025-06-26T08:01:31.018Z"
+    }
+  ],
+  "errors": [],
+  "performance": {
+    "pageLoadTime": 964
+  },
+  "timestamp": "2025-06-26T08:01:16.628Z",
+  "summary": {
+    "total": 11,
+    "passed": 9,
+    "failed": 2,
+    "successRate": 82
+  }
+}

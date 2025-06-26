@@ -9,10 +9,14 @@
 
 function Navigation() {
   return (
-    <nav className="fixed top-0 left-12 right-0 z-30 text-white" style={{
-      background: 'linear-gradient(135deg, var(--color-ios-blue) 0%, var(--color-ios-blue-dark) 100%)',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
-    }}>
+    <nav 
+      data-testid="main-header"
+      className="fixed top-0 left-12 right-0 z-30 text-white" 
+      style={{
+        background: 'linear-gradient(135deg, var(--color-ios-blue) 0%, var(--color-ios-blue-dark) 100%)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+      }}
+    >
       <div className="flex items-center justify-between px-6 py-3">
         {/* Left side - Nav toggle and brand */}
         <div className="flex items-center gap-4">

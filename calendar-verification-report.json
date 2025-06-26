@@ -1,0 +1,195 @@
+{
+  "timestamp": "2025-06-26T09:22:07.661Z",
+  "testResults": [
+    {
+      "test": "Calendar Structure",
+      "passed": true,
+      "details": {
+        "calendarExists": true,
+        "headersExist": true
+      }
+    },
+    {
+      "test": "Header Row Analysis",
+      "passed": true,
+      "details": {
+        "totalColumns": 8,
+        "headers": [
+          {
+            "index": 0,
+            "text": "Date",
+            "isFirstColumn": true,
+            "hasDateText": true,
+            "isYachtName": false
+          },
+          {
+            "index": 1,
+            "text": "Alrisha",
+            "isFirstColumn": false,
+            "hasDateText": false,
+            "isYachtName": true
+          },
+          {
+            "index": 2,
+            "text": "arriva",
+            "isFirstColumn": false,
+            "hasDateText": false,
+            "isYachtName": true
+          },
+          {
+            "index": 3,
+            "text": "Calico Moon",
+            "isFirstColumn": false,
+            "hasDateText": false,
+            "isYachtName": true
+          },
+          {
+            "index": 4,
+            "text": "Disk Drive",
+            "isFirstColumn": false,
+            "hasDateText": false,
+            "isYachtName": true
+          },
+          {
+            "index": 5,
+            "text": "Mridula Sarwar",
+            "isFirstColumn": false,
+            "hasDateText": false,
+            "isYachtName": true
+          },
+          {
+            "index": 6,
+            "text": "Spectre",
+            "isFirstColumn": false,
+            "hasDateText": false,
+            "isYachtName": true
+          },
+          {
+            "index": 7,
+            "text": "Zavaria",
+            "isFirstColumn": false,
+            "hasDateText": false,
+            "isYachtName": true
+          }
+        ],
+        "firstColumnText": "Date",
+        "gridStyle": "grid-template-columns: auto repeat(7, 1fr);"
+      }
+    },
+    {
+      "test": "Date Column Purity",
+      "passed": true,
+      "details": {
+        "totalDateCells": 42,
+        "dateColumnCells": [
+          {
+            "index": 0,
+            "text": "Mon 26/05/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 8,
+            "text": "Tue 27/05/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 16,
+            "text": "Wed 28/05/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 24,
+            "text": "Thu 29/05/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 32,
+            "text": "Fri 30/05/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 40,
+            "text": "Sat 31/05/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 48,
+            "text": "Sun 01/06/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 56,
+            "text": "Mon 02/06/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 64,
+            "text": "Tue 03/06/25",
+            "isDateFormat": true
+          },
+          {
+            "index": 72,
+            "text": "Wed 04/06/25",
+            "isDateFormat": true
+          }
+        ],
+        "yachtNamesInDateColumn": [],
+        "hasYachtNamesInDateColumn": false,
+        "gridColumns": 8
+      }
+    },
+    {
+      "test": "Yacht Column Alignment",
+      "passed": true,
+      "details": {
+        "totalYachtHeaders": 7,
+        "yachtNames": [
+          "Alrisha",
+          "arriva",
+          "Calico Moon",
+          "Disk Drive",
+          "Mridula Sarwar",
+          "Spectre",
+          "Zavaria"
+        ],
+        "validYachtNames": [
+          "Alrisha",
+          "arriva",
+          "Calico Moon",
+          "Disk Drive",
+          "Mridula Sarwar",
+          "Spectre",
+          "Zavaria"
+        ],
+        "hasValidYachtNames": true,
+        "headerGridStyle": "grid-template-columns: auto repeat(7, 1fr);",
+        "contentGridStyle": "grid-template-columns: auto repeat(7, 1fr);",
+        "gridsMatch": true
+      }
+    },
+    {
+      "test": "Diagonal Misalignment Check",
+      "passed": true,
+      "details": {
+        "suspiciousPatterns": [],
+        "hasDiagonalMisalignment": false,
+        "totalCellsChecked": 336
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "type": "initial",
+      "path": "screenshots/calendar-verification/initial-calendar-2025-06-26T09-22-08.672Z.png"
+    },
+    {
+      "type": "final",
+      "path": "screenshots/calendar-verification/final-verification-2025-06-26T09-22-09.023Z.png"
+    }
+  ],
+  "overallStatus": "PASSED",
+  "issues": [],
+  "recommendations": [
+    "Calendar alignment is working correctly"
+  ]
+}

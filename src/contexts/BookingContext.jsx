@@ -10,7 +10,8 @@
 
 import React, { createContext, useContext, useEffect, useReducer, useCallback, useMemo } from 'react'
 import bookingStateManager from '../services/BookingStateManager'
-import { BookingModel } from '../models/core/BookingModel'
+import unifiedDataService from '../services/UnifiedDataService'
+import { BookingModel } from '../models'
 
 // Action types for booking state
 const BookingActionTypes = {
@@ -131,38 +132,55 @@ export function BookingProvider({ children, initialBookings = [] }) {
     bookings: initialBookings
   })
 
-  // Subscribe to state manager updates
+  // Subscribe to unified data service updates
   useEffect(() => {
-    const unsubscribe = bookingStateManager.subscribe((event) => {
+    // Subscribe to unified data service
+    const unsubscribeUnified = unifiedDataService.subscribe((event) => {
       switch (event.type) {
         case 'BULK_UPDATE':
           dispatch({
             type: BookingActionTypes.SET_BOOKINGS,
             payload: event.bookings
           })
+          // Also update booking state manager
+          if (event.bookings) {
+            bookingStateManager.setBookings(event.bookings)
+          }
           break
 
         case 'BOOKING_CREATED':
-          dispatch({
-            type: BookingActionTypes.ADD_BOOKING,
-            payload: event.booking
-          })
+        case 'CHARTER_CREATED':
+          if (event.booking) {
+            dispatch({
+              type: BookingActionTypes.ADD_BOOKING,
+              payload: event.booking
+            })
+          }
           break
 
         case 'BOOKING_UPDATED':
-          dispatch({
-            type: BookingActionTypes.UPDATE_BOOKING,
-            payload: event.booking
-          })
+        case 'CHARTER_UPDATED':
+          if (event.booking) {
+            dispatch({
+              type: BookingActionTypes.UPDATE_BOOKING,
+              payload: event.booking
+            })
+          }
           break
 
         case 'BOOKING_DELETED':
+        case 'CHARTER_DELETED':
           dispatch({
             type: BookingActionTypes.DELETE_BOOKING,
             payload: event.bookingId
           })
           break
+      }
+    })
 
+    // Subscribe to legacy booking state manager
+    const unsubscribeStateManager = bookingStateManager.subscribe((event) => {
+      switch (event.type) {
         case 'OPTIMISTIC_UPDATE':
           dispatch({
             type: BookingActionTypes.OPTIMISTIC_UPDATE,
@@ -185,21 +203,27 @@ export function BookingProvider({ children, initialBookings = [] }) {
       }
     })
 
-    // Initialize with current bookings from state manager
+    // Initialize with current bookings from unified service
     if (initialBookings.length === 0) {
-      const currentBookings = bookingStateManager.getAllBookings()
+      const currentBookings = unifiedDataService.getAllBookings()
       if (currentBookings.length > 0) {
         dispatch({
           type: BookingActionTypes.SET_BOOKINGS,
           payload: currentBookings
         })
+        // Also sync to state manager
+        bookingStateManager.setBookings(currentBookings)
       }
     } else {
-      // Set initial bookings in state manager
+      // Set initial bookings in both services
       bookingStateManager.setBookings(initialBookings)
+      // Note: We don't override unified service with initialBookings as it manages mock data
     }
 
-    return unsubscribe
+    return () => {
+      unsubscribeUnified()
+      unsubscribeStateManager()
+    }
   }, [initialBookings])
 
   // Memoized context values

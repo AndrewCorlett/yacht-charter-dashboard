@@ -15,12 +15,12 @@
 import { addDays, format } from 'date-fns'
 
 export const yachts = [
+  { id: 'calico-moon', name: 'Calico Moon' },
   { id: 'spectre', name: 'Spectre' },
+  { id: 'alrisha', name: 'Alrisha' },
   { id: 'disk-drive', name: 'Disk Drive' },
-  { id: 'arriva', name: 'Arriva' },
-  { id: 'zambada', name: 'Zambada' },
-  { id: 'melba-so', name: 'Melba So' },
-  { id: 'swansea', name: 'Swansea' }
+  { id: 'zavaria', name: 'Zavaria' },
+  { id: 'mridula-sarwar', name: 'Mridula Sarwar' }
 ]
 
 const today = new Date()
@@ -50,10 +50,10 @@ export const mockBookings = [
   },
   {
     id: 'booking-3',
-    yachtId: 'arriva',
+    yachtId: 'calico-moon',
     customerName: 'Owner Use',
     customerNo: 'OWNER',
-    tripNo: 'AR-OWN',
+    tripNo: 'CM-OWN',
     startDate: format(addDays(today, 1), 'yyyy-MM-dd'),
     endDate: format(addDays(today, 2), 'yyyy-MM-dd'),
     status: 'unavailable',
@@ -61,10 +61,10 @@ export const mockBookings = [
   },
   {
     id: 'booking-4',
-    yachtId: 'zambada',
+    yachtId: 'zavaria',
     customerName: 'Williams Party',
     customerNo: 'C2403',
-    tripNo: 'ZM-001',
+    tripNo: 'ZV-001',
     startDate: format(addDays(today, 7), 'yyyy-MM-dd'),
     endDate: format(addDays(today, 14), 'yyyy-MM-dd'),
     status: 'confirmed',
@@ -72,10 +72,10 @@ export const mockBookings = [
   },
   {
     id: 'booking-5',
-    yachtId: 'melba-so',
+    yachtId: 'alrisha',
     customerName: 'Maintenance',
     customerNo: 'MAINT',
-    tripNo: 'MS-MNT',
+    tripNo: 'AL-MNT',
     startDate: format(addDays(today, 3), 'yyyy-MM-dd'),
     endDate: format(addDays(today, 4), 'yyyy-MM-dd'),
     status: 'unavailable',
@@ -83,10 +83,10 @@ export const mockBookings = [
   },
   {
     id: 'booking-6',
-    yachtId: 'swansea',
+    yachtId: 'mridula-sarwar',
     customerName: 'Thompson Group',
     customerNo: 'C2404',
-    tripNo: 'SW-001',
+    tripNo: 'MS-001',
     startDate: format(addDays(today, 5), 'yyyy-MM-dd'),
     endDate: format(addDays(today, 9), 'yyyy-MM-dd'),
     status: 'confirmed',
@@ -116,10 +116,10 @@ export const mockBookings = [
   },
   {
     id: 'booking-9',
-    yachtId: 'arriva',
+    yachtId: 'calico-moon',
     customerName: 'Miller & Associates',
     customerNo: 'C2407',
-    tripNo: 'AR-001',
+    tripNo: 'CM-001',
     startDate: format(addDays(today, 8), 'yyyy-MM-dd'),
     endDate: format(addDays(today, 11), 'yyyy-MM-dd'),
     status: 'confirmed',
@@ -127,10 +127,10 @@ export const mockBookings = [
   },
   {
     id: 'booking-10',
-    yachtId: 'melba-so',
+    yachtId: 'alrisha',
     customerName: 'Robinson Party',
     customerNo: 'C2408',
-    tripNo: 'MS-001',
+    tripNo: 'AL-001',
     startDate: format(addDays(today, 15), 'yyyy-MM-dd'),
     endDate: format(addDays(today, 20), 'yyyy-MM-dd'),
     status: 'confirmed',
@@ -138,10 +138,10 @@ export const mockBookings = [
   },
   {
     id: 'booking-11',
-    yachtId: 'swansea',
+    yachtId: 'mridula-sarwar',
     customerName: 'Cardiff',
     customerNo: 'C2409',
-    tripNo: 'SW-002',
+    tripNo: 'MS-002',
     startDate: format(addDays(today, 1), 'yyyy-MM-dd'),
     endDate: format(addDays(today, 8), 'yyyy-MM-dd'),
     status: 'confirmed',

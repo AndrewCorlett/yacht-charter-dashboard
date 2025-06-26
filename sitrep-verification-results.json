@@ -1,0 +1,12 @@
+{
+  "timestamp": "2025-06-26T08:26:02.887Z",
+  "sitrepFunctionality": {
+    "sitrepWidget": true,
+    "boatsOutSection": true,
+    "upcomingChartersSection": true,
+    "colorKeySection": false,
+    "spectreVisible": true,
+    "diskDriveVisible": true
+  },
+  "overallWorking": false
+}

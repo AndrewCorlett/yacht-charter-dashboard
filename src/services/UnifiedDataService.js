@@ -11,7 +11,7 @@
 
 import { mockCharters } from '../data/mockData.js'
 import { eventEmitter } from '../utils/eventEmitter.js'
-import BookingModel, { BookingStatus, CharterType, PaymentStatus } from '../models/core/BookingModel-unified.js'
+import BookingModel, { BookingStatus, CharterType, PaymentStatus } from '../models'
 
 /**
  * Data transformation utilities

@@ -15,7 +15,7 @@
 
 import { useEffect } from 'react'
 
-function Modal({ isOpen, onClose, title, children }) {
+function Modal({ isOpen, onClose, title, children, size = 'medium' }) {
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -36,13 +36,23 @@ function Modal({ isOpen, onClose, title, children }) {
 
   if (!isOpen) return null
 
+  // Size configuration
+  const sizeClasses = {
+    small: 'max-w-md',
+    medium: 'max-w-2xl',
+    large: 'max-w-4xl',
+    xl: 'max-w-6xl',
+    full: 'max-w-7xl'
+  }
+
   return (
     <div 
+      data-testid="booking-modal"
       className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+        className={`bg-white rounded-lg shadow-xl ${sizeClasses[size]} w-full max-h-[90vh] overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
