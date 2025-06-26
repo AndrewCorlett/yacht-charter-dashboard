@@ -9,11 +9,20 @@
  * @version 1.0.0
  */
 
-// Core Models
+// Core Models - Unified Single Table Design
 export {
   default as BookingModel,
   BookingStatus,
-  BookingType
+  CharterType,
+  PaymentStatus,
+  DocumentTypes
+} from './core/BookingModel-unified.js'
+
+// Legacy Multi-Table Model (deprecated, for migration reference only)
+export {
+  default as LegacyBookingModel,
+  BookingStatus as LegacyBookingStatus,
+  BookingType as LegacyBookingType
 } from './core/BookingModel.js'
 
 export {
@@ -96,7 +105,9 @@ export const Utilities = {
 
 export const Enums = {
   BookingStatus,
-  BookingType,
+  CharterType,
+  PaymentStatus,
+  DocumentTypes,
   CrewPosition,
   ExperienceLevel,
   DietaryRestriction,
