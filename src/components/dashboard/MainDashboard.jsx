@@ -82,6 +82,12 @@ function MainDashboard() {
     setIsBookingModalOpen(true)
   }
 
+  const handleQuickCreateBooking = () => {
+    // For quick create widget - no action needed since it saves directly
+    // This is just a placeholder for future integration
+    console.log('Quick create booking completed')
+  }
+
   const handleEditBooking = (booking) => {
     setSelectedBookingForModal(booking) // booking for edit mode
     setPrefilledData({})
@@ -208,7 +214,7 @@ function MainDashboard() {
               borderColor: 'var(--color-ios-gray-3)' 
             }}>
               <SitRepSection />
-              <CreateBookingSection onCreateBooking={handleCreateBooking} />
+              <CreateBookingSection onCreateBooking={handleQuickCreateBooking} />
             </aside>
 
             {/* Calendar - Fixed to viewport */}

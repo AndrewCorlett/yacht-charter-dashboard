@@ -13,10 +13,10 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { BookingModel } from '../../models/core/BookingModel.js'
-import { StatusTrackingModel, DefaultStatusFields } from '../../models/core/StatusTrackingModel.js'
-import { BookingValidationSchema } from '../../models/validation/ValidationSchemas.js'
-import { useBookings } from '../../contexts/BookingContext'
+import BookingModel, { BookingStatus, CharterType, PaymentStatus } from '../../models'
+import { UnifiedDataService } from '../../services/UnifiedDataService.js'
+import yachtService from '../../services/supabase/YachtService.js'
+import bookingService from '../../services/supabase/BookingService.js'
 
 function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
   // Form state - Quick create with essential fields only
@@ -31,22 +31,53 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     city: '',
     postcode: '',
     
+    // Yacht Selection
+    yacht: '',
+    
     // Booking Details
     startDate: '',
     endDate: '',
     portOfDeparture: '',
     portOfArrival: '',
-    
-    // Auto-generated fields
-    bookingNo: '',
+    tripType: CharterType.BAREBOAT,
     
     // Status
     depositPaid: false
   })
 
+  const [yachts, setYachts] = useState([])
+  const [loadingYachts, setLoadingYachts] = useState(true)
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState({})
   const [successMessage, setSuccessMessage] = useState('')
+
+  // Load yachts from database
+  useEffect(() => {
+    const loadYachts = async () => {
+      try {
+        setLoadingYachts(true)
+        const yachtData = await yachtService.getYachts()
+        setYachts(yachtData)
+      } catch (error) {
+        console.error('Failed to load yachts:', error)
+        // Fallback to static yacht list
+        setYachts([
+          { id: 'Alrisha', name: 'Alrisha', type: 'Sailing Yacht' },
+          { id: 'Calico Moon', name: 'Calico Moon', type: 'Motor Yacht' },
+          { id: 'Spectre', name: 'Spectre', type: 'Sailing Yacht' },
+          { id: 'Disk Drive', name: 'Disk Drive', type: 'Catamaran' },
+          { id: 'Mridula Sarwar', name: 'Mridula Sarwar', type: 'Sailing Yacht' },
+          { id: 'Zavaria', name: 'Zavaria', type: 'Motor Yacht' },
+          { id: 'Arriva', name: 'Arriva', type: 'Sailing Yacht' }
+        ])
+      } finally {
+        setLoadingYachts(false)
+      }
+    }
+
+    loadYachts()
+  }, [])
 
 
   // Handle input changes
@@ -77,17 +108,8 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
       setSuccessMessage('')
     }
   }
-  
-  // Auto-generate booking numbers and IDs
-  const generateBookingNumbers = () => {
-    const bookingModel = new BookingModel()
-    setFormData(prev => ({
-      ...prev,
-      bookingNo: bookingModel.booking_no
-    }))
-  }
 
-  // Handle form submission
+  // Handle form submission - Save directly to database
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -100,6 +122,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     if (!formData.addressLine1.trim()) errors.addressLine1 = 'Address line 1 is required'
     if (!formData.city.trim()) errors.city = 'City is required'
     if (!formData.postcode.trim()) errors.postcode = 'Postcode is required'
+    if (!formData.yacht.trim()) errors.yacht = 'Yacht selection is required'
     if (!formData.startDate) errors.startDate = 'Start date is required'
     if (!formData.endDate) errors.endDate = 'End date is required'
     
@@ -111,47 +134,67 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     setIsSubmitting(true)
     
     try {
-      // Create booking data package
-      const customerAddress = [
-        formData.addressLine1,
-        formData.addressLine2,
-        formData.city,
-        formData.postcode
-      ].filter(line => line.trim()).join('\n')
-
+      // Get selected yacht info
+      const selectedYacht = yachts.find(y => y.id === formData.yacht)
+      
+      // Create unified booking model
       const bookingData = {
-        customer_name: `${formData.firstName} ${formData.surname}`.trim(),
+        // Customer Information (mapped to unified schema)
+        customer_first_name: formData.firstName,
+        customer_surname: formData.surname,
         customer_email: formData.email,
         customer_phone: formData.phone,
-        customer_address: customerAddress,
-        address_line1: formData.addressLine1,
-        address_line2: formData.addressLine2,
-        city: formData.city,
-        postcode: formData.postcode,
-        start_datetime: formData.startDate,
-        end_datetime: formData.endDate,
-        port_of_departure: formData.portOfDeparture,
-        port_of_arrival: formData.portOfArrival,
-        booking_no: formData.bookingNo,
+        customer_street: formData.addressLine1,
+        customer_city: formData.city,
+        customer_postcode: formData.postcode,
+        customer_country: 'United Kingdom',
+        
+        // Yacht Information
+        yacht_id: formData.yacht,
+        yacht_name: selectedYacht?.name || formData.yacht,
+        yacht_type: selectedYacht?.type || 'Sailing Yacht',
+        
+        // Booking Details
+        charter_type: formData.tripType,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        port_of_departure: formData.portOfDeparture || 'Marina Bay',
+        port_of_arrival: formData.portOfArrival || 'Harbor Point',
+        
+        // Status
+        booking_status: BookingStatus.TENTATIVE,
+        payment_status: formData.depositPaid ? PaymentStatus.DEPOSIT_PAID : PaymentStatus.PENDING,
         deposit_paid: formData.depositPaid,
-        summary: `${formData.firstName} ${formData.surname} - Quick Booking`
+        booking_confirmed: false,
+        
+        // Additional Info
+        notes: 'Created via Quick Create widget'
       }
       
-      // Call the booking creation handler
-      if (onCreateBooking) {
-        await onCreateBooking(bookingData)
+      // Create and validate booking model
+      const booking = BookingModel.fromFrontend(bookingData)
+      if (!booking.validate()) {
+        setErrors({ submit: 'Booking validation failed. Please check your data.' })
+        return
       }
+      
+      // Save to database using BookingService
+      const savedBooking = await bookingService.createBooking(booking.toDatabase())
+      
+      // Also update the UnifiedDataService for immediate UI updates
+      const unifiedService = UnifiedDataService.getInstance()
+      unifiedService.addBooking(savedBooking)
       
       // Reset form on success
       resetForm()
       setErrors({})
-      setSuccessMessage('Booking created successfully!')
+      setSuccessMessage('Booking created and saved to database!')
       
       // Auto-clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(''), 5000)
     } catch (error) {
       console.error('Booking creation error:', error)
-      setErrors({ submit: 'Failed to create booking. Please try again.' })
+      setErrors({ submit: `Failed to create booking: ${error.message}` })
     } finally {
       setIsSubmitting(false)
     }
@@ -170,14 +213,15 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
       city: '',
       postcode: '',
       
+      // Yacht Selection
+      yacht: '',
+      
       // Booking Details
       startDate: '',
       endDate: '',
       portOfDeparture: '',
       portOfArrival: '',
-      
-      // Auto-generated fields
-      bookingNo: '',
+      tripType: CharterType.BAREBOAT,
       
       // Status
       depositPaid: false
@@ -190,12 +234,6 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     setSuccessMessage('')
   }
   
-  // Auto-generate booking numbers on component mount
-  useEffect(() => {
-    if (!formData.bookingNo) {
-      generateBookingNumbers()
-    }
-  }, [])
 
   return (
     <div 
@@ -210,20 +248,32 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Customer Details */}
         <div className="space-y-3">
+          {/* Yacht Selection */}
           <div>
-            <label htmlFor="bookingNo" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
-              Booking Number
+            <label htmlFor="yacht" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Yacht *
             </label>
-            <input
-              type="text"
-              id="bookingNo"
-              name="bookingNo"
-              value={formData.bookingNo}
-              className="ios-input text-sm"
-              placeholder="Auto-generated"
-              disabled
-              style={{ opacity: 0.6 }}
-            />
+            {loadingYachts ? (
+              <div className="ios-input text-sm" style={{ opacity: 0.6 }}>Loading yachts...</div>
+            ) : (
+              <select
+                id="yacht"
+                name="yacht"
+                value={formData.yacht}
+                onChange={handleInputChange}
+                className={`ios-input text-sm ${
+                  errors.yacht ? 'border-red-500' : ''
+                }`}
+              >
+                <option value="">Select a yacht</option>
+                {yachts.map(yacht => (
+                  <option key={yacht.id} value={yacht.id}>
+                    {yacht.name} ({yacht.type})
+                  </option>
+                ))}
+              </select>
+            )}
+            {errors.yacht && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.yacht}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -380,6 +430,23 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
                 {errors.postcode && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.postcode}</p>}
               </div>
             </div>
+          </div>
+
+          {/* Trip Type */}
+          <div>
+            <label htmlFor="tripType" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Charter Type
+            </label>
+            <select
+              id="tripType"
+              name="tripType"
+              value={formData.tripType}
+              onChange={handleInputChange}
+              className="ios-input text-sm"
+            >
+              <option value={CharterType.BAREBOAT}>Bareboat</option>
+              <option value={CharterType.SKIPPERED_CHARTER}>Skippered Charter</option>
+            </select>
           </div>
 
           {/* Dates and Ports */}
