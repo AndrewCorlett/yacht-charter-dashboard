@@ -8,7 +8,7 @@
  * @created 2025-06-24
  */
 
-import { BookingModel, BookingStatus } from '../models'
+import { BookingModel, BookingStatus } from '../models/index.js'
 import { BookingConflictService } from './BookingConflictService'
 
 export class BookingStateManager {
@@ -85,8 +85,8 @@ export class BookingStateManager {
       return BookingConflictService.datesOverlap(
         startDate,
         endDate,
-        booking.start_datetime,
-        booking.end_datetime
+        booking.start_date,
+        booking.end_date
       )
     })
   }
@@ -190,10 +190,29 @@ export class BookingStateManager {
       throw new Error(`Booking with ID ${id} not found`)
     }
 
+    // Convert frontend-format updates to database format if needed
+    let processedUpdates = updates
+    if (updates.status) {
+      // Frontend format with status object - convert to database format
+      const statusData = updates.status
+      processedUpdates = {
+        ...updates,
+        // Map status fields to database field names
+        booking_confirmed: statusData.bookingConfirmed,
+        deposit_paid: statusData.depositPaid,
+        final_payment_paid: statusData.finalPaymentPaid,
+        contract_sent: statusData.contractSent,
+        contract_signed: statusData.contractSigned,
+        deposit_invoice_sent: statusData.depositInvoiceSent,
+        receipt_issued: statusData.receiptIssued,
+      }
+      delete processedUpdates.status // Remove the status object
+    }
+
     // Create updated booking
     const updatedBooking = new BookingModel({
       ...existingBooking.toDatabase(),
-      ...updates
+      ...processedUpdates
     })
 
     // Validate updated booking
@@ -204,9 +223,9 @@ export class BookingStateManager {
     // Check for conflicts if enabled
     if (validateConflicts) {
       const otherBookings = this.getAllBookings().filter(b => b.id !== id)
-      const conflictCheck = updatedBooking.checkConflicts(otherBookings)
+      const conflictCheck = BookingConflictService.checkBookingConflicts(updatedBooking.toDatabase(), otherBookings.map(b => b.toDatabase()))
       if (!conflictCheck.isAvailable) {
-        throw new Error(`Booking conflicts detected: ${conflictCheck.conflicts.map(c => c.reason).join(', ')}`)
+        throw new Error(`Booking conflicts detected: ${conflictCheck.conflicts.map(c => c.message || c.reason || 'Unknown conflict').join(', ')}`)
       }
     }
 
@@ -295,8 +314,8 @@ export class BookingStateManager {
     
     return this.updateBooking(id, {
       yacht_id: yachtId,
-      start_datetime: startDate,
-      end_datetime: endDate
+      start_date: startDate,
+      end_date: endDate
     }, options)
   }
 

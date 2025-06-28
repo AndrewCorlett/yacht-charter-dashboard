@@ -13,12 +13,15 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import BookingModel, { BookingStatus, CharterType, PaymentStatus } from '../../models'
-import { UnifiedDataService } from '../../services/UnifiedDataService.js'
+import { BookingModel, BookingStatus, CharterType, PaymentStatus } from '../../models'
 import yachtService from '../../services/supabase/YachtService.js'
-import bookingService from '../../services/supabase/BookingService.js'
+import { useBookingOperations } from '../../contexts/BookingContext'
+import BookingSuccessModal from '../modals/BookingSuccessModal'
 
 function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
+  // Get booking operations from context
+  const { createBooking: createBookingInContext } = useBookingOperations()
+  
   // Form state - Quick create with essential fields only
   const [formData, setFormData] = useState({
     // Customer Information
@@ -41,8 +44,8 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     portOfArrival: '',
     tripType: CharterType.BAREBOAT,
     
-    // Status
-    depositPaid: false
+    // Status - simplified for quick create
+    // Payment status will be managed in booking management page
   })
 
   const [yachts, setYachts] = useState([])
@@ -51,6 +54,10 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState({})
   const [successMessage, setSuccessMessage] = useState('')
+  
+  // Modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [createdBooking, setCreatedBooking] = useState(null)
 
   // Load yachts from database
   useEffect(() => {
@@ -61,16 +68,9 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
         setYachts(yachtData)
       } catch (error) {
         console.error('Failed to load yachts:', error)
-        // Fallback to static yacht list
-        setYachts([
-          { id: 'Alrisha', name: 'Alrisha', type: 'Sailing Yacht' },
-          { id: 'Calico Moon', name: 'Calico Moon', type: 'Motor Yacht' },
-          { id: 'Spectre', name: 'Spectre', type: 'Sailing Yacht' },
-          { id: 'Disk Drive', name: 'Disk Drive', type: 'Catamaran' },
-          { id: 'Mridula Sarwar', name: 'Mridula Sarwar', type: 'Sailing Yacht' },
-          { id: 'Zavaria', name: 'Zavaria', type: 'Motor Yacht' },
-          { id: 'Arriva', name: 'Arriva', type: 'Sailing Yacht' }
-        ])
+        // Log error but don't set fallback yachts
+        console.error('Failed to load yachts from database:', error)
+        setYachts([])
       } finally {
         setLoadingYachts(false)
       }
@@ -137,61 +137,64 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
       // Get selected yacht info
       const selectedYacht = yachts.find(y => y.id === formData.yacht)
       
-      // Create unified booking model
-      const bookingData = {
-        // Customer Information (mapped to unified schema)
-        customer_first_name: formData.firstName,
-        customer_surname: formData.surname,
-        customer_email: formData.email,
-        customer_phone: formData.phone,
-        customer_street: formData.addressLine1,
-        customer_city: formData.city,
-        customer_postcode: formData.postcode,
-        customer_country: 'United Kingdom',
+      // Prepare form data in the format expected by BookingModel.fromFrontend()
+      const frontendData = {
+        // Customer Information 
+        firstName: formData.firstName,
+        surname: formData.surname,
+        email: formData.email,
+        phone: formData.phone,
+        street: formData.addressLine1,
+        city: formData.city,
+        postcode: formData.postcode,
+        country: 'United Kingdom',
         
-        // Yacht Information
-        yacht_id: formData.yacht,
-        yacht_name: selectedYacht?.name || formData.yacht,
-        yacht_type: selectedYacht?.type || 'Sailing Yacht',
-        
-        // Booking Details
-        charter_type: formData.tripType,
-        start_date: formData.startDate,
-        end_date: formData.endDate,
-        port_of_departure: formData.portOfDeparture || 'Marina Bay',
-        port_of_arrival: formData.portOfArrival || 'Harbor Point',
-        
-        // Status
-        booking_status: BookingStatus.TENTATIVE,
-        payment_status: formData.depositPaid ? PaymentStatus.DEPOSIT_PAID : PaymentStatus.PENDING,
-        deposit_paid: formData.depositPaid,
-        booking_confirmed: false,
-        
-        // Additional Info
-        notes: 'Created via Quick Create widget'
+        // Yacht and Booking Details
+        yacht: formData.yacht,
+        tripType: formData.tripType,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        portOfDeparture: formData.portOfDeparture || 'Marina Bay',
+        portOfArrival: formData.portOfArrival || 'Harbor Point'
       }
       
-      // Create and validate booking model
-      const booking = BookingModel.fromFrontend(bookingData)
+      // Default payment status for new bookings - will be managed in booking details
+      let paymentStatus = PaymentStatus.PENDING
+      
+      // Status data - simplified for quick create
+      const statusData = {
+        depositPaid: false,
+        finalPaymentPaid: false,
+        paymentStatus: paymentStatus,
+        bookingConfirmed: false
+      }
+      
+      // Create and validate booking model using the correct method signature
+      const booking = BookingModel.fromFrontend(frontendData, statusData)
+      
       if (!booking.validate()) {
-        setErrors({ submit: 'Booking validation failed. Please check your data.' })
+        // Get specific validation errors from the model
+        const validationErrors = booking.getErrors()
+        console.error('Booking validation errors:', validationErrors)
+        
+        // Create detailed error message for user
+        const errorMessages = Object.entries(validationErrors).map(([field, message]) => `• ${message}`).join('\n')
+        setErrors({ 
+          submit: `Booking validation failed:\n\n${errorMessages}\n\nPlease fix the above issues and try again.` 
+        })
         return
       }
       
-      // Save to database using BookingService
-      const savedBooking = await bookingService.createBooking(booking.toDatabase())
+      // Use booking context which handles both Supabase and state management
+      const savedBooking = await createBookingInContext(booking.toDatabase())
       
-      // Also update the UnifiedDataService for immediate UI updates
-      const unifiedService = UnifiedDataService.getInstance()
-      unifiedService.addBooking(savedBooking)
+      // Show success modal instead of inline message
+      setCreatedBooking(savedBooking)
+      setShowSuccessModal(true)
       
       // Reset form on success
       resetForm()
       setErrors({})
-      setSuccessMessage('Booking created and saved to database!')
-      
-      // Auto-clear success message after 5 seconds
-      setTimeout(() => setSuccessMessage(''), 5000)
     } catch (error) {
       console.error('Booking creation error:', error)
       setErrors({ submit: `Failed to create booking: ${error.message}` })
@@ -223,8 +226,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
       portOfArrival: '',
       tripType: CharterType.BAREBOAT,
       
-      // Status
-      depositPaid: false
+      // Payment status managed in booking details page
     })
   }
   
@@ -232,6 +234,32 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     resetForm()
     setErrors({})
     setSuccessMessage('')
+  }
+  
+  // Modal handlers
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false)
+    setCreatedBooking(null)
+  }
+  
+  const handleGoToBooking = () => {
+    if (createdBooking) {
+      // Close the modal first
+      handleCloseSuccessModal()
+      
+      // Trigger parent navigation with the created booking data
+      if (onCreateBooking) {
+        onCreateBooking(createdBooking)
+      }
+      
+      // Also dispatch a custom event for the main dashboard to handle navigation
+      window.dispatchEvent(new CustomEvent('navigateToBooking', {
+        detail: { 
+          booking: createdBooking,
+          section: 'bookings' 
+        }
+      }))
+    }
   }
   
 
@@ -520,20 +548,11 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
             </div>
           </div>
 
-          {/* Deposit Paid Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: 'var(--color-ios-border)' }}>
-            <label htmlFor="depositPaid" className="text-sm font-medium" style={{ color: 'var(--color-ios-text-primary)' }}>
-              💰 Deposit Paid
-            </label>
-            <input
-              type="checkbox"
-              id="depositPaid"
-              name="depositPaid"
-              checked={formData.depositPaid}
-              onChange={handleInputChange}
-              className="h-4 w-4 rounded"
-              style={{ accentColor: 'var(--color-ios-blue)' }}
-            />
+          {/* Note about payment status */}
+          <div className="p-3 rounded-lg border" style={{ borderColor: 'var(--color-ios-border)', backgroundColor: 'var(--color-ios-bg-secondary)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              💡 Payment status will be managed in the booking details page after creation
+            </p>
           </div>
         </div>
 
@@ -595,12 +614,14 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
             borderColor: 'rgba(255, 59, 48, 0.3)',
             borderRadius: 'var(--radius-ios)'
           }}>
-            <p className="text-sm flex items-center" style={{ color: 'var(--color-ios-red)' }}>
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              {errors.submit}
-            </p>
+            <div className="text-sm" style={{ color: 'var(--color-ios-red)' }}>
+              <div className="flex items-start mb-2">
+                <svg className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="whitespace-pre-line">{errors.submit}</div>
+              </div>
+            </div>
           </div>
         )}
         
@@ -620,6 +641,15 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
           </div>
         )}
       </form>
+      
+      {/* Booking Success Modal */}
+      <BookingSuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        bookingNumber={createdBooking?.booking_number}
+        bookingData={createdBooking}
+        onGoToBooking={handleGoToBooking}
+      />
     </div>
   )
 }

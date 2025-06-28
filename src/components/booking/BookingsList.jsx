@@ -1,92 +1,45 @@
 import { useState } from 'react'
 import { BookingStatus } from '../../models/core/BookingModel'
+import { useBookings } from '../../contexts/BookingContext'
 
 function BookingsList({ onSelectBooking }) {
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
 
-  // Mock bookings data
-  const mockBookings = [
-    {
-      id: 'BOOK001',
-      bookingNo: 'BK2025001',
-      yacht: 'Serenity',
-      customer: 'John Smith',
-      email: 'john.smith@example.com',
-      phone: '+44 7123 456789',
-      startDate: '2025-07-01',
-      endDate: '2025-07-08',
-      status: 'confirmed',
-      totalValue: 15000,
-      depositPaid: true,
-      contractSigned: true,
-      lastModified: '2025-06-20'
-    },
-    {
-      id: 'BOOK002',
-      bookingNo: 'BK2025002',
-      yacht: 'Atlantis',
-      customer: 'Emily Johnson',
-      email: 'emily.johnson@example.com',
-      phone: '+44 7987 654321',
-      startDate: '2025-07-15',
-      endDate: '2025-07-22',
-      status: 'pending',
-      totalValue: 12000,
-      depositPaid: false,
-      contractSigned: false,
-      lastModified: '2025-06-18'
-    },
-    {
-      id: 'BOOK003',
-      bookingNo: 'BK2025003',
-      yacht: 'Poseidon',
-      customer: 'Cardiff Yacht Club',
-      email: 'events@cardiffyc.com',
-      phone: '+44 29 2048 7000',
-      startDate: '2025-08-01',
-      endDate: '2025-08-05',
-      status: 'completed',
-      totalValue: 8000,
-      depositPaid: true,
-      contractSigned: true,
-      lastModified: '2025-06-15'
-    },
-    {
-      id: 'BOOK004',
-      bookingNo: 'BK2025004',
-      yacht: 'Serenity',
-      customer: 'Michael Brown',
-      email: 'michael.brown@example.com',
-      phone: '+44 7555 123456',
-      startDate: '2025-08-10',
-      endDate: '2025-08-17',
-      status: 'pending',
-      totalValue: 18000,
-      depositPaid: true,
-      contractSigned: false,
-      lastModified: '2025-06-22'
-    }
-  ]
+  // Get real bookings data from context
+  const { bookings, loading, error } = useBookings()
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'confirmed':
+  const getPaymentStatusColor = (paymentStatus) => {
+    switch (paymentStatus) {
+      case 'full_payment':
         return 'text-green-400 bg-green-400/10'
-      case 'pending':
-        return 'text-yellow-400 bg-yellow-400/10'
-      case 'completed':
+      case 'deposit_paid':
         return 'text-blue-400 bg-blue-400/10'
-      default:
+      case 'pending':
+        return 'text-orange-400 bg-orange-400/10'
+      case 'refunded':
         return 'text-gray-400 bg-gray-400/10'
+      default:
+        return 'text-orange-400 bg-orange-400/10'
     }
   }
 
-  const filteredBookings = mockBookings.filter(booking => {
+  const getPaymentStatusText = (booking) => {
+    // Calculate payment status based on flags
+    if (booking.final_payment_paid) {
+      return 'Full Payment'
+    } else if (booking.deposit_paid) {
+      return 'Deposit Paid'
+    } else {
+      return 'Tentative'
+    }
+  }
+
+  const filteredBookings = bookings.filter(booking => {
     const matchesFilter = activeFilter === 'all' || booking.status === activeFilter
-    const matchesSearch = booking.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.yacht.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.bookingNo.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (booking.customer_name || booking.guest_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (booking.yacht_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (booking.booking_number || booking.id || '').toLowerCase().includes(searchTerm.toLowerCase())
     return matchesFilter && matchesSearch
   })
 
@@ -96,11 +49,33 @@ function BookingsList({ onSelectBooking }) {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+          <div>Loading bookings...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-center">
+          <div className="text-red-400 mb-2">Error loading bookings</div>
+          <div className="text-sm text-gray-400">{error}</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full flex flex-col bg-gray-900 text-white">
       {/* Header */}
       <div className="p-6 border-b border-gray-700">
-        <h1 className="text-2xl font-semibold mb-4">Bookings Management</h1>
+        <h1 className="text-2xl font-semibold mb-4">Bookings Management ({bookings.length} total)</h1>
         
         {/* Search and Filter */}
         <div className="flex gap-4 mb-4">
@@ -154,41 +129,59 @@ function BookingsList({ onSelectBooking }) {
           </div>
 
           {/* Data Rows */}
-          {filteredBookings.map((booking) => (
-            <div
-              key={booking.id}
-              onClick={() => handleRowClick(booking)}
-              className="grid grid-cols-8 gap-4 p-4 border-b border-gray-700 hover:bg-gray-800 cursor-pointer transition-colors"
-            >
-              <div className="font-medium text-blue-400">{booking.bookingNo}</div>
-              <div>
-                <div className="font-medium">{booking.customer}</div>
-                <div className="text-sm text-gray-400">{booking.email}</div>
-              </div>
-              <div className="font-medium">{booking.yacht}</div>
-              <div className="text-sm">
-                <div>{booking.startDate}</div>
-                <div className="text-gray-400">to {booking.endDate}</div>
-              </div>
-              <div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                </span>
-              </div>
-              <div className="font-medium">£{booking.totalValue.toLocaleString()}</div>
-              <div className="text-sm">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${booking.depositPaid ? 'bg-green-400' : 'bg-gray-500'}`}></span>
-                  <span className="text-gray-400">Deposit</span>
+          {filteredBookings.map((booking) => {
+            const bookingNumber = booking.booking_number || booking.id || 'N/A'
+            const customerName = booking.customer_name || booking.guest_name || 'N/A'
+            const customerEmail = booking.customer_email || booking.guest_email || 'N/A'
+            const yachtName = booking.yacht_name || 'N/A'
+            const startDate = booking.start_date ? new Date(booking.start_date).toLocaleDateString() : 'N/A'
+            const endDate = booking.end_date ? new Date(booking.end_date).toLocaleDateString() : 'N/A'
+            const paymentStatusText = getPaymentStatusText(booking)
+            const paymentStatus = booking.final_payment_paid ? 'full_payment' : 
+                                 booking.deposit_paid ? 'deposit_paid' : 'pending'
+            const totalValue = booking.total_cost || booking.total_value || 0
+            const lastModified = booking.updated_at ? new Date(booking.updated_at).toLocaleDateString() : 'N/A'
+            
+            return (
+              <div
+                key={booking.id}
+                onClick={() => handleRowClick(booking)}
+                className="grid grid-cols-8 gap-4 p-4 border-b border-gray-700 hover:bg-gray-800 cursor-pointer transition-colors"
+              >
+                <div className="font-medium text-blue-400">{bookingNumber}</div>
+                <div>
+                  <div className="font-medium">{customerName}</div>
+                  <div className="text-sm text-gray-400">{customerEmail}</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${booking.contractSigned ? 'bg-green-400' : 'bg-gray-500'}`}></span>
-                  <span className="text-gray-400">Contract</span>
+                <div className="font-medium">{yachtName}</div>
+                <div className="text-sm">
+                  <div>{startDate}</div>
+                  <div className="text-gray-400">to {endDate}</div>
                 </div>
+                <div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(paymentStatus)}`}>
+                    {paymentStatusText}
+                  </span>
+                </div>
+                <div className="font-medium">£{totalValue.toLocaleString()}</div>
+                <div className="text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${booking.deposit_paid ? 'bg-green-400' : 'bg-gray-500'}`}></span>
+                    <span className="text-gray-400">Deposit</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${booking.final_payment_paid ? 'bg-green-400' : 'bg-gray-500'}`}></span>
+                    <span className="text-gray-400">Full Payment</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${booking.contract_signed ? 'bg-green-400' : 'bg-gray-500'}`}></span>
+                    <span className="text-gray-400">Contract</span>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-400">{lastModified}</div>
               </div>
-              <div className="text-sm text-gray-400">{booking.lastModified}</div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {filteredBookings.length === 0 && (

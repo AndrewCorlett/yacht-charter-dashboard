@@ -5,46 +5,57 @@ import FileUpload from '../common/FileUpload'
 import DocumentGenerationModal from '../modals/DocumentGenerationModal'
 import PartialDownloadWarningModal from '../modals/PartialDownloadWarningModal'
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
+import { useBookingOperations } from '../../contexts/BookingContext'
+import { BookingModel } from '../../models'
 
 function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBookingManagementClick }) {
+  // Get booking operations from context
+  const { updateBooking: updateBookingInContext, deleteBooking: deleteBookingInContext } = useBookingOperations()
+  
+  // Transform booking data from database format to frontend format
+  const bookingData = booking?.toFrontend ? booking.toFrontend() : (booking ? BookingModel.fromDatabase(booking).toFrontend() : {})
+  
   const [formData, setFormData] = useState({
-    yacht: booking?.yacht || '',
-    tripType: booking?.tripType || 'bareboat',
-    startDate: booking?.startDate || '',
-    endDate: booking?.endDate || '',
-    portOfDeparture: booking?.portOfDeparture || '',
-    portOfArrival: booking?.portOfArrival || '',
-    firstName: booking?.firstName || '',
-    surname: booking?.surname || '',
-    email: booking?.email || '',
-    phone: booking?.phone || '',
+    yacht: bookingData.yacht || '',
+    tripType: bookingData.tripType || 'bareboat',
+    startDate: bookingData.startDate || '',
+    endDate: bookingData.endDate || '',
+    portOfDeparture: bookingData.portOfDeparture || '',
+    portOfArrival: bookingData.portOfArrival || '',
+    firstName: bookingData.firstName || '',
+    surname: bookingData.surname || '',
+    email: bookingData.email || '',
+    phone: bookingData.phone || '',
     // Address fields
-    street: booking?.address?.street || '',
-    city: booking?.address?.city || '',
-    postcode: booking?.address?.postcode || '',
-    country: booking?.address?.country || '',
+    street: bookingData.street || '',
+    city: bookingData.city || '',
+    postcode: bookingData.postcode || '',
+    country: bookingData.country || '',
     // Crew experience file
-    crewExperienceFile: booking?.crewExperienceFile || null
+    crewExperienceFile: bookingData.crewExperienceFile || null
   })
 
   const [statusData, setStatusData] = useState({
-    bookingConfirmed: booking?.status?.bookingConfirmed || false,
-    depositPaid: booking?.status?.depositPaid || false,
-    contractSent: booking?.status?.contractSent || false,
-    contractSigned: booking?.status?.contractSigned || false,
-    depositInvoiceSent: booking?.status?.depositInvoiceSent || false,
-    receiptIssued: booking?.status?.receiptIssued || false
+    bookingConfirmed: bookingData.status?.bookingConfirmed || false,
+    depositPaid: bookingData.status?.depositPaid || false,
+    finalPaymentPaid: bookingData.status?.finalPaymentPaid || false,
+    contractSent: bookingData.status?.contractSent || false,
+    contractSigned: bookingData.status?.contractSigned || false,
+    depositInvoiceSent: bookingData.status?.depositInvoiceSent || false,
+    receiptIssued: bookingData.status?.receiptIssued || false
   })
 
-  // Document generation state
-  const [documentStates, setDocumentStates] = useState({
-    'Contract': { generated: false, downloaded: false, updated: false },
-    'Deposit Invoice': { generated: false, downloaded: false, updated: false },
-    'Deposit Receipt': { generated: false, downloaded: false, updated: false },
-    'Remaining Balance Invoice': { generated: false, downloaded: false, updated: false },
-    'Remaining Balance Receipt': { generated: false, downloaded: false, updated: false },
-    'Hand-over Notes': { generated: false, downloaded: false, updated: false }
-  })
+  // Document generation state - use data from booking if available
+  const [documentStates, setDocumentStates] = useState(
+    bookingData.documentStates || {
+      'Contract': { generated: false, downloaded: false, updated: false },
+      'Deposit Invoice': { generated: false, downloaded: false, updated: false },
+      'Deposit Receipt': { generated: false, downloaded: false, updated: false },
+      'Remaining Balance Invoice': { generated: false, downloaded: false, updated: false },
+      'Remaining Balance Receipt': { generated: false, downloaded: false, updated: false },
+      'Hand-over Notes': { generated: false, downloaded: false, updated: false }
+    }
+  )
 
   // Modal states
   const [documentModal, setDocumentModal] = useState({ isOpen: false, documentType: null })
@@ -81,30 +92,47 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     handleDiscardAndGo,
     handleCancel,
     resetDirtyState
-  } = useUnsavedChanges(formData, statusData, booking)
+  } = useUnsavedChanges(formData, statusData, bookingData)
 
-  const handleSave = () => {
-    const updatedBooking = {
-      ...booking,
-      ...formData,
-      address: {
-        street: formData.street,
-        city: formData.city,
-        postcode: formData.postcode,
-        country: formData.country
-      },
-      status: statusData
-    }
-    
-    if (onSave) {
-      onSave(updatedBooking)
-      resetDirtyState()
+  const handleSave = async () => {
+    try {
+      // Create updated booking data in frontend format
+      const updatedBookingData = {
+        ...bookingData,
+        ...formData,
+        status: statusData
+      }
+      
+      if (bookingData.id) {
+        // Update existing booking through context
+        await updateBookingInContext(bookingData.id, updatedBookingData)
+        resetDirtyState()
+      }
+      
+      // Also call the parent onSave if provided for UI updates
+      if (onSave) {
+        onSave(updatedBookingData)
+      }
+    } catch (error) {
+      console.error('Failed to save booking:', error)
+      // Error is handled by the context
     }
   }
 
-  const handleDelete = () => {
-    if (onDelete && booking) {
-      handleNavigation(() => onDelete(booking.id))
+  const handleDelete = async () => {
+    if (bookingData.id) {
+      try {
+        // Delete through context
+        await deleteBookingInContext(bookingData.id)
+        
+        // Call parent onDelete for UI updates (e.g., navigate away)
+        if (onDelete) {
+          onDelete(bookingData.id)
+        }
+      } catch (error) {
+        console.error('Failed to delete booking:', error)
+        // Error is handled by the context
+      }
     }
   }
 
@@ -139,7 +167,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
 
   const handleDownloadDocument = (documentType) => {
     // Mock download implementation
-    console.log(`Downloading ${documentType} for booking ${booking?.id}`)
+    console.log(`Downloading ${documentType} for booking ${bookingData?.id}`)
     
     setDocumentStates(prev => ({
       ...prev,
@@ -152,8 +180,8 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     
     // Mock file download
     const element = document.createElement('a')
-    element.href = `data:text/plain;charset=utf-8,Mock ${documentType} content for booking ${booking?.id}`
-    element.download = `${documentType.replace(/\s+/g, '_')}_Booking_${booking?.id}.pdf`
+    element.href = `data:text/plain;charset=utf-8,Mock ${documentType} content for booking ${bookingData?.id}`
+    element.download = `${documentType.replace(/\s+/g, '_')}_Booking_${bookingData?.id}.pdf`
     document.body.appendChild(element)
     element.click()
     document.body.removeChild(element)
@@ -190,7 +218,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     const element = document.createElement('a')
     const zipContent = documentsToDownload.map(doc => `${doc} content`).join('\n\n')
     element.href = `data:application/zip;charset=utf-8,${encodeURIComponent(zipContent)}`
-    element.download = `Booking_${booking?.id}_Documents.zip`
+    element.download = `Booking_${bookingData?.id}_Documents.zip`
     document.body.appendChild(element)
     element.click()
     document.body.removeChild(element)
@@ -218,7 +246,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     <div className="h-full bg-gray-900 text-white overflow-y-auto">
       {/* Header with Breadcrumb Navigation */}
       <BreadcrumbHeader
-        bookingNumber={booking?.id}
+        bookingNumber={bookingData?.bookingNumber || bookingData?.id}
         onSeascapeClick={handleSeascapeNavigation}
         onBookingManagementClick={handleBookingManagementNavigation}
         onBack={handleBackNavigation}
@@ -394,6 +422,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
               {[
                 { key: 'bookingConfirmed', label: 'Booking Confirmed', icon: '✓' },
                 { key: 'depositPaid', label: 'Deposit Paid', icon: '💰' },
+                { key: 'finalPaymentPaid', label: 'Full Payment Made', icon: '✅' },
                 { key: 'contractSent', label: 'Contract Sent', icon: '📄' },
                 { key: 'contractSigned', label: 'Contract Signed', icon: '✍️' },
                 { key: 'depositInvoiceSent', label: 'Deposit Invoice Sent', icon: '📧' },
