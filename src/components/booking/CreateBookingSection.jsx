@@ -16,7 +16,7 @@ import React, { useState, useEffect } from 'react'
 import { BookingModel, BookingStatus, CharterType, PaymentStatus } from '../../models'
 import yachtService from '../../services/supabase/YachtService.js'
 import { useBookingOperations } from '../../contexts/BookingContext'
-import BookingSuccessModal from '../modals/BookingSuccessModal'
+import BookingSuccessModal from '../modals/BookingSuccessModal.jsx'
 
 function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
   // Get booking operations from context

@@ -7,7 +7,7 @@
  * @created 2025-06-22
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navigation from '../Layout/Navigation'
 import Sidebar from '../Layout/Sidebar'
 import SitRepSection from './SitRepSection'
@@ -15,14 +15,16 @@ import YachtTimelineCalendar from '../calendar/YachtTimelineCalendar'
 import BookingFormModal from '../modals/BookingFormModal'
 import { CreateBookingSection } from '../booking'
 import AdminConfigPage from '../admin/AdminConfigPage'
+import Settings from '../settings/Settings.jsx'
 import BookingsList from '../booking/BookingsList'
 import BookingPanel from '../booking/BookingPanel'
 import { BookingModel, BookingStatus } from '../../models'
-import { BookingProvider } from '../../contexts/BookingContext'
+import { BookingProvider, useBookings } from '../../contexts/BookingContext'
 import UndoManager from '../common/UndoManager'
 import KeyboardShortcuts from '../common/KeyboardShortcuts'
 
-function MainDashboard() {
+// Inner component that has access to BookingContext
+function MainDashboardInner() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
   const [selectedBookingForModal, setSelectedBookingForModal] = useState(null)
   const [prefilledData, setPrefilledData] = useState({})
@@ -30,51 +32,45 @@ function MainDashboard() {
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [currentView, setCurrentView] = useState('list') // 'list' or 'panel'
   
-  // Initial mock bookings data for demonstration
-  const initialBookings = [
-    {
-      id: '1',
-      yacht_id: 'spectre',
-      customer_name: 'John Smith',
-      customer_email: 'john.smith@example.com',
-      booking_no: 'BK2024001',
-      trip_no: 'TR001',
-      start_datetime: new Date(2025, 5, 10, 9, 0),
-      end_datetime: new Date(2025, 5, 15, 17, 0),
-      status: BookingStatus.CONFIRMED,
-      summary: 'John Smith - Spectre',
-      total_value: 15000,
-      deposit_amount: 3000
-    },
-    {
-      id: '2',
-      yacht_id: 'disk-drive',
-      customer_name: 'Emily Johnson',
-      customer_email: 'emily.johnson@example.com',
-      booking_no: 'BK2024002',
-      trip_no: 'TR002',
-      start_datetime: new Date(2025, 5, 12, 10, 0),
-      end_datetime: new Date(2025, 5, 18, 16, 0),
-      status: BookingStatus.PENDING,
-      summary: 'Emily Johnson - Disk Drive',
-      total_value: 12000,
-      deposit_amount: 2400
-    },
-    {
-      id: '3',
-      yacht_id: 'arriva',
-      customer_name: 'Cardiff Yacht Club',
-      customer_email: 'events@cardiffyc.com',
-      booking_no: 'BK2024003',
-      trip_no: 'TR003',
-      start_datetime: new Date(2025, 5, 20, 8, 0),
-      end_datetime: new Date(2025, 5, 25, 18, 0),
-      status: BookingStatus.CONFIRMED,
-      type: 'owner',
-      summary: 'Cardiff Yacht Club - Arriva',
-      total_value: 0
+  // Get booking operations from context
+  const { getBooking, bookings } = useBookings()
+
+  // Listen for custom navigation events from child components
+  useEffect(() => {
+    const handleNavigateToBooking = async (event) => {
+      const { booking, section } = event.detail
+      if (booking && section === 'bookings') {
+        setActiveSection('bookings')
+        
+        // If we have a full booking object, use it directly
+        if (booking.customer_name || booking.customerName || booking.yacht_name || booking.yacht_id) {
+          // Ensure it's a BookingModel instance with toFrontend method
+          const bookingModel = booking.toFrontend ? booking : BookingModel.fromDatabase(booking)
+          setSelectedBooking(bookingModel)
+        } else if (booking.id) {
+          // If we only have an ID, find the booking in our context
+          const fullBooking = getBooking(booking.id)
+          if (fullBooking) {
+            // Ensure it's a BookingModel instance with toFrontend method
+            const bookingModel = fullBooking.toFrontend ? fullBooking : BookingModel.fromDatabase(fullBooking)
+            setSelectedBooking(bookingModel)
+          } else {
+            console.warn('Booking not found in context:', booking.id)
+            setSelectedBooking(booking)
+          }
+        } else {
+          setSelectedBooking(booking)
+        }
+        
+        setCurrentView('panel')
+      }
     }
-  ].map(b => new BookingModel(b))
+
+    window.addEventListener('navigateToBooking', handleNavigateToBooking)
+    return () => {
+      window.removeEventListener('navigateToBooking', handleNavigateToBooking)
+    }
+  }, [bookings, getBooking])
 
   const handleCreateBooking = (data) => {
     setSelectedBookingForModal(null) // null for create mode
@@ -82,10 +78,17 @@ function MainDashboard() {
     setIsBookingModalOpen(true)
   }
 
-  const handleQuickCreateBooking = () => {
-    // For quick create widget - no action needed since it saves directly
-    // This is just a placeholder for future integration
-    console.log('Quick create booking completed')
+  const handleQuickCreateBooking = (booking) => {
+    // When a booking is created via Quick Create and user clicks "Go to booking"
+    if (booking) {
+      // Navigate to bookings section and select the specific booking
+      setActiveSection('bookings')
+      setSelectedBooking(booking)
+      setCurrentView('panel')
+    } else {
+      // Default behavior for successful creation without navigation
+      console.log('Quick create booking completed')
+    }
   }
 
   const handleEditBooking = (booking) => {
@@ -204,6 +207,8 @@ function MainDashboard() {
           )
         }
         return <BookingsList onSelectBooking={handleSelectBooking} />
+      case 'settings':
+        return <Settings onSeascapeClick={handleSeascapeNavigation} onBack={() => setActiveSection('dashboard')} />
       case 'dashboard':
       default:
         return (
@@ -232,40 +237,50 @@ function MainDashboard() {
   }
 
   return (
-    <BookingProvider initialBookings={initialBookings}>
-      <div className="min-h-screen" data-testid="main-dashboard" style={{ backgroundColor: 'var(--color-ios-bg-secondary)' }}>
-        {/* Fixed Sidebar */}
-        <Sidebar 
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
-        />
+    <div className="min-h-screen" data-testid="main-dashboard" style={{ backgroundColor: 'var(--color-ios-bg-secondary)' }}>
+      {/* Fixed Sidebar */}
+      <Sidebar 
+        activeSection={activeSection}
+        onSectionChange={handleSectionChange}
+      />
+      
+      {/* Main content area - Offset by sidebar width */}
+      <div className="ml-12 min-h-screen flex flex-col">
+        <Navigation />
         
-        {/* Main content area - Offset by sidebar width */}
-        <div className="ml-12 min-h-screen flex flex-col">
-          <Navigation />
-          
-          {/* Content with top padding for fixed header */}
-          <div className="pt-16">
-            {renderMainContent()}
-          </div>
+        {/* Content with top padding for fixed header */}
+        <div className="pt-16">
+          {renderMainContent()}
         </div>
-
-        {/* Booking Form Modal */}
-        <BookingFormModal
-          isOpen={isBookingModalOpen}
-          onClose={handleCloseModal}
-          booking={selectedBookingForModal}
-          prefilledData={prefilledData}
-          onSave={handleBookingSaved}
-          onDelete={handleBookingDeleted}
-        />
-
-        {/* Undo Manager */}
-        <UndoManager />
-
-        {/* Keyboard Shortcuts */}
-        <KeyboardShortcuts onAction={handleKeyboardAction} />
       </div>
+
+      {/* Booking Form Modal */}
+      <BookingFormModal
+        isOpen={isBookingModalOpen}
+        onClose={handleCloseModal}
+        booking={selectedBookingForModal}
+        prefilledData={prefilledData}
+        onSave={handleBookingSaved}
+        onDelete={handleBookingDeleted}
+      />
+
+      {/* Undo Manager */}
+      <UndoManager />
+
+      {/* Keyboard Shortcuts */}
+      <KeyboardShortcuts onAction={handleKeyboardAction} />
+    </div>
+  )
+}
+
+// Main wrapper component that provides the BookingContext
+function MainDashboard() {
+  // Initial bookings data - clean start
+  const initialBookings = []
+
+  return (
+    <BookingProvider initialBookings={initialBookings}>
+      <MainDashboardInner />
     </BookingProvider>
   )
 }
