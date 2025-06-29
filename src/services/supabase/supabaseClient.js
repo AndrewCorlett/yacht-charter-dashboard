@@ -7,10 +7,20 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-// Get environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true'
+// Get environment variables with fallback
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 
+  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app') 
+    ? 'https://kbwjtihjyhapaclyytxn.supabase.co' 
+    : import.meta.env.VITE_SUPABASE_URL)
+
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 
+  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
+    ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtid2p0aWhqeWhhcGFjbHl5dHhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5MzIxMjksImV4cCI6MjA2NjUwODEyOX0.i6vbPAhTkfwInLnvfmNDblUNdEF4Y-r0jzXMiKUZtqI'
+    : import.meta.env.VITE_SUPABASE_ANON_KEY)
+
+const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true' || 
+  (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'))
+
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 
 // Debug logging for production
@@ -20,6 +30,16 @@ console.log('Supabase initialization debug:', {
   useSupabase,
   useMockData,
   url: supabaseUrl ? `${supabaseUrl.slice(0, 20)}...` : 'missing'
+})
+
+// Log all available environment variables
+console.log('All available env vars:', Object.keys(import.meta.env))
+console.log('Raw env values:', {
+  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  VITE_USE_SUPABASE: import.meta.env.VITE_USE_SUPABASE,
+  NODE_ENV: import.meta.env.NODE_ENV,
+  MODE: import.meta.env.MODE
 })
 
 // Validate configuration
