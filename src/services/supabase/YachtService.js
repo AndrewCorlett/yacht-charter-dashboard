@@ -14,7 +14,15 @@ class YachtService {
    * @returns {Promise<Array>} Array of yachts
    */
   async getYachts() {
-    if (!supabase) throw new Error('Supabase not initialized')
+    if (!supabase) {
+      console.error('Supabase client not available in YachtService.getYachts()')
+      console.error('Environment check:', {
+        VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL ? 'present' : 'missing',
+        VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing',
+        VITE_USE_SUPABASE: import.meta.env.VITE_USE_SUPABASE
+      })
+      throw new Error('Supabase not initialized')
+    }
 
     try {
       // Get all yachts from the yachts table

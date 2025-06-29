@@ -13,10 +13,24 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true'
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 
+// Debug logging for production
+console.log('Supabase initialization debug:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  useSupabase,
+  useMockData,
+  url: supabaseUrl ? `${supabaseUrl.slice(0, 20)}...` : 'missing'
+})
+
 // Validate configuration
 if (useSupabase && (!supabaseUrl || !supabaseAnonKey)) {
   console.error('Supabase configuration missing! Check your .env file')
   console.error('Required: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
+  console.error('Current values:', {
+    VITE_SUPABASE_URL: supabaseUrl || 'undefined',
+    VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? 'present' : 'missing',
+    VITE_USE_SUPABASE: useSupabase
+  })
 }
 
 // Create Supabase client instance
@@ -34,6 +48,9 @@ export const supabase = useSupabase && supabaseUrl && supabaseAnonKey
       }
     })
   : null
+
+// Additional debug logging
+console.log('Supabase client created:', !!supabase)
 
 // Configuration helper
 export const supabaseConfig = {
