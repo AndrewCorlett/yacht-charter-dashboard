@@ -7,7 +7,7 @@
  */
 
 import { supabase, supabaseConfig, TABLES, queryHelpers, RealtimeSubscription } from './supabaseClient.js'
-import { BookingModel } from '../../models'
+import { BookingModel, BookingNumberGenerator, BookingNumberFormat } from '../../models'
 
 class BookingService {
   constructor() {
@@ -28,7 +28,7 @@ class BookingService {
       
       // Generate booking number if not provided
       if (!booking.booking_number) {
-        booking.booking_number = await this.generateBookingNumber()
+        booking.booking_number = await this.generateBookingNumber(booking.yacht_id)
       }
 
       // Set timestamps
@@ -176,9 +176,12 @@ class BookingService {
         )
       }
 
+      // Transform field names to match database schema
+      const transformedUpdates = this.transformFieldNames(updates)
+
       const { data, error } = await supabase
         .from(TABLES.BOOKINGS)
-        .update(updates)
+        .update(transformedUpdates)
         .eq('id', id)
         .select()
         .single()
@@ -432,13 +435,55 @@ class BookingService {
   }
 
   /**
-   * Helper: Generate booking number
+   * Helper: Generate booking number using sophisticated generator
    */
-  async generateBookingNumber() {
-    const prefix = 'BK'
-    const year = new Date().getFullYear()
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-    return `${prefix}-${year}-${random}`
+  async generateBookingNumber(yachtId = null) {
+    try {
+      // Create generator with year-month-sequence format for better organization
+      const generator = new BookingNumberGenerator({
+        format: BookingNumberFormat.YEAR_MONTH_SEQ,
+        prefix: 'BK',
+        sequenceLength: 3,
+        sequenceProvider: async (key, value = null) => {
+          // Use database-backed sequence for collision safety
+          if (value !== null) {
+            // This would be implemented with a sequences table in production
+            return value
+          }
+          
+          // For now, get count from existing bookings to ensure uniqueness
+          const { count } = await supabase
+            .from(TABLES.BOOKINGS)
+            .select('*', { count: 'exact', head: true })
+          
+          return (count || 0) + 1
+        }
+      })
+
+      // Load existing booking numbers for collision detection
+      const { data: existingBookings } = await supabase
+        .from(TABLES.BOOKINGS)
+        .select('booking_number')
+      
+      if (existingBookings) {
+        existingBookings.forEach(booking => {
+          if (booking.booking_number) {
+            generator._existingNumbers.add(booking.booking_number)
+          }
+        })
+      }
+
+      // Generate the booking number
+      return await generator.generateBookingNumber({ yachtId })
+    } catch (error) {
+      console.error('Booking number generation error:', error)
+      // Fallback to simple generation
+      const prefix = 'BK'
+      const year = new Date().getFullYear()
+      const month = String(new Date().getMonth() + 1).padStart(2, '0')
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+      return `${prefix}${year}${month}${random}`
+    }
   }
 
   /**
@@ -464,6 +509,95 @@ class BookingService {
   isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
+  }
+
+  /**
+   * Transform frontend camelCase field names to database snake_case
+   * This handles the crewExperienceFile object decomposition issue
+   */
+  transformFieldNames(data) {
+    const fieldMappings = {
+      // Financial fields
+      'balanceDue': 'balance_due',
+      'totalAmount': 'total_amount',
+      'depositAmount': 'deposit_amount',
+      'baseRate': 'base_rate',
+      
+      // Customer fields
+      'firstName': 'customer_first_name',
+      'surname': 'customer_surname',
+      'email': 'customer_email',
+      'phone': 'customer_phone',
+      'street': 'customer_street',
+      'city': 'customer_city',
+      'postcode': 'customer_postcode',
+      'country': 'customer_country',
+      
+      // Booking details
+      'charterType': 'charter_type',
+      'startDate': 'start_date',
+      'endDate': 'end_date',
+      'portOfDeparture': 'port_of_departure',
+      'portOfArrival': 'port_of_arrival',
+      'yachtId': 'yacht_id',
+      'customerId': 'customer_id',
+      'bookingNumber': 'booking_number',
+      
+      // Status fields
+      'bookingStatus': 'booking_status',
+      'paymentStatus': 'payment_status',
+      'bookingConfirmed': 'booking_confirmed',
+      'depositPaid': 'deposit_paid',
+      'finalPaymentPaid': 'final_payment_paid',
+      'contractSent': 'contract_sent',
+      'contractSigned': 'contract_signed',
+      'depositInvoiceSent': 'deposit_invoice_sent',
+      'receiptIssued': 'receipt_issued',
+      
+      // Timestamp fields
+      'createdAt': 'created_at',
+      'updatedAt': 'updated_at',
+      
+      // File fields
+      'crewExperienceFileName': 'crew_experience_file_name',
+      'crewExperienceFileUrl': 'crew_experience_file_url',
+      'crewExperienceFileSize': 'crew_experience_file_size',
+      
+      // Notes
+      'specialRequirements': 'special_requirements',
+      'notes': 'notes'
+    }
+    
+    const transformed = {}
+    
+    for (const [key, value] of Object.entries(data)) {
+      // Skip nested status object - we use flattened fields instead
+      if (key === 'status' && typeof value === 'object') {
+        continue
+      }
+      
+      // Handle crewExperienceFile object decomposition
+      if (key === 'crewExperienceFile' && value && typeof value === 'object') {
+        // Decompose the file object into individual database fields
+        if (value.name) {
+          transformed.crew_experience_file_name = value.name
+        }
+        if (value.url) {
+          transformed.crew_experience_file_url = value.url
+        }
+        if (value.size) {
+          transformed.crew_experience_file_size = value.size
+        }
+        // Don't include the original object field
+        continue
+      }
+      
+      // Use mapped field name if available, otherwise keep original
+      const dbFieldName = fieldMappings[key] || key
+      transformed[dbFieldName] = value
+    }
+    
+    return transformed
   }
 
   /**

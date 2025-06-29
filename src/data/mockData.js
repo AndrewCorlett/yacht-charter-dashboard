@@ -1,115 +1,247 @@
 /**
- * Mock Charter Data
+ * Mock Data for Development and Testing
  * 
- * Centralized mock data for the SIT REP widget and other charter-related components.
+ * Contains sample charter bookings and yacht data for testing
+ * the calendar integration and booking management features.
  * 
  * @author AI Agent
- * @created 2025-06-26
+ * @created 2025-06-27
  */
 
-/**
- * Charter type definition (JSDoc for type safety in JS)
- * @typedef {Object} Charter
- * @property {string} id - Unique charter identifier
- * @property {string} yachtName - Name of the yacht
- * @property {string} startDate - Start date in ISO format
- * @property {string} endDate - End date in ISO format
- * @property {"active" | "upcoming"} status - Charter status
- * @property {string} calendarColor - Hex color or Tailwind color token
- * @property {"tentative" | "unavailable" | "full-paid" | "deposit-paid"} paymentStatus - Payment/booking status
- * @property {boolean} hasOverdueTasks - Whether booking has overdue tasks requiring attention
- */
+import { addDays, subDays, format } from 'date-fns'
 
-/**
- * Color coding definitions for SIT REP widget
- */
-export const COLOR_CODES = {
-  TENTATIVE: "#F97316",     // orange-500 - Booking confirmed but deposit not paid
-  UNAVAILABLE: "#EF4444",   // red-500 - Yacht unavailable
-  FULL_PAID: "#10B981",     // green-500 - Full balance paid
-  DEPOSIT_PAID: "#3B82F6",  // blue-500 - Deposit only paid
-  OVERDUE_STROKE: "#DC2626" // red-600 - Red outline for overdue tasks
-}
-
-/**
- * Color key legend for display in widget
- */
-export const COLOR_KEY_LEGEND = [
-  { color: COLOR_CODES.TENTATIVE, label: "Tentative", description: "Confirmed, no deposit" },
-  { color: COLOR_CODES.DEPOSIT_PAID, label: "Deposit Paid", description: "Deposit received" },
-  { color: COLOR_CODES.FULL_PAID, label: "Full Payment", description: "Balance paid" },
-  { color: COLOR_CODES.UNAVAILABLE, label: "Unavailable", description: "Yacht unavailable" }
-]
-
-/**
- * Mock charter data for development and testing
- * @type {Charter[]}
- */
-const mockCharters = [
-  // Boats currently out
+// Sample Charter Bookings for Calendar Testing
+export const sampleCharters = [
   {
-    id: "c1",
-    yachtName: "Calico Moon",
-    startDate: "2025-06-20T10:00:00.000Z",
-    endDate: "2025-06-27T16:00:00.000Z",
-    status: "active",
-    paymentStatus: "deposit-paid",
+    id: 'charter-001',
+    bookingCode: 'SC-2025-001',
+    yachtName: 'Calico Moon',
+    customerName: 'John Smith',
+    customerEmail: 'john.smith@email.com',
+    customerPhone: '+44 7123 456789',
+    startDate: '2025-06-28',
+    endDate: '2025-06-29',
+    paymentStatus: 'deposit-paid',
+    totalPrice: 2500,
     hasOverdueTasks: false,
-    calendarColor: "#3B82F6" // blue-500
+    notes: 'Weekend getaway charter'
   },
   {
-    id: "c2",
-    yachtName: "Spectre",
-    startDate: "2025-06-22T12:00:00.000Z",
-    endDate: "2025-06-29T18:00:00.000Z",
-    status: "active",
-    paymentStatus: "full-paid",
+    id: 'charter-002', 
+    bookingCode: 'SC-2025-002',
+    yachtName: 'Spectre',
+    customerName: 'Sarah Johnson',
+    customerEmail: 'sarah.j@email.com',
+    customerPhone: '+44 7234 567890',
+    startDate: '2025-07-01',
+    endDate: '2025-07-07',
+    paymentStatus: 'full-paid',
+    totalPrice: 4200,
+    hasOverdueTasks: false,
+    notes: 'Week-long family charter'
+  },
+  {
+    id: 'charter-003',
+    bookingCode: 'SC-2025-003',
+    yachtName: 'Alrisha', 
+    customerName: 'Mike Wilson',
+    customerEmail: 'mike.wilson@email.com',
+    customerPhone: '+44 7345 678901',
+    startDate: '2025-07-05',
+    endDate: '2025-07-08',
+    paymentStatus: 'tentative',
+    totalPrice: 1800,
     hasOverdueTasks: true,
-    calendarColor: "#10B981" // green-500
-  },
-
-  // Upcoming charters
-  {
-    id: "c3",
-    yachtName: "Alrisha",
-    startDate: "2025-07-05T09:00:00.000Z",
-    endDate: "2025-07-12T15:00:00.000Z",
-    status: "upcoming",
-    paymentStatus: "tentative",
-    hasOverdueTasks: false,
-    calendarColor: "#F59E0B" // amber-500
+    notes: 'Corporate team building event'
   },
   {
-    id: "c4",
-    yachtName: "Disk Drive",
-    startDate: "2025-07-10T08:00:00.000Z",
-    endDate: "2025-07-17T14:00:00.000Z",
-    status: "upcoming",
-    paymentStatus: "deposit-paid",
+    id: 'charter-004',
+    bookingCode: 'SC-2025-004',
+    yachtName: 'Disk Drive',
+    customerName: 'Emma Thompson',
+    customerEmail: 'emma.t@email.com', 
+    customerPhone: '+44 7456 789012',
+    startDate: '2025-07-10',
+    endDate: '2025-07-14',
+    paymentStatus: 'deposit-paid',
+    totalPrice: 3200,
     hasOverdueTasks: false,
-    calendarColor: "#8B5CF6" // purple-500
+    notes: 'Anniversary celebration charter'
   },
   {
-    id: "c5",
-    yachtName: "Zavaria",
-    startDate: "2025-07-15T11:00:00.000Z",
-    endDate: "2025-07-22T17:00:00.000Z",
-    status: "upcoming",
-    paymentStatus: "full-paid",
+    id: 'charter-005',
+    bookingCode: 'SC-2025-005',
+    yachtName: 'Zavaria',
+    customerName: 'David Brown',
+    customerEmail: 'david.brown@email.com',
+    customerPhone: '+44 7567 890123',
+    startDate: '2025-07-15',
+    endDate: '2025-07-17',
+    paymentStatus: 'full-paid',
+    totalPrice: 2100,
     hasOverdueTasks: false,
-    calendarColor: "#EC4899" // pink-500
+    notes: 'Birthday party charter'
   },
   {
-    id: "c6",
-    yachtName: "Mridula Sarwar",
-    startDate: "2025-07-25T09:00:00.000Z",
-    endDate: "2025-08-01T16:00:00.000Z",
-    status: "upcoming",
-    paymentStatus: "unavailable",
+    id: 'charter-test-today',
+    bookingCode: 'SC-2025-TEST',
+    yachtName: 'Spectre',
+    customerName: 'Test Customer Today',
+    customerEmail: 'test.today@example.com',
+    customerPhone: '+44 7000 000001',
+    startDate: format(new Date(), 'yyyy-MM-dd'),
+    endDate: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
+    paymentStatus: 'deposit-paid',
+    totalPrice: 3500,
     hasOverdueTasks: false,
-    calendarColor: "#EF4444" // red-500
+    notes: 'Test booking starting today for 1 week'
+  },
+  {
+    id: 'charter-test-upcoming',
+    bookingCode: 'SC-2025-UP01',
+    yachtName: 'Calico Moon',
+    customerName: 'Upcoming Charter Customer',
+    customerEmail: 'upcoming@example.com',
+    customerPhone: '+44 7000 000002',
+    startDate: format(addDays(new Date(), 3), 'yyyy-MM-dd'),
+    endDate: format(addDays(new Date(), 5), 'yyyy-MM-dd'),
+    paymentStatus: 'tentative',
+    totalPrice: 2200,
+    hasOverdueTasks: true,
+    notes: 'Upcoming charter with overdue tasks'
+  },
+  {
+    id: 'charter-test-paid',
+    bookingCode: 'SC-2025-PAID',
+    yachtName: 'Alrisha',
+    customerName: 'Fully Paid Customer',
+    customerEmail: 'paid@example.com',
+    customerPhone: '+44 7000 000003',
+    startDate: format(addDays(new Date(), 10), 'yyyy-MM-dd'),
+    endDate: format(addDays(new Date(), 12), 'yyyy-MM-dd'),
+    paymentStatus: 'full-paid',
+    totalPrice: 2800,
+    hasOverdueTasks: false,
+    notes: 'Fully paid charter booking'
   }
 ]
 
-export { mockCharters }
-export default mockCharters
+// Sample Yacht Fleet Data
+export const sampleYachts = [
+  {
+    id: 'calico-moon',
+    name: 'Calico Moon',
+    type: 'Sailing Yacht',
+    length: '12m',
+    capacity: 8,
+    location: 'Cardiff Marina',
+    status: 'active'
+  },
+  {
+    id: 'spectre',
+    name: 'Spectre', 
+    type: 'Motor Yacht',
+    length: '15m',
+    capacity: 10,
+    location: 'Cardiff Marina',
+    status: 'active'
+  },
+  {
+    id: 'alrisha',
+    name: 'Alrisha',
+    type: 'Sailing Yacht', 
+    length: '11m',
+    capacity: 6,
+    location: 'Cardiff Marina',
+    status: 'active'
+  },
+  {
+    id: 'disk-drive',
+    name: 'Disk Drive',
+    type: 'Motor Yacht',
+    length: '14m', 
+    capacity: 12,
+    location: 'Cardiff Marina',
+    status: 'active'
+  },
+  {
+    id: 'zavaria',
+    name: 'Zavaria',
+    type: 'Sailing Yacht',
+    length: '10m',
+    capacity: 6,
+    location: 'Cardiff Marina', 
+    status: 'active'
+  },
+  {
+    id: 'mridula-sarwar',
+    name: 'Mridula Sarwar',
+    type: 'Motor Yacht',
+    length: '16m',
+    capacity: 14,
+    location: 'Cardiff Marina',
+    status: 'active'
+  }
+]
+
+// Generate additional sample charter data for different months
+export const generateSampleCharters = (monthOffset = 0) => {
+  const baseDate = new Date()
+  baseDate.setMonth(baseDate.getMonth() + monthOffset)
+  
+  return [
+    ...sampleCharters,
+    // Add more dynamic charters based on current date
+    {
+      id: `charter-dynamic-001-${monthOffset}`,
+      bookingCode: `SC-2025-T${String(monthOffset).padStart(2, '0')}1`,
+      yachtName: 'Calico Moon',
+      customerName: 'Test User',
+      customerEmail: 'test@example.com',
+      customerPhone: '+44 7000 000000',
+      startDate: format(addDays(baseDate, 5), 'yyyy-MM-dd'),
+      endDate: format(addDays(baseDate, 7), 'yyyy-MM-dd'),
+      paymentStatus: 'tentative',
+      totalPrice: 1500,
+      hasOverdueTasks: false,
+      notes: 'Test booking for current month'
+    }
+  ]
+}
+
+// Color legend for SIT REP section - Updated to match requirements
+export const COLOR_KEY_LEGEND = [
+  { color: '#34C759', label: 'Full Balance Paid', status: 'full-paid', description: 'Charter fully paid' },
+  { color: '#007AFF', label: 'Deposit Only Paid', status: 'deposit-paid', description: 'Deposit received' },
+  { color: '#FF9500', label: 'Tentative', status: 'tentative', description: 'Confirmed but deposit not paid' },
+  { color: '#DC2626', label: 'Yacht Unavailable', status: 'unavailable', description: 'Yacht not available' }
+]
+
+// Payment status to color mapping
+export const PAYMENT_STATUS_COLORS = {
+  // Unified model enum values (preferred)
+  'pending': '#FF9500',        // Orange - Tentative (no deposit)
+  'deposit_paid': '#007AFF',   // Blue - Deposit only paid  
+  'full_payment': '#34C759',   // Green - Full balance paid
+  'refunded': '#8E8E93',       // Gray - Refunded bookings
+  
+  // Legacy format compatibility
+  'full-paid': '#34C759',      // Green - Full balance paid
+  'deposit-paid': '#007AFF',   // Blue - Deposit only paid  
+  'tentative': '#FF9500',      // Orange - Tentative (confirmed but deposit not paid)
+  'unavailable': '#DC2626',    // Red - Yacht unavailable
+  'cancelled': '#8E8E93',      // Gray - Cancelled
+  'maintenance': '#AF52DE',    // Purple - Maintenance
+  'owner-use': '#5856D6'       // Indigo - Owner use
+}
+
+// Legacy export for compatibility
+export const mockCharters = sampleCharters
+
+export default {
+  sampleCharters,
+  sampleYachts,
+  generateSampleCharters,
+  COLOR_KEY_LEGEND,
+  mockCharters
+}

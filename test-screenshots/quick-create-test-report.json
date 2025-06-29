@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-06-29T07:52:23.438Z",
+  "testSuite": "Quick Create Booking Form",
+  "tests": [
+    {
+      "name": "Load Dashboard and Verify Form Elements",
+      "status": "PASSED",
+      "duration": 4394,
+      "timestamp": "2025-06-29T07:52:29.343Z"
+    },
+    {
+      "name": "Fill Form with Valid Data",
+      "status": "PASSED",
+      "duration": 31442,
+      "timestamp": "2025-06-29T07:53:00.785Z"
+    },
+    {
+      "name": "Validate Form Fields",
+      "status": "PASSED",
+      "duration": 12596,
+      "timestamp": "2025-06-29T07:53:13.381Z"
+    },
+    {
+      "name": "Submit Form",
+      "status": "PASSED",
+      "duration": 4705,
+      "timestamp": "2025-06-29T07:53:18.086Z"
+    },
+    {
+      "name": "Check Booking Navigation",
+      "status": "PASSED",
+      "duration": 513,
+      "timestamp": "2025-06-29T07:53:18.599Z"
+    },
+    {
+      "name": "Check Calendar Integration",
+      "status": "PASSED",
+      "duration": 4688,
+      "timestamp": "2025-06-29T07:53:23.287Z"
+    },
+    {
+      "name": "Check Console Errors",
+      "status": "PASSED",
+      "duration": 0,
+      "timestamp": "2025-06-29T07:53:23.287Z"
+    },
+    {
+      "name": "Test Mobile Responsiveness",
+      "status": "PASSED",
+      "duration": 3977,
+      "timestamp": "2025-06-29T07:53:27.264Z"
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "errors": [
+      {
+        "type": "console_error",
+        "message": "Booking validation errors: JSHandle@object",
+        "timestamp": "2025-06-29T07:53:14.638Z"
+      }
+    ]
+  },
+  "testEnvironment": {
+    "url": "http://localhost:5173",
+    "viewport": {
+      "width": 1400,
+      "height": 900
+    },
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  },
+  "recommendations": [
+    "Address JavaScript errors to improve user experience",
+    "All tests passed! Consider adding more edge case tests"
+  ]
+}

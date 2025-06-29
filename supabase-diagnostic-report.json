@@ -1,0 +1,63 @@
+{
+  "timestamp": "2025-06-27T14:55:44.761Z",
+  "config": {
+    "supabaseUrl": "https://kbwjtihjyhapaclyytxn.supabase.co",
+    "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtid2p0aWhqeWhhcGFjbHl5dHhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5MzIxMjksImV4cCI6MjA2NjUwODEyOX0.i6vbPAhTkfwInLnvfmNDblUNdEF4Y-r0jzXMiKUZtqI",
+    "useSupabase": true
+  },
+  "tests": [
+    {
+      "test": "Environment Variables",
+      "status": "PASS",
+      "details": {
+        "info": "URL: https://kbwjtihjyhapaclyytxn.s..."
+      },
+      "timestamp": "2025-06-27T14:55:44.761Z"
+    },
+    {
+      "test": "Supabase Connection",
+      "status": "PASS",
+      "details": {
+        "info": "Found 1 bookings"
+      },
+      "timestamp": "2025-06-27T14:55:44.918Z"
+    },
+    {
+      "test": "Database Schema",
+      "status": "PASS",
+      "details": {
+        "info": "Bookings table exists and is accessible"
+      },
+      "timestamp": "2025-06-27T14:55:44.994Z"
+    },
+    {
+      "test": "Yachts Table",
+      "status": "PASS",
+      "details": {
+        "info": "Found 5 yachts"
+      },
+      "timestamp": "2025-06-27T14:55:45.066Z"
+    },
+    {
+      "test": "Real-time Channel Creation",
+      "status": "PASS",
+      "details": {
+        "info": "Can create real-time channels"
+      },
+      "timestamp": "2025-06-27T14:55:45.066Z"
+    },
+    {
+      "test": "Real-time Subscription Setup",
+      "status": "PASS",
+      "details": {
+        "info": "Subscription created successfully"
+      },
+      "timestamp": "2025-06-27T14:55:46.068Z"
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0
+  }
+}

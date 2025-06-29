@@ -30,11 +30,12 @@ function AddPricingRule({ isOpen, onClose, onSave }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const yachts = [
+    { id: 'calico-moon', name: 'Calico Moon' },
     { id: 'spectre', name: 'Spectre' },
-    { id: 'diskdrive', name: 'Disk Drive' },
-    { id: 'arriva', name: 'Arriva' },
-    { id: 'zambada', name: 'Zambada' },
-    { id: 'melba', name: 'Melba So' }
+    { id: 'alrisha', name: 'Alrisha' },
+    { id: 'disk-drive', name: 'Disk Drive' },
+    { id: 'zavaria', name: 'Zavaria' },
+    { id: 'mridula-sarwar', name: 'Mridula Sarwar' }
   ]
 
   const ruleTypes = [

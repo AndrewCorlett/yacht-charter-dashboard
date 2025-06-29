@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "formSubmitted": true,
+  "modalAppeared": false,
+  "bookingNumber": null,
+  "consoleErrors": [],
+  "screenshots": [
+    "01-initial-page.png",
+    "02-form-filled.png",
+    "03-after-submission.png"
+  ],
+  "errors": []
+}

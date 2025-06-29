@@ -23,7 +23,21 @@ export const LABELS = {
     SPECIFICATIONS: '[Yacht Specifications]',
     FEATURES: '[Yacht Features]',
     STATUS: '[Yacht Status]',
-    AVAILABILITY: '[Yacht Availability]'
+    AVAILABILITY: '[Yacht Availability]',
+    CABINS: '[Cabins]',
+    BERTHS: '[Berths]',
+    ENGINE_TYPE: '[Engine Type]',
+    YEAR_BUILT: '[Year Built]',
+    MAX_POB: '[Maximum Persons on Board]',
+    FUEL_CAPACITY: '[Fuel Capacity (Liters)]',
+    WATER_CAPACITY: '[Water Capacity (Liters)]',
+    DRAFT: '[Draft (Meters)]',
+    BEAM: '[Beam (Meters)]',
+    INSURANCE_POLICY: '[Insurance Policy Number]',
+    INSURANCE_EXPIRY: '[Insurance Expiry Date]',
+    DAILY_RATE: '[Daily Rate]',
+    WEEKLY_RATE: '[Weekly Rate]',
+    DESCRIPTION: '[Description]'
   },
 
   // === BOOKING RELATED LABELS ===
@@ -247,7 +261,9 @@ export const LABELS = {
     AUTOMATION: '[Automation Settings]',
     NOTIFICATIONS: '[Notification Settings]',
     USER_PREFERENCES: '[User Preferences]',
-    SYSTEM: '[System Settings]'
+    SYSTEM: '[System Settings]',
+    YACHT_MANAGEMENT: '[Yacht Management]',
+    FORMS_MANAGEMENT: '[Forms Management]'
   },
 
   // === COMMON UI LABELS ===
@@ -275,6 +291,72 @@ export const LABELS = {
     SCHEDULE: '[Schedule]',
     ENABLED: '[Enabled]',
     DISABLED: '[Disabled]'
+  },
+
+  // === YACHT OWNER LABELS ===
+  OWNER: {
+    NAME: '[Owner Name]',
+    EMAIL: '[Owner Email]',
+    PHONE: '[Owner Phone]',
+    ADDRESS_LINE_1: '[Owner Address Line 1]',
+    ADDRESS_LINE_2: '[Owner Address Line 2]',
+    CITY: '[Owner City]',
+    POSTCODE: '[Owner Postcode]',
+    COUNTRY: '[Owner Country]',
+    EMERGENCY_CONTACT_NAME: '[Emergency Contact Name]',
+    EMERGENCY_CONTACT_PHONE: '[Emergency Contact Phone]',
+    CONTACT_PREFERENCES: '[Contact Preferences]',
+    NOTES: '[Owner Notes]',
+    DETAILS: '[Owner Details]'
+  },
+
+  // === YACHT MANAGEMENT LABELS ===
+  YACHT_MANAGEMENT: {
+    SELECT_YACHT: '[Select Yacht]',
+    YACHT_SELECTOR: '[Yacht Selector]',
+    YACHT_DETAILS: '[Yacht Details]',
+    OWNER_DETAILS: '[Owner Details]',
+    CHARTER_COSTS: '[Charter Costs]',
+    SPECIFICATIONS_EDITOR: '[Specifications Editor]',
+    SEASONAL_PRICING: '[Seasonal Pricing]',
+    MANAGE_YACHTS: '[Manage Yachts]'
+  },
+
+  // === CHARTER COSTS LABELS ===
+  CHARTER_COSTS: {
+    SEASON_TYPE: '[Season Type]',
+    SEASON_NAME: '[Season Name]',
+    HIGH_SEASON: '[High Season]',
+    LOW_SEASON: '[Low Season]',
+    OTHER_SEASON: '[Other Season]',
+    SEASON_START_DATE: '[Season Start Date]',
+    SEASON_END_DATE: '[Season End Date]',
+    CHARTER_TOTAL: '[Charter Total]',
+    DEPOSIT_AMOUNT: '[Deposit Amount]',
+    SECURITY_DEPOSIT: '[Security Deposit]',
+    PRICING_TABLE: '[Pricing Table]',
+    ADD_SEASON: '[Add Season]',
+    EDIT_SEASON: '[Edit Season]',
+    DELETE_SEASON: '[Delete Season]'
+  },
+
+  // === FORMS MANAGEMENT LABELS ===
+  FORMS_MANAGEMENT: {
+    TEMPLATE_FORMS: '[Template Forms]',
+    UPLOAD_TEMPLATE: '[Upload Template]',
+    MANAGE_TEMPLATES: '[Manage Templates]',
+    FORM_TYPE: '[Form Type]',
+    ACTIVE_TEMPLATES: '[Active Templates]',
+    CONTRACT_TEMPLATE: '[Contract Template]',
+    INITIAL_TERMS_TEMPLATE: '[Initial Terms Template]',
+    DEPOSIT_INVOICE_TEMPLATE: '[Deposit Invoice Template]',
+    DEPOSIT_RECEIPT_TEMPLATE: '[Deposit Receipt Template]',
+    BALANCE_INVOICE_TEMPLATE: '[Balance Invoice Template]',
+    FILE_VERSION: '[File Version]',
+    UPLOADED_AT: '[Uploaded At]',
+    REPLACE_TEMPLATE: '[Replace Template]',
+    DOWNLOAD_TEMPLATE: '[Download Template]',
+    DELETE_TEMPLATE: '[Delete Template]'
   }
 }
 
@@ -298,5 +380,9 @@ export const CHART_LABELS = LABELS.CHART
 export const SETTINGS_LABELS = LABELS.SETTINGS
 export const COMMON_LABELS = LABELS.COMMON
 export const AUTOMATION_LABELS = LABELS.AUTOMATION
+export const OWNER_LABELS = LABELS.OWNER
+export const YACHT_MANAGEMENT_LABELS = LABELS.YACHT_MANAGEMENT
+export const CHARTER_COSTS_LABELS = LABELS.CHARTER_COSTS
+export const FORMS_MANAGEMENT_LABELS = LABELS.FORMS_MANAGEMENT
 
 export default LABELS

@@ -10,42 +10,33 @@ import { supabase, supabaseConfig, TABLES, queryHelpers } from './supabaseClient
 
 class YachtService {
   /**
-   * Get all unique yachts from bookings
-   * @returns {Promise<Array>} Array of unique yachts
+   * Get all yachts from yachts table
+   * @returns {Promise<Array>} Array of yachts
    */
   async getYachts() {
     if (!supabase) throw new Error('Supabase not initialized')
 
     try {
-      // Get all unique yacht information from bookings
+      // Get all yachts from the yachts table
       const { data, error } = await supabase
-        .from(TABLES.BOOKINGS)
-        .select('yacht_id, yacht_name')
-        .order('yacht_name', { ascending: true })
+        .from('yachts')
+        .select('id, name, length_feet, cabins, berths, daily_rate, weekly_rate, location')
+        .order('name', { ascending: true })
 
       queryHelpers.handleError(error, 'getYachts')
 
-      // Extract unique yachts
-      const yachtMap = new Map()
-      
-      (data || []).forEach(booking => {
-        if (booking.yacht_id && !yachtMap.has(booking.yacht_id)) {
-          yachtMap.set(booking.yacht_id, {
-            id: booking.yacht_id,
-            name: booking.yacht_name || booking.yacht_id,
-            // Additional yacht info would come from a separate yachts table
-            // For now, we'll add placeholder data
-            type: 'Sailing Yacht',
-            capacity: 8,
-            length: 45,
-            year: 2020,
-            base_price: 1500,
-            status: 'active'
-          })
-        }
-      })
-
-      return Array.from(yachtMap.values())
+      // Return yacht data directly from yachts table
+      return (data || []).map(yacht => ({
+        id: yacht.id,
+        name: yacht.name,
+        length: yacht.length_feet,
+        cabins: yacht.cabins,
+        berths: yacht.berths,
+        daily_rate: yacht.daily_rate,
+        weekly_rate: yacht.weekly_rate,
+        location: yacht.location,
+        status: 'active'
+      }))
     } catch (error) {
       console.error('Get yachts error:', error)
       throw error

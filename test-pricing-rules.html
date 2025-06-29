@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Rules Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 200px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .rule-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pricing Rules Integration Test</h1>
+    
+    <h2>Create New Pricing Rule</h2>
+    <form id="pricingForm">
+        <div class="form-group">
+            <label for="yacht_id">Yacht:</label>
+            <select id="yacht_id" required>
+                <option value="">Select a yacht</option>
+                <option value="calico-moon">Calico Moon</option>
+                <option value="spectre">Spectre</option>
+                <option value="alrisha">Alrisha</option>
+                <option value="disk-drive">Disk Drive</option>
+                <option value="zavaria">Zavaria</option>
+                <option value="mridula-sarwar">Mridula Sarwar</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="rule_type">Rule Type:</label>
+            <select id="rule_type" required>
+                <option value="base">Base Rate</option>
+                <option value="seasonal">Seasonal</option>
+                <option value="special">Special Offer</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="rate">Rate:</label>
+            <input type="number" id="rate" required placeholder="1200">
+        </div>
+
+        <div class="form-group">
+            <label for="currency">Currency:</label>
+            <select id="currency" required>
+                <option value="GBP">GBP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" required>
+        </div>
+
+        <div class="form-group">
+            <label for="end_date">End Date:</label>
+            <input type="date" id="end_date" required>
+        </div>
+
+        <div class="form-group">
+            <label for="min_hours">Minimum Hours:</label>
+            <input type="number" id="min_hours" required placeholder="4">
+        </div>
+
+        <div class="form-group">
+            <label for="priority">Priority:</label>
+            <input type="number" id="priority" required placeholder="1" min="1" max="10">
+        </div>
+
+        <div class="form-group">
+            <label for="is_active">Active:</label>
+            <input type="checkbox" id="is_active" checked>
+        </div>
+
+        <button type="submit">Create Pricing Rule</button>
+    </form>
+
+    <button onclick="loadExistingRules()">Load Existing Rules</button>
+    <button onclick="testConnection()">Test Supabase Connection</button>
+
+    <div id="results">
+        <h3>Results:</h3>
+        <div id="output">Click "Test Supabase Connection" to start</div>
+    </div>
+
+    <script>
+        // Supabase configuration - using the same config from the main app
+        const SUPABASE_URL = 'https://ktrcqqwvlhqmdppmzkzi.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cmNxcXd2bGhxbWRwcG16a3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTk0MDU4NDUsImV4cCI6MjAzNDk4MTg0NX0.YraMJAiKdYaIH6g_5rF6HK7LwAH_5aVOhBVmAM0fztk'
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+        function log(message, isError = false) {
+            const output = document.getElementById('output')
+            const timestamp = new Date().toLocaleTimeString()
+            const style = isError ? 'color: red;' : 'color: black;'
+            output.innerHTML += `<div style="${style}">[${timestamp}] ${message}</div>`
+        }
+
+        async function testConnection() {
+            log('Testing Supabase connection...')
+            try {
+                const { data, error } = await supabase.from('pricing_rules').select('count')
+                if (error) {
+                    log(`Connection error: ${error.message}`, true)
+                } else {
+                    log('Connection successful!')
+                    loadExistingRules()
+                }
+            } catch (err) {
+                log(`Exception: ${err.message}`, true)
+            }
+        }
+
+        async function loadExistingRules() {
+            log('Loading existing pricing rules...')
+            try {
+                const { data, error } = await supabase
+                    .from('pricing_rules')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+
+                if (error) {
+                    log(`Error loading rules: ${error.message}`, true)
+                    return
+                }
+
+                log(`Found ${data.length} existing pricing rules`)
+                
+                if (data.length > 0) {
+                    data.forEach(rule => {
+                        log(`Rule: ${rule.yacht_id} - ${rule.rule_type} - ${rule.currency} ${rule.rate} - Active: ${rule.is_active}`)
+                    })
+                } else {
+                    log('No existing pricing rules found')
+                }
+            } catch (err) {
+                log(`Exception loading rules: ${err.message}`, true)
+            }
+        }
+
+        document.getElementById('pricingForm').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            
+            const formData = {
+                yacht_id: document.getElementById('yacht_id').value,
+                rule_type: document.getElementById('rule_type').value,
+                rate: parseFloat(document.getElementById('rate').value),
+                currency: document.getElementById('currency').value,
+                start_date: document.getElementById('start_date').value,
+                end_date: document.getElementById('end_date').value,
+                min_hours: parseInt(document.getElementById('min_hours').value),
+                priority: parseInt(document.getElementById('priority').value),
+                is_active: document.getElementById('is_active').checked,
+                created_at: new Date().toISOString()
+            }
+
+            log('Creating pricing rule...')
+            log(`Data: ${JSON.stringify(formData, null, 2)}`)
+
+            try {
+                const { data, error } = await supabase
+                    .from('pricing_rules')
+                    .insert([formData])
+                    .select()
+
+                if (error) {
+                    log(`Error creating rule: ${error.message}`, true)
+                } else {
+                    log('Pricing rule created successfully!')
+                    log(`Created rule ID: ${data[0].id}`)
+                    
+                    // Clear the form
+                    document.getElementById('pricingForm').reset()
+                    
+                    // Reload existing rules
+                    loadExistingRules()
+                }
+            } catch (err) {
+                log(`Exception creating rule: ${err.message}`, true)
+            }
+        })
+
+        // Set default dates
+        const today = new Date()
+        const nextYear = new Date()
+        nextYear.setFullYear(today.getFullYear() + 1)
+        
+        document.getElementById('start_date').value = today.toISOString().split('T')[0]
+        document.getElementById('end_date').value = nextYear.toISOString().split('T')[0]
+    </script>
+</body>
+</html>

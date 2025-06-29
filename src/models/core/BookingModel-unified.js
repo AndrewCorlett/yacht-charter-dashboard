@@ -317,9 +317,11 @@ export class BookingModel {
    * @private
    */
   _isValidPhone(phone) {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
-    const cleaned = phone.replace(/[\s\-\(\)]/g, '')
-    return phoneRegex.test(cleaned) && cleaned.length >= 10
+    // More flexible phone validation - accepts any numeric format
+    // Removed strict +44 requirement as mentioned in Session 13
+    const cleaned = phone.replace(/[\s\-\(\)\+]/g, '')
+    // Must be at least 10 digits and contain only digits
+    return /^\d{10,15}$/.test(cleaned)
   }
 
   /**
@@ -405,7 +407,6 @@ export class BookingModel {
       // Yacht information (denormalized)
       yacht_id: this.yacht_id,
       yacht_name: this.yacht_name,
-      yacht_type: this.yacht_type,
       yacht_location: this.yacht_location,
       
       // Booking details
@@ -740,6 +741,7 @@ export class BookingModel {
       customer_country: formData.country,
       
       yacht_id: formData.yacht,
+      yacht_name: formData.yachtName, // Map yacht name to database field
       charter_type: formData.tripType,
       start_date: formData.startDate,
       end_date: formData.endDate,

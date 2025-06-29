@@ -55,23 +55,22 @@ export const fetchCharters = async () => {
 
 /**
  * Navigation helper function
- * In production, this would integrate with your routing system
+ * Triggers navigation to booking management page
  * 
  * @param {string} charterId - Charter ID to navigate to
  */
 export const navigateToBooking = (charterId) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`Navigating to booking: ${charterId}`)
-    // In development, just log the navigation
-    return
-  }
+  console.log(`Navigating to booking: ${charterId}`)
   
-  // Production implementation would be:
-  // window.location.href = `/bookings/${charterId}`
-  // or using React Router:
-  // navigate(`/bookings/${charterId}`)
+  // Dispatch custom event that MainDashboard is listening for
+  const navigationEvent = new CustomEvent('navigateToBooking', {
+    detail: {
+      booking: { id: charterId }, // Minimal booking object for navigation
+      section: 'bookings'
+    }
+  })
   
-  console.log(`Navigate to booking: ${charterId}`)
+  window.dispatchEvent(navigationEvent)
 }
 
 /**

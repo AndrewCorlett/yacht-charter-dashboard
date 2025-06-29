@@ -72,7 +72,7 @@ function BookingsList({ onSelectBooking }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-900 text-white">
+    <div className="h-full flex flex-col bg-gray-900 text-white pr-6">
       {/* Header */}
       <div className="p-6 border-b border-gray-700">
         <h1 className="text-2xl font-semibold mb-4">Bookings Management ({bookings.length} total)</h1>

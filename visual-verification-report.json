@@ -1,0 +1,404 @@
+{
+  "timestamp": "2025-06-28T01:23:43.466Z",
+  "screenshots": [
+    {
+      "description": "01-initial-state",
+      "filename": "visual-01-initial-state-2025-06-28T01-23-50-841Z.png",
+      "timestamp": "2025-06-28T01:23:51.772Z"
+    },
+    {
+      "description": "02-sidebar-expanded",
+      "filename": "visual-02-sidebar-expanded-2025-06-28T01-24-05-101Z.png",
+      "timestamp": "2025-06-28T01:24:05.947Z"
+    },
+    {
+      "description": "03-after-dashboard-click",
+      "filename": "visual-03-after-dashboard-click-2025-06-28T01-24-08-454Z.png",
+      "timestamp": "2025-06-28T01:24:09.595Z"
+    },
+    {
+      "description": "03-after-bookings-click",
+      "filename": "visual-03-after-bookings-click-2025-06-28T01-24-12-110Z.png",
+      "timestamp": "2025-06-28T01:24:13.294Z"
+    },
+    {
+      "description": "03-after-settings-click",
+      "filename": "visual-03-after-settings-click-2025-06-28T01-24-15-810Z.png",
+      "timestamp": "2025-06-28T01:24:16.578Z"
+    },
+    {
+      "description": "03-after-admin-config-click",
+      "filename": "visual-03-after-admin-config-click-2025-06-28T01-24-19-090Z.png",
+      "timestamp": "2025-06-28T01:24:20.006Z"
+    },
+    {
+      "description": "04-main-content-analysis",
+      "filename": "visual-04-main-content-analysis-2025-06-28T01-24-21-012Z.png",
+      "timestamp": "2025-06-28T01:24:22.876Z"
+    },
+    {
+      "description": "05-responsive-desktop",
+      "filename": "visual-05-responsive-desktop-2025-06-28T01-24-24-882Z.png",
+      "timestamp": "2025-06-28T01:24:25.657Z"
+    },
+    {
+      "description": "05-responsive-tablet",
+      "filename": "visual-05-responsive-tablet-2025-06-28T01-24-28-944Z.png",
+      "timestamp": "2025-06-28T01:24:29.806Z"
+    },
+    {
+      "description": "05-responsive-mobile",
+      "filename": "visual-05-responsive-mobile-2025-06-28T01-24-31-846Z.png",
+      "timestamp": "2025-06-28T01:24:32.511Z"
+    },
+    {
+      "description": "06-form-analysis",
+      "filename": "visual-06-form-analysis-2025-06-28T01-24-33-558Z.png",
+      "timestamp": "2025-06-28T01:24:34.727Z"
+    }
+  ],
+  "findings": [
+    {
+      "type": "page-inspection",
+      "timestamp": "2025-06-28T01:23:52.275Z",
+      "data": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": true,
+          "buttons": 14,
+          "inputs": 13,
+          "navigation": 2
+        },
+        "sidebarInfo": {
+          "width": 48,
+          "isVisible": false,
+          "buttonsText": []
+        }
+      }
+    },
+    {
+      "type": "page-inspection",
+      "timestamp": "2025-06-28T01:24:06.450Z",
+      "data": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": true,
+          "buttons": 14,
+          "inputs": 13,
+          "navigation": 2
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "page-inspection",
+      "timestamp": "2025-06-28T01:24:10.098Z",
+      "data": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": true,
+          "buttons": 14,
+          "inputs": 13,
+          "navigation": 2
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "navigation-test",
+      "button": "Dashboard",
+      "success": true,
+      "timestamp": "2025-06-28T01:24:10.098Z",
+      "pageInfo": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": true,
+          "buttons": 14,
+          "inputs": 13,
+          "navigation": 2
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "page-inspection",
+      "timestamp": "2025-06-28T01:24:13.796Z",
+      "data": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": false,
+          "buttons": 11,
+          "inputs": 1,
+          "navigation": 2
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "navigation-test",
+      "button": "Bookings",
+      "success": true,
+      "timestamp": "2025-06-28T01:24:13.796Z",
+      "pageInfo": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": false,
+          "buttons": 11,
+          "inputs": 1,
+          "navigation": 2
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "page-inspection",
+      "timestamp": "2025-06-28T01:24:17.080Z",
+      "data": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": false,
+          "buttons": 13,
+          "inputs": 6,
+          "navigation": 4
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "navigation-test",
+      "button": "Settings",
+      "success": true,
+      "timestamp": "2025-06-28T01:24:17.080Z",
+      "pageInfo": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": false,
+          "buttons": 13,
+          "inputs": 6,
+          "navigation": 4
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "page-inspection",
+      "timestamp": "2025-06-28T01:24:20.508Z",
+      "data": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": true,
+          "buttons": 16,
+          "inputs": 0,
+          "navigation": 3
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "navigation-test",
+      "button": "Admin Config",
+      "success": true,
+      "timestamp": "2025-06-28T01:24:20.508Z",
+      "pageInfo": {
+        "title": "Yacht Charter Dashboard",
+        "url": "http://localhost:5173/",
+        "readyState": "complete",
+        "elementsFound": {
+          "sidebar": true,
+          "mainContent": true,
+          "buttons": 16,
+          "inputs": 0,
+          "navigation": 3
+        },
+        "sidebarInfo": {
+          "width": 256,
+          "isVisible": false,
+          "buttonsText": [
+            "Dashboard",
+            "Bookings",
+            "Settings",
+            "Admin Config"
+          ]
+        }
+      }
+    },
+    {
+      "type": "component-detection",
+      "timestamp": "2025-06-28T01:24:21.012Z",
+      "components": {}
+    },
+    {
+      "type": "responsive-test",
+      "viewport": "Desktop",
+      "dimensions": "1400x900",
+      "timestamp": "2025-06-28T01:24:25.657Z",
+      "info": {
+        "scrollWidth": 1400,
+        "clientWidth": 1400,
+        "hasHorizontalOverflow": false,
+        "sidebarVisible": false
+      }
+    },
+    {
+      "type": "responsive-test",
+      "viewport": "Tablet",
+      "dimensions": "768x1024",
+      "timestamp": "2025-06-28T01:24:29.806Z",
+      "info": {
+        "scrollWidth": 768,
+        "clientWidth": 768,
+        "hasHorizontalOverflow": false,
+        "sidebarVisible": false
+      }
+    },
+    {
+      "type": "responsive-test",
+      "viewport": "Mobile",
+      "dimensions": "375x667",
+      "timestamp": "2025-06-28T01:24:32.511Z",
+      "info": {
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "hasHorizontalOverflow": false,
+        "sidebarVisible": false
+      }
+    },
+    {
+      "type": "form-analysis",
+      "timestamp": "2025-06-28T01:24:33.558Z",
+      "formInfo": {
+        "inputCount": 0,
+        "inputTypes": [],
+        "buttonCount": 16,
+        "buttonTexts": [
+          "Dashboard",
+          "Bookings",
+          "Settings",
+          "Admin Config",
+          "Nav",
+          "Export Config",
+          "Save Changes",
+          "💰Pricing",
+          "⛵Yachts",
+          "📄Documents",
+          "📋Policies",
+          "🎯Special OffersCreate promotional pricing rules"
+        ],
+        "formCount": 0
+      }
+    }
+  ],
+  "errors": [],
+  "summary": {
+    "totalScreenshots": 11,
+    "totalFindings": 15,
+    "totalErrors": 0,
+    "findingsByType": {
+      "page-inspection": 6,
+      "navigation-test": 4,
+      "component-detection": 1,
+      "responsive-test": 3,
+      "form-analysis": 1
+    },
+    "testCompleted": true
+  }
+}

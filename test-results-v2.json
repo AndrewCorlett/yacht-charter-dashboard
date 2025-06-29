@@ -1,0 +1,16 @@
+{
+  "success": false,
+  "formSubmitted": false,
+  "modalAppeared": false,
+  "bookingNumber": null,
+  "validationErrors": [],
+  "consoleErrors": [],
+  "networkRequests": [],
+  "screenshots": [
+    "v2-01-initial-page.png",
+    "v2-99-error.png"
+  ],
+  "errors": [
+    "No element found for selector: select[name=\"yachtId\"]"
+  ]
+}

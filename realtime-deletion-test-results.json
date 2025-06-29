@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-06-27T15:29:20.668Z",
+  "testPassed": false,
+  "phases": {
+    "initial": {
+      "hasSpectre": true,
+      "hasAlrisha": true,
+      "success": true
+    },
+    "monitoring": {
+      "eventsDetected": 0,
+      "events": [],
+      "success": false
+    },
+    "final": {
+      "hasSpectre": true,
+      "hasAlrisha": true,
+      "dataConsistent": true,
+      "syncWorking": true
+    }
+  }
+}

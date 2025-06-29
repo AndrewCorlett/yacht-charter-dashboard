@@ -13,7 +13,7 @@
  * @created 2025-06-22
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import CalendarHeader from './CalendarHeader'
 import BookingCell from './BookingCell'
 import CalendarLegend from './CalendarLegend'
@@ -49,32 +49,37 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
   // Get yacht data from unified data service (same source as SIT REP)
   const { charters } = useUnifiedData()
   
-  // Extract unique yacht names from unified charter data
+  // Always show the same 6 yachts for consistent grid layout
   const yachts = useMemo(() => {
-    // If no charters or bookings, use fallback with correct yacht names
-    if (charters.length === 0 && bookings.length === 0) {
-      return [
-        { id: 'calico-moon', name: 'Calico Moon' },
-        { id: 'spectre', name: 'Spectre' },
-        { id: 'alrisha', name: 'Alrisha' },
-        { id: 'disk-drive', name: 'Disk Drive' },
-        { id: 'zavaria', name: 'Zavaria' },
-        { id: 'mridula-sarwar', name: 'Mridula Sarwar' }
-      ]
-    }
+    // Fixed yacht list for consistent calendar display
+    const fixedYachts = [
+      { id: 'calico-moon', name: 'Calico Moon' },
+      { id: 'spectre', name: 'Spectre' },
+      { id: 'alrisha', name: 'Alrisha' },
+      { id: 'disk-drive', name: 'Disk Drive' },
+      { id: 'zavaria', name: 'Zavaria' },
+      { id: 'mridula-sarwar', name: 'Mridula Sarwar' }
+    ]
     
     const uniqueYachts = new Map()
     
-    // Add yachts from unified charter data
-    charters.forEach(charter => {
-      const yachtId = charter.yachtName.toLowerCase().replace(/\s+/g, '-')
-      uniqueYachts.set(yachtId, {
-        id: yachtId,
-        name: charter.yachtName
-      })
+    // Start with fixed yachts to ensure they always appear
+    fixedYachts.forEach(yacht => {
+      uniqueYachts.set(yacht.id, yacht)
     })
     
-    // Add yachts from existing bookings (in case there are bookings without charters)
+    // Add yachts from unified charter data (if they exist and are different)
+    charters.forEach(charter => {
+      const yachtId = charter.yachtName.toLowerCase().replace(/\s+/g, '-')
+      if (!uniqueYachts.has(yachtId)) {
+        uniqueYachts.set(yachtId, {
+          id: yachtId,
+          name: charter.yachtName
+        })
+      }
+    })
+    
+    // Add yachts from existing bookings (if they exist and are different)
     bookings.forEach(booking => {
       if (booking.yacht_name || booking.yacht_id) {
         const yachtName = booking.yacht_name || booking.yacht_id
@@ -88,8 +93,12 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
       }
     })
     
-    // Convert to array and sort for consistent display
-    return Array.from(uniqueYachts.values()).sort((a, b) => a.name.localeCompare(b.name))
+    // Return fixed yachts first, then any additional ones
+    const yachtArray = Array.from(uniqueYachts.values())
+    const sortedFixed = fixedYachts.filter(fixed => yachtArray.some(y => y.id === fixed.id))
+    const additional = yachtArray.filter(y => !fixedYachts.some(fixed => fixed.id === y.id))
+    
+    return [...sortedFixed, ...additional]
   }, [charters, bookings])
 
   // Generate dates for full month view (including padding days)
@@ -140,6 +149,10 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
     setCurrentDate(new Date())
   }, [])
 
+  const handleDateChange = useCallback((newDate) => {
+    setCurrentDate(newDate)
+  }, [])
+
   // Get current period display text
   const getCurrentPeriodText = () => {
     if (viewMode === 'month') {
@@ -159,10 +172,17 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
 
   const handleCellClick = useCallback(({ date, yachtId, booking, availability }) => {
     if (booking) {
-      // Handle booking click - show edit modal
-      if (onEditBooking) {
-        onEditBooking(booking)
-      }
+      // Handle booking click - navigate to booking management page
+      console.log('Navigating to booking from calendar:', booking.id || booking.booking_no)
+      
+      // Dispatch custom event to navigate to booking management
+      const navigationEvent = new CustomEvent('navigateToBooking', {
+        detail: {
+          booking: booking,
+          section: 'bookings'
+        }
+      })
+      window.dispatchEvent(navigationEvent)
     } else if (availability?.isAvailable) {
       // Handle empty cell click - show create booking modal
       if (onCreateBooking) {
@@ -278,9 +298,9 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
   return (
     <div 
       data-testid="yacht-calendar"
-      className="w-full h-full ios-card flex flex-col overflow-x-hidden" 
+      className="w-full h-full ios-card flex flex-col overflow-hidden min-w-0 min-h-0" 
       style={{ 
-        fontFamily: 'var(--font-family-ios)' 
+        fontFamily: 'var(--font-family-ios)'
       }}
     >
       {/* Fixed Header */}
@@ -329,6 +349,8 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
               viewMode={viewMode}
               onViewModeChange={handleViewModeChange}
               currentPeriodText={getCurrentPeriodText()}
+              currentDate={currentDate}
+              onDateChange={handleDateChange}
             />
           </div>
           
@@ -343,7 +365,7 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
               backgroundColor: 'var(--color-ios-bg-primary)'
             }}
           >
-            <div className="grid w-full" style={{ gridTemplateColumns: `120px repeat(${yachts.length}, minmax(120px, 1fr))` }}>
+            <div className="grid w-full" style={{ gridTemplateColumns: `120px repeat(${yachts.length}, 1fr)` }}>
               <div className="border-r calendar-header-border h-[50px] flex items-center justify-center font-medium" style={{ 
                 backgroundColor: 'var(--color-ios-gray-1)',
                 color: 'var(--color-ios-text-secondary)'
@@ -366,15 +388,19 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
           </div>
 
           {/* Calendar Container - Scrollable Content */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden" id="calendar-scroll-area">
-            <div className="grid w-full" style={{ gridTemplateColumns: `120px repeat(${yachts.length}, minmax(120px, 1fr))` }}>
+          <div className="flex-1 overflow-auto min-h-0 w-full" id="calendar-scroll-area">
+            <div className="grid w-full h-full" style={{ 
+              gridTemplateColumns: `120px repeat(${yachts.length}, 1fr)`,
+              gridTemplateRows: `repeat(${dates.length}, minmax(54px, 1fr))`,
+              minHeight: '100%'
+            }}>
               {/* Calendar Content */}
               {dates.map((date, dateIndex) => (
-                <>
+                <React.Fragment key={`date-row-${dateIndex}`}>
                   {/* Date cell */}
                   <div
                     key={`date-${dateIndex}`}
-                    className="border-b border-r calendar-grid-border flex items-center justify-center font-medium text-sm h-[60px]"
+                    className="border-b border-r calendar-grid-border flex items-center justify-center font-medium text-sm h-full min-h-[54px]"
                     style={{ 
                       backgroundColor: 'var(--color-ios-gray-1)',
                       color: 'var(--color-ios-text-secondary)'
@@ -386,12 +412,14 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
                   {/* Booking cells for this date */}
                   {yachts.map((yacht, yachtIndex) => {
                     const tabIndex = dateIndex === 0 && yachtIndex === 0 ? 0 : -1
+                    const availability = getDateAvailability(date, yacht.id)
+                    const cellBooking = availability?.booking || null
                     return (
                       <BookingCell
                         key={`${yacht.id}-${dateIndex}`}
                         date={date}
                         yachtId={yacht.id}
-                        booking={null}
+                        booking={cellBooking}
                         allBookings={bookings}
                         onClick={handleCellClick}
                         onDragStart={handleDragStart}
@@ -400,11 +428,11 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
                         tabIndex={tabIndex}
                         isDragging={draggedBooking?.id && 
                                    draggedBooking.yacht_id === yacht.id &&
-                                   getDateAvailability(date, yacht.id).booking?.id === draggedBooking.id}
+                                   cellBooking?.id === draggedBooking.id}
                       />
                     )
                   })}
-                </>
+                </React.Fragment>
               ))}
             </div>
           </div>

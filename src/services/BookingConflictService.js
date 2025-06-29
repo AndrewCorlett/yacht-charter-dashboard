@@ -21,7 +21,7 @@ import {
   format,
   differenceInDays
 } from 'date-fns'
-import { BookingStatus, CharterType } from '../models'
+import { BookingStatus, CharterType } from '../models/index.js'
 
 /**
  * Main Booking Conflict Service Class
@@ -161,10 +161,18 @@ export class BookingConflictService {
     const dayStart = startOfDay(date)
     const dayEnd = endOfDay(date)
 
-    const yachtBookings = bookings.filter(booking => 
-      booking.yacht_id === yachtId &&
-      booking.booking_status !== BookingStatus.CANCELLED
-    )
+    const yachtBookings = bookings.filter(booking => {
+      if (booking.booking_status === BookingStatus.CANCELLED) {
+        return false
+      }
+      
+      // Match by yacht_id (UUID format) or by yacht_name converted to kebab-case
+      const matchById = booking.yacht_id === yachtId
+      const matchByName = booking.yacht_name && 
+        booking.yacht_name.toLowerCase().replace(/\s+/g, '-') === yachtId
+      
+      return matchById || matchByName
+    })
 
     let status = 'available'
     let booking = null

@@ -14,6 +14,10 @@
 
 import { useState, memo, useMemo } from 'react'
 import { BookingConflictService } from '../../services/BookingConflictService'
+import { PAYMENT_STATUS_COLORS } from '../../data/mockData'
+import { getBookingDisplayProps, hexToRgba } from '../../utils/bookingColors'
+import { navigateToBooking } from '../../utils/charterService'
+import { format } from 'date-fns'
 
 const BookingCell = memo(function BookingCell({ 
   date, 
@@ -39,22 +43,15 @@ const BookingCell = memo(function BookingCell({
   }, [date, yachtId, allBookings])
 
   const getCellStyles = () => {
-    // Use availability status for styling
-    switch (availability.status) {
-      case 'confirmed':
-        return 'bg-ios-green/20 hover:bg-ios-green/30 border-ios-green/20'
-      case 'pending':
-        return 'bg-ios-orange/20 hover:bg-ios-orange/30 border-ios-orange/20'
-      case 'blocked':
-        return 'bg-ios-gray-3/50 hover:bg-ios-gray-3/70 border-ios-gray-3 cursor-not-allowed'
-      case 'maintenance':
-        return 'bg-ios-pink/20 hover:bg-ios-pink/30 border-ios-pink/20'
-      case 'owner':
-        return 'bg-ios-purple/20 hover:bg-ios-purple/30 border-ios-purple/20'
-      case 'available':
-      default:
-        return 'bg-ios-bg-primary hover:bg-ios-gray-1'
+    const booking = availability.booking
+    
+    if (!booking) {
+      // Available cell
+      return 'bg-ios-bg-primary hover:bg-ios-gray-1'
     }
+
+    // Use centralized booking color utility
+    return `cursor-pointer transition-all duration-200 hover:scale-105`
   }
 
   // Get status indicator for the cell
@@ -73,18 +70,29 @@ const BookingCell = memo(function BookingCell({
     // Don't allow clicks on blocked periods
     if (availability.status === 'blocked' && !booking) return
     
-    onClick({ 
-      date, 
-      yachtId, 
-      booking: availability.booking || booking,
-      availability 
-    })
+    const bookingInfo = availability.booking || booking
+    
+    // If there's a booking, navigate to booking management page
+    if (bookingInfo) {
+      navigateToBooking(bookingInfo.id)
+      return
+    }
+    
+    // Otherwise, call the original onClick handler for creating new bookings
+    if (onClick) {
+      onClick({ 
+        date, 
+        yachtId, 
+        booking: bookingInfo,
+        availability 
+      })
+    }
   }
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      onClick({ date, yachtId, booking: availability.booking || booking, availability })
+      handleClick()
     }
   }
 
@@ -150,13 +158,19 @@ const BookingCell = memo(function BookingCell({
     }
   }
 
+  // Get booking information to display
+  const bookingInfo = availability.booking || booking
+  
+  // Get booking display properties using centralized utility
+  const displayProps = bookingInfo ? getBookingDisplayProps(bookingInfo) : null
+
   return (
     <div
       data-testid="booking-cell"
       data-yacht-id={yachtId}
       data-date={date instanceof Date ? date.toISOString().split('T')[0] : date}
-      data-booking-id={booking?.id || availability.booking?.id || ''}
-      draggable={!!(booking || availability.booking)}
+      data-booking-id={bookingInfo?.id || ''}
+      draggable={!!bookingInfo}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       onMouseEnter={() => setIsHovered(true)}
@@ -167,7 +181,7 @@ const BookingCell = memo(function BookingCell({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`border-b border-r calendar-grid-border p-2 transition-all duration-200 relative ${
+      className={`border-b border-r calendar-grid-border p-2 relative ${
         getCellStyles()
       } ${
         isFocused ? 'ring-2 ring-ios-blue ring-inset z-10' : ''
@@ -177,17 +191,22 @@ const BookingCell = memo(function BookingCell({
         isDragOver && !availability.isAvailable ? 'ring-2 ring-red-400 bg-red-50' : ''
       } ${
         availability.status === 'blocked' ? 'cursor-not-allowed' : 'cursor-pointer'
+      } ${
+        // Red outline for overdue tasks
+        displayProps?.hasOverdueTasks ? 'ring-2 ring-red-600' : ''
       }`}
       style={{ 
-        height: '60px',
-        fontFamily: 'var(--font-family-ios)'
+        height: '54px',
+        fontFamily: 'var(--font-family-ios)',
+        backgroundColor: displayProps ? hexToRgba(displayProps.color, 0.2) : undefined,
+        borderColor: displayProps ? hexToRgba(displayProps.color, 0.4) : undefined
       }}
       tabIndex={tabIndex}
       role="button"
       aria-label={
-        availability.booking 
-          ? `${availability.booking.customer_name || availability.booking.customerName} - ${availability.status}` 
-          : `${availability.status === 'available' ? 'Available' : availability.status} slot for ${yachtId} on ${date}`
+        bookingInfo 
+          ? `${bookingInfo.customerName || bookingInfo.customer_name} - ${bookingInfo.bookingCode || bookingInfo.booking_code} - ${displayProps?.label || 'Unknown Status'}${displayProps?.hasOverdueTasks ? ' - Has overdue tasks' : ''}` 
+          : `Available slot for ${yachtId} on ${date}`
       }
     >
       {getStatusIndicator()}
@@ -207,28 +226,66 @@ const BookingCell = memo(function BookingCell({
         </div>
       )}
       
-      {availability.booking || booking ? (
-        <div className="text-xs overflow-hidden">
-          <div className="font-medium truncate flex items-center" 
-               title={(availability.booking || booking).customer_name || (availability.booking || booking).customerName} 
-               style={{ color: 'var(--color-ios-text-primary)' }}>
-            {(availability.booking || booking).customer_name || (availability.booking || booking).customerName}
-            {(booking || availability.booking) && (
-              <svg className="w-3 h-3 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Draggable">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-              </svg>
-            )}
+      {bookingInfo ? (
+        <div className="text-xs overflow-hidden h-full flex flex-col justify-between">
+          {/* Booking Code */}
+          <div className="font-bold truncate text-white text-center" 
+               title={bookingInfo.bookingCode || bookingInfo.booking_code}
+               style={{ 
+                 textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                 fontSize: '10px'
+               }}>
+            {bookingInfo.bookingCode || bookingInfo.booking_code}
           </div>
-          {((availability.booking || booking).booking_no || (availability.booking || booking).customerNo) && (
-            <div className="text-xs mt-0.5 truncate" 
-                 title={`${(availability.booking || booking).booking_no || (availability.booking || booking).customerNo} • ${(availability.booking || booking).trip_no || (availability.booking || booking).tripNo || 'N/A'}`} 
-                 style={{ color: 'var(--color-ios-text-tertiary)' }}>
-              {(availability.booking || booking).booking_no || (availability.booking || booking).customerNo} • {(availability.booking || booking).trip_no || (availability.booking || booking).tripNo || 'N/A'}
-            </div>
-          )}
+          
+          {/* Yacht Name */}
+          <div className="font-semibold truncate text-white text-center" 
+               title={bookingInfo.yachtName || bookingInfo.yacht_name}
+               style={{ 
+                 textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                 fontSize: '9px'
+               }}>
+            {bookingInfo.yachtName || bookingInfo.yacht_name}
+          </div>
+          
+          {/* Date Range */}
+          <div className="text-white/90 text-center truncate" 
+               style={{ 
+                 textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                 fontSize: '8px'
+               }}>
+            {(() => {
+              try {
+                const startDate = bookingInfo.startDate || bookingInfo.start_datetime
+                const endDate = bookingInfo.endDate || bookingInfo.end_datetime
+                
+                if (!startDate || !endDate) return 'Invalid Date'
+                
+                const start = new Date(startDate)
+                const end = new Date(endDate)
+                
+                if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                  return 'Invalid Date'
+                }
+                
+                return `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`
+              } catch (error) {
+                console.error('Date formatting error:', error)
+                return 'Date Error'
+              }
+            })()}
+          </div>
+          
+          {/* Drag indicator */}
+          <div className="absolute top-1 right-1">
+            <svg className="w-3 h-3 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Draggable">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+          </div>
         </div>
       ) : (
-        availability.status === 'available' && isHovered && (
+        // Available cell hover state
+        isHovered && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(74, 158, 255, 0.1)' }}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-ios-blue)' }}>

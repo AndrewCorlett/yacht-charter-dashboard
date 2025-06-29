@@ -13,7 +13,6 @@ CREATE TYPE payment_status AS ENUM ('pending', 'deposit_paid', 'full_payment', '
 CREATE TABLE yachts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL UNIQUE,
-    yacht_type TEXT,
     length_feet INTEGER,
     cabins INTEGER,
     berths INTEGER,
