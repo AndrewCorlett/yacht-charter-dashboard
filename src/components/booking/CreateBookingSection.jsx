@@ -14,9 +14,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { BookingModel, BookingStatus, CharterType, PaymentStatus } from '../../models'
-import yachtService from '../../services/supabase/YachtService.js'
+import yachtService from '../../services/supabase/YachtService'
 import { useBookingOperations } from '../../contexts/BookingContext'
-import BookingSuccessModal from '../modals/BookingSuccessModal.jsx'
+import BookingSuccessModal from '../modals/BookingSuccessModal'
 
 function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
   // Get booking operations from context
@@ -40,8 +40,8 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     // Booking Details
     startDate: '',
     endDate: '',
-    portOfDeparture: '',
-    portOfArrival: '',
+    portOfDeparture: 'Largs Marina',
+    portOfArrival: 'Largs Marina',
     tripType: CharterType.BAREBOAT,
     
     // Status - simplified for quick create
@@ -151,6 +151,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
         
         // Yacht and Booking Details
         yacht: formData.yacht,
+        yachtName: selectedYacht ? selectedYacht.name : '', // Include yacht name for Supabase
         tripType: formData.tripType,
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -296,7 +297,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
                 <option value="">Select a yacht</option>
                 {yachts.map(yacht => (
                   <option key={yacht.id} value={yacht.id}>
-                    {yacht.name} ({yacht.type})
+                    {yacht.name}
                   </option>
                 ))}
               </select>
@@ -378,7 +379,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
                 className={`ios-input text-sm ${
                   errors.phone ? 'border-red-500' : ''
                 }`}
-                placeholder="+44 7XXX XXXXXX"
+                placeholder="Phone number"
               />
               {errors.phone && <p data-testid="error-phone" className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.phone}</p>}
             </div>
@@ -528,7 +529,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
                 value={formData.portOfDeparture}
                 onChange={handleInputChange}
                 className="ios-input text-sm"
-                placeholder="e.g., Cardiff Marina"
+                placeholder="Largs Marina"
               />
             </div>
 
@@ -543,7 +544,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
                 value={formData.portOfArrival}
                 onChange={handleInputChange}
                 className="ios-input text-sm"
-                placeholder="e.g., Plymouth"
+                placeholder="Largs Marina"
               />
             </div>
           </div>

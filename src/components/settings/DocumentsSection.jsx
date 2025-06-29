@@ -16,8 +16,8 @@
  */
 
 import { useState, useEffect } from 'react'
-import { LABELS } from '../../config/labels.js'
-import FileUpload from '../common/FileUpload.jsx'
+import { LABELS } from '../../config/labels'
+import FileUpload from '../common/FileUpload'
 
 function DocumentsSection() {
   // [Document State] - Tracks uploaded documents and their metadata

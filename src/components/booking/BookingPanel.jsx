@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BreadcrumbHeader from '../common/BreadcrumbHeader'
 import UnsavedChangesModal from '../common/UnsavedChangesModal'
 import FileUpload from '../common/FileUpload'
@@ -7,6 +7,7 @@ import PartialDownloadWarningModal from '../modals/PartialDownloadWarningModal'
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 import { useBookingOperations } from '../../contexts/BookingContext'
 import { BookingModel } from '../../models'
+import yachtService from '../../services/supabase/YachtService'
 
 function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBookingManagementClick }) {
   // Get booking operations from context
@@ -62,6 +63,28 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
   const [partialDownloadModal, setPartialDownloadModal] = useState({ isOpen: false, missingDocuments: [] })
   const [lastBulkDownload, setLastBulkDownload] = useState(null)
 
+  // Yacht data state for database-driven dropdown
+  const [yachts, setYachts] = useState([])
+  const [loadingYachts, setLoadingYachts] = useState(true)
+
+  // Load yachts from database
+  useEffect(() => {
+    const loadYachts = async () => {
+      try {
+        setLoadingYachts(true)
+        const yachtData = await yachtService.getYachts()
+        setYachts(yachtData)
+      } catch (error) {
+        console.error('Failed to load yachts:', error)
+        setYachts([])
+      } finally {
+        setLoadingYachts(false)
+      }
+    }
+
+    loadYachts()
+  }, [])
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -96,10 +119,26 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
 
   const handleSave = async () => {
     try {
+      // Find the selected yacht to get both ID and name
+      const selectedYacht = yachts.find(y => y.id === formData.yacht)
+      
       // Create updated booking data in frontend format
+      // Flatten statusData object into individual fields to match database schema
       const updatedBookingData = {
         ...bookingData,
         ...formData,
+        // Include both yacht ID and yacht name for proper database storage
+        yacht: formData.yacht, // yacht ID is already in formData.yacht
+        yachtName: selectedYacht ? selectedYacht.name : '', // Include yacht name for caching
+        // Flatten status fields instead of nesting them
+        bookingConfirmed: statusData.bookingConfirmed,
+        depositPaid: statusData.depositPaid,
+        finalPaymentPaid: statusData.finalPaymentPaid,
+        contractSent: statusData.contractSent,
+        contractSigned: statusData.contractSigned,
+        depositInvoiceSent: statusData.depositInvoiceSent,
+        receiptIssued: statusData.receiptIssued,
+        // Keep the nested status for frontend compatibility
         status: statusData
       }
       
@@ -243,7 +282,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
 
 
   return (
-    <div className="h-full bg-gray-900 text-white overflow-y-auto">
+    <div className="h-full bg-gray-900 text-white overflow-y-auto pr-6">
       {/* Header with Breadcrumb Navigation */}
       <BreadcrumbHeader
         bookingNumber={bookingData?.bookingNumber || bookingData?.id}
@@ -260,16 +299,24 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Yacht *</label>
-                <select 
-                  value={formData.yacht}
-                  onChange={(e) => handleInputChange('yacht', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">Select a yacht</option>
-                  <option value="Serenity">Serenity</option>
-                  <option value="Atlantis">Atlantis</option>
-                  <option value="Poseidon">Poseidon</option>
-                </select>
+                {loadingYachts ? (
+                  <div className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-400">
+                    Loading yachts...
+                  </div>
+                ) : (
+                  <select 
+                    value={formData.yacht}
+                    onChange={(e) => handleInputChange('yacht', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">Select a yacht</option>
+                    {yachts.map(yacht => (
+                      <option key={yacht.id} value={yacht.id}>
+                        {yacht.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Trip Type</label>

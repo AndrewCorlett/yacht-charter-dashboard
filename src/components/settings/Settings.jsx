@@ -11,21 +11,29 @@
  */
 
 import { useState } from 'react'
-import { LABELS } from '../../config/labels.js'
-import DocumentsSection from './DocumentsSection.jsx'
-import PricingSection from './PricingSection.jsx'
-import AutomationSection from './AutomationSection.jsx'
-import BreadcrumbHeader from '../common/BreadcrumbHeader.jsx'
+import { LABELS } from '../../config/labels'
+import DocumentsSection from './DocumentsSection'
+import PricingSection from './PricingSection'
+import AutomationSection from './AutomationSection'
+import BreadcrumbHeader from '../common/BreadcrumbHeader'
+import YachtManagementSection from './YachtManagementSection'
+import FormsManagementSection from './FormsManagementSection'
 
 function Settings({ onSeascapeClick, onBack }) {
-  const [activeTab, setActiveTab] = useState('documents')
+  const [activeTab, setActiveTab] = useState('yachts')
 
   const tabs = [
     { 
-      key: 'documents', 
-      label: LABELS.SETTINGS.DOCUMENTS, 
-      icon: '📄',
-      description: 'Upload and manage document templates'
+      key: 'yachts', 
+      label: LABELS.SETTINGS.YACHT_MANAGEMENT, 
+      icon: '⚓',
+      description: 'Manage yacht details, specifications, and owner information'
+    },
+    { 
+      key: 'forms', 
+      label: LABELS.SETTINGS.FORMS_MANAGEMENT, 
+      icon: '📋',
+      description: 'Upload and manage template forms for auto-populate'
     },
     { 
       key: 'pricing', 
@@ -43,14 +51,16 @@ function Settings({ onSeascapeClick, onBack }) {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'documents':
-        return <DocumentsSection />
+      case 'yachts':
+        return <YachtManagementSection />
+      case 'forms':
+        return <FormsManagementSection />
       case 'pricing':
         return <PricingSection />
       case 'automation':
         return <AutomationSection />
       default:
-        return <DocumentsSection />
+        return <YachtManagementSection />
     }
   }
 
@@ -63,7 +73,7 @@ function Settings({ onSeascapeClick, onBack }) {
         onBack={onBack}
       />
 
-      <div className="p-6">
+      <div className="p-6 pr-12">
         {/* [Settings Header] - Main settings title and description */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{LABELS.NAVIGATION.SETTINGS}</h1>

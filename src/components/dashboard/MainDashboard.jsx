@@ -15,7 +15,7 @@ import YachtTimelineCalendar from '../calendar/YachtTimelineCalendar'
 import BookingFormModal from '../modals/BookingFormModal'
 import { CreateBookingSection } from '../booking'
 import AdminConfigPage from '../admin/AdminConfigPage'
-import Settings from '../settings/Settings.jsx'
+import Settings from '../settings/Settings'
 import BookingsList from '../booking/BookingsList'
 import BookingPanel from '../booking/BookingPanel'
 import { BookingModel, BookingStatus } from '../../models'
@@ -128,13 +128,14 @@ function MainDashboardInner() {
       case 'create-booking':
         handleCreateBooking({})
         break
-      case 'search':
+      case 'search': {
         // Focus search input if available
         const searchInput = document.querySelector('input[placeholder*="Search"]')
         if (searchInput) {
           searchInput.focus()
         }
         break
+      }
       case 'escape':
         if (isBookingModalOpen) {
           handleCloseModal()
@@ -212,9 +213,9 @@ function MainDashboardInner() {
       case 'dashboard':
       default:
         return (
-          <div className="flex flex-1 overflow-x-hidden">
+          <div className="flex flex-1 overflow-hidden h-full w-full">
             {/* Left Widgets - Constrained to avoid calendar overlap */}
-            <aside className="w-[calc(50vw-3rem)] p-4 overflow-y-auto overflow-x-hidden border-r" style={{ 
+            <aside className="w-[40vw] p-4 overflow-y-auto overflow-x-hidden border-r h-full flex-shrink-0" style={{ 
               backgroundColor: 'var(--color-ios-bg-grouped)', 
               borderColor: 'var(--color-ios-gray-3)' 
             }}>
@@ -223,7 +224,7 @@ function MainDashboardInner() {
             </aside>
 
             {/* Calendar - Fixed to viewport */}
-            <main className="calendar-container-fixed p-6 flex flex-col overflow-x-hidden" style={{ 
+            <main className="calendar-container-fixed p-4 flex flex-col overflow-hidden flex-1 h-full min-w-0 -ml-4 -mr-4" style={{ 
               backgroundColor: 'var(--color-ios-bg-secondary)' 
             }}>
               <YachtTimelineCalendar 
@@ -237,7 +238,7 @@ function MainDashboardInner() {
   }
 
   return (
-    <div className="min-h-screen" data-testid="main-dashboard" style={{ backgroundColor: 'var(--color-ios-bg-secondary)' }}>
+    <div className="h-screen w-screen overflow-hidden" data-testid="main-dashboard" style={{ backgroundColor: 'var(--color-ios-bg-secondary)' }}>
       {/* Fixed Sidebar */}
       <Sidebar 
         activeSection={activeSection}
@@ -245,11 +246,11 @@ function MainDashboardInner() {
       />
       
       {/* Main content area - Offset by sidebar width */}
-      <div className="ml-12 min-h-screen flex flex-col">
+      <div className="ml-12 h-screen w-full flex flex-col">
         <Navigation />
         
-        {/* Content with top padding for fixed header */}
-        <div className="pt-16">
+        {/* Content with top padding for fixed header - Fill remaining space */}
+        <div className="pt-16 flex-1 flex flex-col w-full h-full">
           {renderMainContent()}
         </div>
       </div>

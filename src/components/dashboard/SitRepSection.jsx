@@ -24,7 +24,8 @@ import {
   categorizeCharters, 
   formatDateRange 
 } from '../../utils/charterService'
-import { COLOR_KEY_LEGEND } from '../../data/mockData'
+import { COLOR_KEY_LEGEND, PAYMENT_STATUS_COLORS } from '../../data/mockData'
+import { getBookingDisplayProps } from '../../utils/bookingColors'
 import useUnifiedData from '../../hooks/useUnifiedData'
 
 function SitRepSection() {
@@ -119,44 +120,61 @@ function SitRepSection() {
   /**
    * Charter Card Component
    * Reusable card component for both active and upcoming charters
-   * Now includes red outline for overdue tasks
+   * Now includes red outline for overdue tasks and proper color coding using centralized booking color utility
    */
-  const CharterCard = ({ charter, testId, section }) => (
-    <button
-      key={charter.id}
-      data-testid={testId}
-      className="flex-shrink-0 w-48 h-20 p-3 rounded-lg transition-all duration-200 
-                 hover:scale-105 focus-visible:ring-2 focus-visible:ring-blue-500 
-                 focus-visible:ring-offset-2 focus:outline-none"
-      style={{ 
-        backgroundColor: charter.calendarColor,
-        minWidth: '12rem', // Ensure fixed minimum width
-        border: charter.hasOverdueTasks ? '2px solid #DC2626' : 'none', // Red outline for overdue tasks
-        boxShadow: charter.hasOverdueTasks ? '0 0 0 1px #DC2626' : 'none' // Additional red glow
-      }}
-      onClick={() => handleCardClick(charter.id)}
-      onKeyDown={(e) => handleCardKeyDown(e, charter.id)}
-      aria-label={`${charter.yachtName} charter from ${formatDateRange(charter.startDate, charter.endDate)}${charter.hasOverdueTasks ? ' - Has overdue tasks' : ''}`}
-    >
-      <div className="text-left h-full flex flex-col justify-between">
-        {/* Yacht name - bold */}
-        <div 
-          data-testid={`yacht-name-${charter.id}`}
-          className="font-bold text-white text-sm leading-tight mb-1"
-        >
-          {charter.yachtName}
+  const CharterCard = ({ charter, testId, section }) => {
+    // Get booking display properties using centralized utility
+    const displayProps = getBookingDisplayProps(charter)
+    const backgroundColor = displayProps.color
+    
+    return (
+      <button
+        key={charter.id}
+        data-testid={testId}
+        className="flex-shrink-0 w-48 h-20 p-3 rounded-lg transition-all duration-200 
+                   hover:scale-105 focus-visible:ring-2 focus-visible:ring-blue-500 
+                   focus-visible:ring-offset-2 focus:outline-none"
+        style={{ 
+          backgroundColor,
+          minWidth: '12rem', // Ensure fixed minimum width
+          border: displayProps.hasOverdueTasks ? '2px solid #DC2626' : 'none', // Red outline for overdue tasks
+          boxShadow: displayProps.hasOverdueTasks ? '0 0 0 1px #DC2626' : 'none' // Additional red glow
+        }}
+        onClick={() => handleCardClick(charter.id)}
+        onKeyDown={(e) => handleCardKeyDown(e, charter.id)}
+        aria-label={`${charter.yachtName} charter from ${formatDateRange(charter.startDate, charter.endDate)}${displayProps.hasOverdueTasks ? ' - Has overdue tasks' : ''}`}
+      >
+        <div className="text-left h-full flex flex-col justify-between">
+          {/* Yacht name at the top - largest and bold */}
+          <div 
+            data-testid={`yacht-name-${charter.id}`}
+            className="font-bold text-white text-sm leading-tight"
+            style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+          >
+            {charter.yachtName}
+          </div>
+          
+          {/* Charterer name in the middle */}
+          <div 
+            data-testid={`charterer-name-${charter.id}`}
+            className="text-white/90 text-xs leading-tight"
+            style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+          >
+            {charter.chartererName}
+          </div>
+          
+          {/* Date range at the bottom */}
+          <div 
+            data-testid={`date-range-${charter.id}`}
+            className="text-white/80 text-xs leading-tight"
+            style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+          >
+            {formatDateRange(charter.startDate, charter.endDate)}
+          </div>
         </div>
-        
-        {/* Date range */}
-        <div 
-          data-testid={`date-range-${charter.id}`}
-          className="text-white/90 text-xs leading-tight"
-        >
-          {formatDateRange(charter.startDate, charter.endDate)}
-        </div>
-      </div>
-    </button>
-  )
+      </button>
+    )
+  }
 
   /**
    * Empty State Component
@@ -170,64 +188,48 @@ function SitRepSection() {
 
   /**
    * Color Key Component
-   * Shows the color coding legend for the SIT REP widget
+   * Shows the color coding legend for the SIT REP widget - Compact horizontal layout
    */
   const ColorKey = () => (
-    <div className="mt-6 pt-4 border-t border-gray-200/20">
+    <div className="mt-4 pt-3 border-t border-gray-200/20">
       <h4 
-        className="text-xs font-medium mb-3 uppercase tracking-wide text-center" 
+        className="text-xs font-medium mb-2 uppercase tracking-wide text-center" 
         style={{ color: 'var(--color-ios-text-secondary)' }}
       >
         Color Key
       </h4>
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="flex flex-wrap justify-center gap-4 text-xs">
         {COLOR_KEY_LEGEND.map((item, index) => (
-          <div key={index} className="flex items-center gap-2">
+          <div key={index} className="flex items-center gap-1.5">
             {/* Color indicator */}
             <div 
-              className="w-3 h-3 rounded-sm flex-shrink-0"
+              className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
               style={{ backgroundColor: item.color }}
             ></div>
-            {/* Label and description */}
-            <div className="flex flex-col min-w-0">
-              <span 
-                className="font-medium truncate" 
-                style={{ color: 'var(--color-ios-text-primary)' }}
-              >
-                {item.label}
-              </span>
-              <span 
-                className="truncate leading-tight" 
-                style={{ color: 'var(--color-ios-text-tertiary)' }}
-              >
-                {item.description}
-              </span>
-            </div>
+            {/* Label only */}
+            <span 
+              className="font-medium whitespace-nowrap" 
+              style={{ color: 'var(--color-ios-text-primary)' }}
+            >
+              {item.label}
+            </span>
           </div>
         ))}
         {/* Special indicator for overdue tasks */}
-        <div className="flex items-center gap-2 col-span-2">
+        <div className="flex items-center gap-1.5">
           <div 
-            className="w-3 h-3 rounded-sm border-2 flex-shrink-0"
+            className="w-2.5 h-2.5 rounded-sm border flex-shrink-0"
             style={{ 
               backgroundColor: 'transparent',
               borderColor: '#DC2626'
             }}
           ></div>
-          <div className="flex flex-col min-w-0">
-            <span 
-              className="font-medium truncate" 
-              style={{ color: 'var(--color-ios-text-primary)' }}
-            >
-              Red Outline
-            </span>
-            <span 
-              className="truncate leading-tight" 
-              style={{ color: 'var(--color-ios-text-tertiary)' }}
-            >
-              Overdue tasks required
-            </span>
-          </div>
+          <span 
+            className="font-medium whitespace-nowrap" 
+            style={{ color: 'var(--color-ios-text-primary)' }}
+          >
+            Red Outline
+          </span>
         </div>
       </div>
     </div>
@@ -276,7 +278,7 @@ function SitRepSection() {
             >
               {charters.active.map(charter => (
                 <CharterCard
-                  key={charter.id}
+                  key={`active-${charter.id}`}
                   charter={charter}
                   testId={`boats-out-card-${charter.id}`}
                   section="boats-out"
@@ -313,7 +315,7 @@ function SitRepSection() {
             >
               {charters.upcoming.map(charter => (
                 <CharterCard
-                  key={charter.id}
+                  key={`upcoming-${charter.id}`}
                   charter={charter}
                   testId={`upcoming-charter-card-${charter.id}`}
                   section="upcoming"
@@ -330,7 +332,7 @@ function SitRepSection() {
       <ColorKey />
       
       {/* Hide scrollbars for WebKit browsers */}
-      <style jsx>{`
+      <style>{`
         [data-testid="boats-out-scroll-container"]::-webkit-scrollbar,
         [data-testid="upcoming-charters-scroll-container"]::-webkit-scrollbar {
           display: none;

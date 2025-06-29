@@ -16,7 +16,7 @@
  * @created 2025-06-28
  */
 
-import { LABELS } from '../../config/labels.js'
+import { LABELS } from '../../config/labels'
 
 function AutomationSection() {
   // [Future Feature Areas] - Planned automation capabilities

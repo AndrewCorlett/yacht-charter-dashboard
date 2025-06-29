@@ -17,7 +17,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { LABELS } from '../../config/labels.js'
+import { LABELS } from '../../config/labels'
 
 function PricingSection() {
   // [Pricing State] - Manages yacht pricing data and UI state
