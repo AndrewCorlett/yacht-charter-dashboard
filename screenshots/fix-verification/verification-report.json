@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-06-26T08:28:22.038Z",
+  "fixSuccessful": false,
+  "consoleResults": {
+    "errors": [
+      "Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. \n\nCheck the render method of `YachtTimelineCalendar`. ",
+      "Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s=\"%s\" or %s={value.toString()}. true jsx jsx true jsx",
+      "JavaScript Error: SyntaxError: Failed to execute 'querySelector' on 'Document': 'h2:has-text(\"SIT REP\")' is not a valid selector."
+    ],
+    "warnings": [],
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "error",
+        "text": "Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. \n\nCheck the render method of `YachtTimelineCalendar`. "
+      },
+      {
+        "type": "error",
+        "text": "Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s=\"%s\" or %s={value.toString()}. true jsx jsx true jsx"
+      }
+    ],
+    "hasCircularDependencyError": false,
+    "hasJavaScriptErrors": true,
+    "errorCount": 2,
+    "warningCount": 0
+  },
+  "loadingResults": {
+    "pageLoaded": true,
+    "title": "Yacht Charter Dashboard",
+    "appRootExists": true,
+    "dashboardExists": false
+  },
+  "sitrepResults": {
+    "sitrepExists": false,
+    "error": "Waiting for selector `h2:has-text(\"SIT REP\")` failed: Waiting failed: 10000ms exceeded"
+  },
+  "summary": {
+    "circularDependencyFixed": true,
+    "noJavaScriptErrors": false,
+    "pageLoads": true,
+    "sitrepWorks": false
+  }
+}

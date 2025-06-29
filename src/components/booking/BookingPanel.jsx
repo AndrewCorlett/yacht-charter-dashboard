@@ -1,40 +1,101 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import BreadcrumbHeader from '../common/BreadcrumbHeader'
+import UnsavedChangesModal from '../common/UnsavedChangesModal'
+import FileUpload from '../common/FileUpload'
+import DocumentGenerationModal from '../modals/DocumentGenerationModal'
+import PartialDownloadWarningModal from '../modals/PartialDownloadWarningModal'
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
+import { useBookingOperations } from '../../contexts/BookingContext'
+import { BookingModel } from '../../models'
+import yachtService from '../../services/supabase/YachtService'
 
-function BookingPanel({ booking, onSave, onDelete, onBack }) {
+function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBookingManagementClick }) {
+  // Get booking operations from context
+  const { updateBooking: updateBookingInContext, deleteBooking: deleteBookingInContext } = useBookingOperations()
+  
+  // Transform booking data from database format to frontend format
+  const bookingData = booking?.toFrontend ? booking.toFrontend() : (booking ? BookingModel.fromDatabase(booking).toFrontend() : {})
+  
   const [formData, setFormData] = useState({
-    yacht: booking?.yacht || '',
-    tripType: booking?.tripType || 'Charter',
-    startDate: booking?.startDate || '',
-    endDate: booking?.endDate || '',
-    portOfDeparture: booking?.portOfDeparture || '',
-    portOfArrival: booking?.portOfArrival || '',
-    firstName: booking?.firstName || '',
-    surname: booking?.surname || '',
-    email: booking?.email || '',
-    phone: booking?.phone || '',
+    yacht: bookingData.yacht || '',
+    tripType: bookingData.tripType || 'bareboat',
+    startDate: bookingData.startDate || '',
+    endDate: bookingData.endDate || '',
+    portOfDeparture: bookingData.portOfDeparture || '',
+    portOfArrival: bookingData.portOfArrival || '',
+    firstName: bookingData.firstName || '',
+    surname: bookingData.surname || '',
+    email: bookingData.email || '',
+    phone: bookingData.phone || '',
     // Address fields
-    street: booking?.address?.street || '',
-    city: booking?.address?.city || '',
-    postcode: booking?.address?.postcode || '',
-    country: booking?.address?.country || '',
-    // Crew experience
-    crewExperience: booking?.crewExperience || '',
-    crewDetails: booking?.crewDetails || ''
+    street: bookingData.street || '',
+    city: bookingData.city || '',
+    postcode: bookingData.postcode || '',
+    country: bookingData.country || '',
+    // Crew experience file
+    crewExperienceFile: bookingData.crewExperienceFile || null
   })
 
   const [statusData, setStatusData] = useState({
-    bookingConfirmed: booking?.status?.bookingConfirmed || false,
-    depositPaid: booking?.status?.depositPaid || false,
-    contractSent: booking?.status?.contractSent || false,
-    contractSigned: booking?.status?.contractSigned || false,
-    depositInvoiceSent: booking?.status?.depositInvoiceSent || false,
-    receiptIssued: booking?.status?.receiptIssued || false
+    bookingConfirmed: bookingData.status?.bookingConfirmed || false,
+    depositPaid: bookingData.status?.depositPaid || false,
+    finalPaymentPaid: bookingData.status?.finalPaymentPaid || false,
+    contractSent: bookingData.status?.contractSent || false,
+    contractSigned: bookingData.status?.contractSigned || false,
+    depositInvoiceSent: bookingData.status?.depositInvoiceSent || false,
+    receiptIssued: bookingData.status?.receiptIssued || false
   })
+
+  // Document generation state - use data from booking if available
+  const [documentStates, setDocumentStates] = useState(
+    bookingData.documentStates || {
+      'Contract': { generated: false, downloaded: false, updated: false },
+      'Deposit Invoice': { generated: false, downloaded: false, updated: false },
+      'Deposit Receipt': { generated: false, downloaded: false, updated: false },
+      'Remaining Balance Invoice': { generated: false, downloaded: false, updated: false },
+      'Remaining Balance Receipt': { generated: false, downloaded: false, updated: false },
+      'Hand-over Notes': { generated: false, downloaded: false, updated: false }
+    }
+  )
+
+  // Modal states
+  const [documentModal, setDocumentModal] = useState({ isOpen: false, documentType: null })
+  const [partialDownloadModal, setPartialDownloadModal] = useState({ isOpen: false, missingDocuments: [] })
+  const [lastBulkDownload, setLastBulkDownload] = useState(null)
+
+  // Yacht data state for database-driven dropdown
+  const [yachts, setYachts] = useState([])
+  const [loadingYachts, setLoadingYachts] = useState(true)
+
+  // Load yachts from database
+  useEffect(() => {
+    const loadYachts = async () => {
+      try {
+        setLoadingYachts(true)
+        const yachtData = await yachtService.getYachts()
+        setYachts(yachtData)
+      } catch (error) {
+        console.error('Failed to load yachts:', error)
+        setYachts([])
+      } finally {
+        setLoadingYachts(false)
+      }
+    }
+
+    loadYachts()
+  }, [])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }))
+  }
+
+  const handleFileUpload = (fileInfo) => {
+    setFormData(prev => ({
+      ...prev,
+      crewExperienceFile: fileInfo
     }))
   }
 
@@ -45,54 +106,190 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
     }))
   }
 
-  const handleSave = () => {
-    const updatedBooking = {
-      ...booking,
-      ...formData,
-      address: {
-        street: formData.street,
-        city: formData.city,
-        postcode: formData.postcode,
-        country: formData.country
-      },
-      status: statusData
+  // Unsaved changes tracking
+  const {
+    isDirty,
+    showUnsavedModal,
+    handleNavigation,
+    handleSaveAndGo,
+    handleDiscardAndGo,
+    handleCancel,
+    resetDirtyState
+  } = useUnsavedChanges(formData, statusData, bookingData)
+
+  const handleSave = async () => {
+    try {
+      // Find the selected yacht to get both ID and name
+      const selectedYacht = yachts.find(y => y.id === formData.yacht)
+      
+      // Create updated booking data in frontend format
+      // Flatten statusData object into individual fields to match database schema
+      const updatedBookingData = {
+        ...bookingData,
+        ...formData,
+        // Include both yacht ID and yacht name for proper database storage
+        yacht: formData.yacht, // yacht ID is already in formData.yacht
+        yachtName: selectedYacht ? selectedYacht.name : '', // Include yacht name for caching
+        // Flatten status fields instead of nesting them
+        bookingConfirmed: statusData.bookingConfirmed,
+        depositPaid: statusData.depositPaid,
+        finalPaymentPaid: statusData.finalPaymentPaid,
+        contractSent: statusData.contractSent,
+        contractSigned: statusData.contractSigned,
+        depositInvoiceSent: statusData.depositInvoiceSent,
+        receiptIssued: statusData.receiptIssued,
+        // Keep the nested status for frontend compatibility
+        status: statusData
+      }
+      
+      if (bookingData.id) {
+        // Update existing booking through context
+        await updateBookingInContext(bookingData.id, updatedBookingData)
+        resetDirtyState()
+      }
+      
+      // Also call the parent onSave if provided for UI updates
+      if (onSave) {
+        onSave(updatedBookingData)
+      }
+    } catch (error) {
+      console.error('Failed to save booking:', error)
+      // Error is handled by the context
     }
+  }
+
+  const handleDelete = async () => {
+    if (bookingData.id) {
+      try {
+        // Delete through context
+        await deleteBookingInContext(bookingData.id)
+        
+        // Call parent onDelete for UI updates (e.g., navigate away)
+        if (onDelete) {
+          onDelete(bookingData.id)
+        }
+      } catch (error) {
+        console.error('Failed to delete booking:', error)
+        // Error is handled by the context
+      }
+    }
+  }
+
+  // Navigation handlers that check for unsaved changes
+  const handleBackNavigation = () => {
+    handleNavigation(() => onBack())
+  }
+
+  const handleSeascapeNavigation = () => {
+    handleNavigation(() => onSeascapeClick && onSeascapeClick())
+  }
+
+  const handleBookingManagementNavigation = () => {
+    handleNavigation(() => onBookingManagementClick && onBookingManagementClick())
+  }
+
+  // Document generation functions
+  const handleGenerateDocument = (documentType) => {
+    setDocumentModal({ isOpen: true, documentType })
+  }
+
+  const handleDocumentGenerated = (documentType) => {
+    setDocumentStates(prev => ({
+      ...prev,
+      [documentType]: {
+        ...prev[documentType],
+        generated: true,
+        updated: lastBulkDownload ? new Date() > lastBulkDownload : false
+      }
+    }))
+  }
+
+  const handleDownloadDocument = (documentType) => {
+    // Mock download implementation
+    console.log(`Downloading ${documentType} for booking ${bookingData?.id}`)
     
-    if (onSave) {
-      onSave(updatedBooking)
+    setDocumentStates(prev => ({
+      ...prev,
+      [documentType]: {
+        ...prev[documentType],
+        downloaded: true,
+        updated: false
+      }
+    }))
+    
+    // Mock file download
+    const element = document.createElement('a')
+    element.href = `data:text/plain;charset=utf-8,Mock ${documentType} content for booking ${bookingData?.id}`
+    element.download = `${documentType.replace(/\s+/g, '_')}_Booking_${bookingData?.id}.pdf`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
+  const handleDownloadAll = () => {
+    const allDocumentTypes = Object.keys(documentStates)
+    const generatedDocuments = allDocumentTypes.filter(type => documentStates[type].generated)
+    const missingDocuments = allDocumentTypes.filter(type => !documentStates[type].generated)
+    
+    if (missingDocuments.length > 0) {
+      setPartialDownloadModal({ isOpen: true, missingDocuments })
+    } else {
+      performBulkDownload(generatedDocuments)
     }
   }
 
-  const handleDelete = () => {
-    if (onDelete && booking) {
-      onDelete(booking.id)
-    }
+  const performBulkDownload = (documentsToDownload) => {
+    console.log(`Bulk downloading documents:`, documentsToDownload)
+    
+    // Update all documents as downloaded
+    const updatedStates = { ...documentStates }
+    documentsToDownload.forEach(docType => {
+      updatedStates[docType] = {
+        ...updatedStates[docType],
+        downloaded: true,
+        updated: false
+      }
+    })
+    setDocumentStates(updatedStates)
+    setLastBulkDownload(new Date())
+    
+    // Mock zip file download
+    const element = document.createElement('a')
+    const zipContent = documentsToDownload.map(doc => `${doc} content`).join('\n\n')
+    element.href = `data:application/zip;charset=utf-8,${encodeURIComponent(zipContent)}`
+    element.download = `Booking_${bookingData?.id}_Documents.zip`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
   }
 
-  const generateDocument = (type) => {
-    console.log(`Generating ${type} document for booking ${booking?.id}`)
-    // Mock implementation
+  const handlePartialDownloadAnyway = () => {
+    const generatedDocuments = Object.keys(documentStates).filter(type => documentStates[type].generated)
+    performBulkDownload(generatedDocuments)
+    setPartialDownloadModal({ isOpen: false, missingDocuments: [] })
   }
+
+  const handlePartialDownloadCancel = () => {
+    setPartialDownloadModal({ isOpen: false, missingDocuments: [] })
+  }
+
+  const getDocumentStatusIcon = (documentType) => {
+    const state = documentStates[documentType]
+    if (!state.generated) return null
+    if (state.updated) return '!'
+    return '✓'
+  }
+
 
   return (
-    <div className="h-full bg-gray-900 text-white overflow-y-auto">
-      {/* Header */}
-      <div className="bg-blue-600 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={onBack}
-              className="text-white hover:text-gray-200 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-xl font-semibold">Seascape - Booking Panel</h1>
-          </div>
-          <div className="text-sm">Nav ↓</div>
-        </div>
-      </div>
+    <div className="h-full bg-gray-900 text-white overflow-y-auto pr-6">
+      {/* Header with Breadcrumb Navigation */}
+      <BreadcrumbHeader
+        bookingNumber={bookingData?.bookingNumber || bookingData?.id}
+        onSeascapeClick={handleSeascapeNavigation}
+        onBookingManagementClick={handleBookingManagementNavigation}
+        onBack={handleBackNavigation}
+      />
 
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -102,16 +299,24 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Yacht *</label>
-                <select 
-                  value={formData.yacht}
-                  onChange={(e) => handleInputChange('yacht', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">Select a yacht</option>
-                  <option value="Serenity">Serenity</option>
-                  <option value="Atlantis">Atlantis</option>
-                  <option value="Poseidon">Poseidon</option>
-                </select>
+                {loadingYachts ? (
+                  <div className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-gray-400">
+                    Loading yachts...
+                  </div>
+                ) : (
+                  <select 
+                    value={formData.yacht}
+                    onChange={(e) => handleInputChange('yacht', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">Select a yacht</option>
+                    {yachts.map(yacht => (
+                      <option key={yacht.id} value={yacht.id}>
+                        {yacht.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Trip Type</label>
@@ -120,9 +325,8 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
                   onChange={(e) => handleInputChange('tripType', e.target.value)}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                 >
-                  <option value="Charter">Charter</option>
-                  <option value="Day Trip">Day Trip</option>
-                  <option value="Corporate">Corporate</option>
+                  <option value="bareboat">bareboat</option>
+                  <option value="skippered charter">skippered charter</option>
                 </select>
               </div>
             </div>
@@ -212,7 +416,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
 
             {/* Address Entry Fields */}
             <div className="bg-gray-800 p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-4">Address Entry</h3>
+              <h3 className="text-lg font-medium mb-4">Address Entry - Charterer</h3>
               <div className="space-y-3">
                 <input
                   type="text"
@@ -247,30 +451,15 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
               </div>
             </div>
 
-            {/* Crew Experience */}
-            <div className="bg-gray-800 p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-4">Crew Experience</h3>
-              <div className="space-y-3">
-                <select
-                  value={formData.crewExperience}
-                  onChange={(e) => handleInputChange('crewExperience', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">Select experience level</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Professional">Professional</option>
-                </select>
-                <textarea
-                  value={formData.crewDetails}
-                  onChange={(e) => handleInputChange('crewDetails', e.target.value)}
-                  placeholder="Additional crew details and requirements..."
-                  rows={3}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-                />
-              </div>
-            </div>
+            {/* Crew Experience File Upload */}
+            <FileUpload
+              title="Crew Experience"
+              description="Upload crew experience document (PDF or Word)"
+              acceptedTypes=".pdf,.doc,.docx"
+              maxSize={10 * 1024 * 1024} // 10MB
+              onFileUpload={handleFileUpload}
+              currentFile={formData.crewExperienceFile}
+            />
           </div>
 
           {/* Right Column - Status and Actions */}
@@ -280,6 +469,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
               {[
                 { key: 'bookingConfirmed', label: 'Booking Confirmed', icon: '✓' },
                 { key: 'depositPaid', label: 'Deposit Paid', icon: '💰' },
+                { key: 'finalPaymentPaid', label: 'Full Payment Made', icon: '✅' },
                 { key: 'contractSent', label: 'Contract Sent', icon: '📄' },
                 { key: 'contractSigned', label: 'Contract Signed', icon: '✍️' },
                 { key: 'depositInvoiceSent', label: 'Deposit Invoice Sent', icon: '📧' },
@@ -322,15 +512,52 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
                   'Remaining Balance Invoice',
                   'Remaining Balance Receipt',
                   'Hand-over Notes'
-                ].map(docType => (
-                  <button
-                    key={docType}
-                    onClick={() => generateDocument(docType)}
-                    className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
-                  >
-                    <span className="text-sm">- {docType}</span>
-                  </button>
-                ))}
+                ].map(docType => {
+                  const statusIcon = getDocumentStatusIcon(docType)
+                  
+                  return (
+                    <div key={docType} className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleGenerateDocument(docType)}
+                        className="flex-1 text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                      >
+                        <span className="text-sm">- {docType}</span>
+                      </button>
+                      <button
+                        onClick={() => handleGenerateDocument(docType)}
+                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+                      >
+                        Generate
+                      </button>
+                      {statusIcon && (
+                        <button
+                          onClick={() => handleDownloadDocument(docType)}
+                          className={`w-8 h-8 rounded border-2 flex items-center justify-center font-bold text-sm transition-colors ${
+                            statusIcon === '!' 
+                              ? 'border-orange-400 bg-orange-400/20 text-orange-400 hover:bg-orange-400/30' 
+                              : 'border-green-400 bg-green-400/20 text-green-400 hover:bg-green-400/30'
+                          }`}
+                          title={statusIcon === '!' ? 'Document updated - click to download' : 'Document generated - click to download'}
+                        >
+                          {statusIcon}
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {/* Download All Button */}
+              <div className="mt-4 pt-4 border-t border-gray-600">
+                <button
+                  onClick={handleDownloadAll}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download All Files
+                </button>
               </div>
             </div>
 
@@ -340,9 +567,13 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
               <div className="flex gap-3">
                 <button
                   onClick={handleSave}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
+                  className={`flex-1 font-medium py-2 px-4 rounded transition-colors ${
+                    isDirty 
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
                 >
-                  Update Booking
+                  {isDirty ? 'Save Changes' : 'Update Booking'}
                 </button>
                 <button
                   onClick={handleDelete}
@@ -355,6 +586,38 @@ function BookingPanel({ booking, onSave, onDelete, onBack }) {
           </div>
         </div>
       </div>
+
+      {/* Unsaved Changes Modal */}
+      <UnsavedChangesModal
+        isOpen={showUnsavedModal}
+        onSaveAndGo={() => handleSaveAndGo(handleSave)}
+        onDiscardAndGo={handleDiscardAndGo}
+        onCancel={handleCancel}
+      />
+
+      {/* Document Generation Modal */}
+      <DocumentGenerationModal
+        isOpen={documentModal.isOpen}
+        onClose={() => setDocumentModal({ isOpen: false, documentType: null })}
+        documentType={documentModal.documentType}
+        onDownload={(docType) => {
+          handleDocumentGenerated(docType)
+          handleDownloadDocument(docType)
+        }}
+        onNotNow={(docType) => {
+          handleDocumentGenerated(docType)
+          console.log(`Document ${docType} generated but not downloaded`)
+        }}
+      />
+
+      {/* Partial Download Warning Modal */}
+      <PartialDownloadWarningModal
+        isOpen={partialDownloadModal.isOpen}
+        onClose={() => setPartialDownloadModal({ isOpen: false, missingDocuments: [] })}
+        missingDocuments={partialDownloadModal.missingDocuments}
+        onDownloadAnyway={handlePartialDownloadAnyway}
+        onCancel={handlePartialDownloadCancel}
+      />
     </div>
   )
 }

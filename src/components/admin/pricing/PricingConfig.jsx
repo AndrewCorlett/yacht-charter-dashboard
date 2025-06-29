@@ -12,64 +12,7 @@ import { useState, useMemo } from 'react'
 import { ConfigSection, ConfigGrid, ConfigCard, ActionButton } from '../AdminConfigLayout'
 
 function PricingConfig() {
-  const [pricingRules, setPricingRules] = useState([
-    {
-      id: 1,
-      yachtId: 'spectre',
-      yachtName: 'Spectre',
-      ruleType: 'base',
-      rateType: 'daily',
-      rate: 2500,
-      currency: 'EUR',
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      minHours: 4,
-      priority: 1,
-      isActive: true
-    },
-    {
-      id: 2,
-      yachtId: 'spectre',
-      yachtName: 'Spectre',
-      ruleType: 'seasonal',
-      rateType: 'daily',
-      rate: 3500,
-      currency: 'EUR',
-      startDate: '2025-06-01',
-      endDate: '2025-08-31',
-      minHours: 4,
-      priority: 2,
-      isActive: true
-    },
-    {
-      id: 3,
-      yachtId: 'diskdrive',
-      yachtName: 'Disk Drive',
-      ruleType: 'base',
-      rateType: 'daily',
-      rate: 1800,
-      currency: 'EUR',
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      minHours: 4,
-      priority: 1,
-      isActive: true
-    },
-    {
-      id: 4,
-      yachtId: 'arriva',
-      yachtName: 'Arriva',
-      ruleType: 'special',
-      rateType: 'daily',
-      rate: 2200,
-      currency: 'EUR',
-      startDate: '2025-07-15',
-      endDate: '2025-07-30',
-      minHours: 6,
-      priority: 3,
-      isActive: true
-    }
-  ])
+  const [pricingRules, setPricingRules] = useState([])
 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [filterConfig, setFilterConfig] = useState({
@@ -198,11 +141,12 @@ function PricingConfig() {
               className="border border-gray-300 rounded-md px-3 py-1 text-sm"
             >
               <option value="all">All Yachts</option>
+              <option value="calico-moon">Calico Moon</option>
               <option value="spectre">Spectre</option>
-              <option value="diskdrive">Disk Drive</option>
-              <option value="arriva">Arriva</option>
-              <option value="zambada">Zambada</option>
-              <option value="melba">Melba So</option>
+              <option value="alrisha">Alrisha</option>
+              <option value="disk-drive">Disk Drive</option>
+              <option value="zavaria">Zavaria</option>
+              <option value="mridula-sarwar">Mridula Sarwar</option>
             </select>
           </div>
           

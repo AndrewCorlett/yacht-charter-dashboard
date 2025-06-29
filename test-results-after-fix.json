@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-06-26T08:25:03.953Z",
+  "consoleMessages": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2025-06-26T08:24:56.114Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected.",
+      "timestamp": "2025-06-26T08:24:56.129Z"
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+      "timestamp": "2025-06-26T08:24:56.209Z"
+    },
+    {
+      "type": "error",
+      "text": "Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. \n\nCheck the render method of `YachtTimelineCalendar`. ",
+      "timestamp": "2025-06-26T08:24:56.273Z"
+    },
+    {
+      "type": "error",
+      "text": "Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s=\"%s\" or %s={value.toString()}. true jsx jsx true jsx",
+      "timestamp": "2025-06-26T08:24:56.413Z"
+    }
+  ],
+  "jsErrors": [],
+  "sitrepExists": false,
+  "summary": {
+    "totalConsoleMessages": 5,
+    "errorMessages": 2,
+    "jsErrors": 0,
+    "fixSuccessful": true
+  }
+}

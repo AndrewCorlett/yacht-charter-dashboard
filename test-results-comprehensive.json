@@ -1,0 +1,18 @@
+{
+  "success": false,
+  "formSubmitted": false,
+  "modalAppeared": false,
+  "bookingNumber": null,
+  "validationErrors": [],
+  "consoleErrors": [],
+  "networkRequests": [],
+  "screenshots": [
+    "final-01-initial.png",
+    "final-02-filled.png",
+    "final-99-error.png"
+  ],
+  "errors": [
+    "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button:contains(\"Quick Create\")' is not a valid selector."
+  ],
+  "formValidationPassed": false
+}

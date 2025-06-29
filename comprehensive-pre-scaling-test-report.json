@@ -1,0 +1,191 @@
+{
+  "timestamp": "2025-06-28T01:22:04.945Z",
+  "testResults": {
+    "applicationStartup": {
+      "status": "PASS",
+      "loadTime": "320ms",
+      "criticalElementsFound": true,
+      "details": "Application loaded successfully"
+    },
+    "navigation": {
+      "Dashboard": {
+        "status": "FAIL",
+        "details": "Navigation element not found"
+      },
+      "Bookings": {
+        "status": "FAIL",
+        "details": "Navigation element not found"
+      },
+      "Settings": {
+        "status": "FAIL",
+        "details": "Navigation element not found"
+      },
+      "Admin": {
+        "status": "FAIL",
+        "details": "Navigation element not found"
+      }
+    },
+    "settingsSystem": {
+      "documentsTab": {
+        "status": "FAIL",
+        "details": "Documents tab not found"
+      },
+      "pricingTab": {
+        "status": "FAIL",
+        "elementsFound": "0/3",
+        "details": "Pricing tab loaded with 0 expected elements"
+      },
+      "automationTab": {
+        "status": "FAIL",
+        "elementsFound": "0/2",
+        "details": "Automation tab loaded with 0 expected elements"
+      }
+    },
+    "bookingSystem": {
+      "listView": {
+        "status": "FAIL",
+        "details": "Bookings list not found"
+      },
+      "quickCreate": {
+        "status": "FAIL",
+        "details": "Quick create widget not found"
+      },
+      "bookingForm": {
+        "status": "FAIL",
+        "details": "Create button not found"
+      },
+      "statusToggle": {
+        "status": "FAIL",
+        "details": "Status elements not found"
+      }
+    },
+    "dashboard": {
+      "sitrepSection": {
+        "status": "FAIL",
+        "details": "SitRep section not found"
+      },
+      "calendarView": {
+        "status": "FAIL",
+        "details": "Calendar view not found"
+      },
+      "widgets": {
+        "status": "FAIL",
+        "widgetCount": 0,
+        "details": "Found 0 widgets"
+      }
+    },
+    "adminConfiguration": {
+      "status": "FAIL",
+      "elementsFound": 0,
+      "details": "Admin section not found"
+    },
+    "responsiveDesign": {
+      "Desktop": {
+        "status": "PASS",
+        "hasOverflow": false,
+        "dimensions": "1400x900",
+        "details": "No overflow issues"
+      },
+      "Tablet": {
+        "status": "PASS",
+        "hasOverflow": false,
+        "dimensions": "768x1024",
+        "details": "No overflow issues"
+      },
+      "Mobile": {
+        "status": "PASS",
+        "hasOverflow": false,
+        "dimensions": "375x667",
+        "details": "No overflow issues"
+      }
+    },
+    "performanceAndErrors": {
+      "status": "PASS",
+      "consoleErrors": 0,
+      "brokenImages": 0,
+      "memoryInfo": {
+        "usedJSHeapSize": 16917142,
+        "totalJSHeapSize": 19947090,
+        "jsHeapSizeLimit": 2248146944
+      },
+      "details": "0 console errors, 0 broken images"
+    }
+  },
+  "screenshots": [
+    {
+      "description": "initial-application-load",
+      "filename": "01-initial-application-load.png",
+      "timestamp": "2025-06-28T01:22:07.036Z"
+    },
+    {
+      "description": "settings-initial-view",
+      "filename": "02-settings-initial-view.png",
+      "timestamp": "2025-06-28T01:22:11.406Z"
+    },
+    {
+      "description": "settings-pricing-tab",
+      "filename": "03-settings-pricing-tab.png",
+      "timestamp": "2025-06-28T01:22:13.031Z"
+    },
+    {
+      "description": "settings-automation-tab",
+      "filename": "04-settings-automation-tab.png",
+      "timestamp": "2025-06-28T01:22:15.920Z"
+    },
+    {
+      "description": "bookings-list-view",
+      "filename": "05-bookings-list-view.png",
+      "timestamp": "2025-06-28T01:22:19.123Z"
+    },
+    {
+      "description": "dashboard-main-view",
+      "filename": "06-dashboard-main-view.png",
+      "timestamp": "2025-06-28T01:22:22.598Z"
+    },
+    {
+      "description": "admin-configuration",
+      "filename": "07-admin-configuration.png",
+      "timestamp": "2025-06-28T01:22:25.880Z"
+    },
+    {
+      "description": "responsive-desktop",
+      "filename": "08-responsive-desktop.png",
+      "timestamp": "2025-06-28T01:22:27.157Z"
+    },
+    {
+      "description": "responsive-tablet",
+      "filename": "09-responsive-tablet.png",
+      "timestamp": "2025-06-28T01:22:28.824Z"
+    },
+    {
+      "description": "responsive-mobile",
+      "filename": "10-responsive-mobile.png",
+      "timestamp": "2025-06-28T01:22:29.958Z"
+    }
+  ],
+  "consoleErrors": [],
+  "performanceMetrics": {
+    "initialLoad": "320ms",
+    "loadTime": 305.59999999403954,
+    "domContentLoaded": 304.5,
+    "firstPaint": 1060,
+    "firstContentfulPaint": 1060
+  },
+  "criticalIssues": [],
+  "recommendations": [
+    {
+      "priority": "MEDIUM",
+      "category": "Functionality",
+      "issue": "1 test categories failed",
+      "recommendation": "Address failed functionality tests to ensure stability"
+    }
+  ],
+  "summary": {
+    "overallStatus": "PARTIALLY_READY",
+    "totalTests": 8,
+    "passedTests": 2,
+    "failedTests": 6,
+    "criticalIssues": 0,
+    "readyForScaling": false
+  }
+}

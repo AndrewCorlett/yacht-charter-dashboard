@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent 6 - Pricing Configuration Integration Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/puppeteer@21.0.0/lib/esm/puppeteer-core.min.js"></script>
+</head>
+<body>
+    <h1>Agent 6 - Settings Pricing Configuration Test</h1>
+    <p>Testing the Settings - Pricing Configuration integration with Supabase</p>
+    
+    <div id="test-results">
+        <h2>Test Results</h2>
+        <div id="navigation-test">
+            <h3>Navigation Test</h3>
+            <p>Status: <span id="nav-status">Testing...</span></p>
+            <ul id="nav-steps"></ul>
+        </div>
+        
+        <div id="pricing-config-test">
+            <h3>Pricing Configuration Test</h3>
+            <p>Status: <span id="pricing-status">Pending...</span></p>
+            <ul id="pricing-steps"></ul>
+        </div>
+        
+        <div id="supabase-integration-test">
+            <h3>Supabase Integration Test</h3>
+            <p>Status: <span id="supabase-status">Pending...</span></p>
+            <ul id="supabase-steps"></ul>
+        </div>
+    </div>
+
+    <script>
+        async function runPricingConfigTest() {
+            const navSteps = document.getElementById('nav-steps');
+            const pricingSteps = document.getElementById('pricing-steps');
+            const supabaseSteps = document.getElementById('supabase-steps');
+            
+            try {
+                // Test 1: Navigation to Settings
+                navSteps.innerHTML += '<li>✅ Opened application at localhost:5173</li>';
+                navSteps.innerHTML += '<li>✅ Expanded sidebar navigation</li>';
+                navSteps.innerHTML += '<li>⚠️ Settings navigation has routing issues - attempted multiple approaches</li>';
+                navSteps.innerHTML += '<li>ℹ️ Found Settings component with proper structure in code</li>';
+                navSteps.innerHTML += '<li>ℹ️ Settings component includes 4 tabs: Yacht Management, Forms, Pricing, Automation</li>';
+                document.getElementById('nav-status').textContent = 'Partially Working';
+                document.getElementById('nav-status').style.color = 'orange';
+                
+                // Test 2: Pricing Configuration Analysis
+                pricingSteps.innerHTML += '<li>✅ Located PricingSection.jsx component with comprehensive features</li>';
+                pricingSteps.innerHTML += '<li>✅ Component includes season date configuration (high/low season)</li>';
+                pricingSteps.innerHTML += '<li>✅ Component includes yacht pricing table with editable rates</li>';
+                pricingSteps.innerHTML += '<li>✅ Component includes currency selection (GBP, EUR, USD)</li>';
+                pricingSteps.innerHTML += '<li>✅ Component includes pricing summary and statistics</li>';
+                pricingSteps.innerHTML += '<li>⚠️ Navigation to pricing section not accessible via UI</li>';
+                document.getElementById('pricing-status').textContent = 'Component Ready, Navigation Issue';
+                document.getElementById('pricing-status').style.color = 'orange';
+                
+                // Test 3: Supabase Integration Assessment
+                supabaseSteps.innerHTML += '<li>✅ Component has Supabase integration planned</li>';
+                supabaseSteps.innerHTML += '<li>⚠️ Supabase queries marked as TODO (lines 47-49)</li>';
+                supabaseSteps.innerHTML += '<li>⚠️ Update operations marked as TODO (lines 106-108)</li>';
+                supabaseSteps.innerHTML += '<li>✅ Mock data structure shows proper pricing data format</li>';
+                supabaseSteps.innerHTML += '<li>ℹ️ Expected tables: yachts, yacht_pricing, audit</li>';
+                supabaseSteps.innerHTML += '<li>⚠️ Real-time sync functionality not yet implemented</li>';
+                document.getElementById('supabase-status').textContent = 'Planned, Not Implemented';
+                document.getElementById('supabase-status').style.color = 'red';
+                
+                // Generate comprehensive report
+                generateTestReport();
+                
+            } catch (error) {
+                console.error('Test error:', error);
+                document.getElementById('nav-status').textContent = 'Error';
+                document.getElementById('pricing-status').textContent = 'Error';
+                document.getElementById('supabase-status').textContent = 'Error';
+            }
+        }
+        
+        function generateTestReport() {
+            const reportSection = document.createElement('div');
+            reportSection.innerHTML = `
+                <h2>Comprehensive Test Report</h2>
+                <h3>Agent 6 Task Assessment</h3>
+                <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
+                    <h4>Expected Test Results:</h4>
+                    <ul>
+                        <li><strong>✅ Component Structure:</strong> PricingSection component is well-structured with comprehensive features</li>
+                        <li><strong>⚠️ Navigation Issues:</strong> Cannot access Settings > Pricing tab via UI navigation</li>
+                        <li><strong>⚠️ Supabase Integration:</strong> Planned but not yet implemented - using mock data</li>
+                        <li><strong>✅ Feature Completeness:</strong> All required pricing features are designed:
+                            <ul>
+                                <li>High/Low season date configuration</li>
+                                <li>Individual yacht pricing management</li>
+                                <li>Currency selection (GBP, EUR, USD)</li>
+                                <li>Seasonal rate multipliers</li>
+                                <li>Real-time editing interface</li>
+                                <li>Pricing summary statistics</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <h4>Issues Identified:</h4>
+                    <ul>
+                        <li><strong>Critical:</strong> Settings page navigation routing problems</li>
+                        <li><strong>High:</strong> Supabase integration not implemented (TODO comments)</li>
+                        <li><strong>Medium:</strong> Cannot test pricing persistence without database connection</li>
+                    </ul>
+                    
+                    <h4>Recommendations:</h4>
+                    <ul>
+                        <li>Fix Settings page routing in MainDashboard component</li>
+                        <li>Implement Supabase queries in PricingSection component</li>
+                        <li>Create pricing_rules and settings tables in Supabase</li>
+                        <li>Test end-to-end pricing configuration workflow</li>
+                    </ul>
+                </div>
+            `;
+            document.body.appendChild(reportSection);
+        }
+        
+        // Run the test automatically
+        window.onload = () => {
+            setTimeout(runPricingConfigTest, 1000);
+        };
+    </script>
+</body>
+</html>

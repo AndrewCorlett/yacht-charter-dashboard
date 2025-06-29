@@ -8,10 +8,17 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "test:e2e": "vitest run src/tests/e2e --reporter=verbose",
+    "test:e2e:watch": "vitest src/tests/e2e",
+    "test:unit": "vitest run src/tests/unit",
+    "test:all": "npm run test:unit && npm run test:e2e"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.2",
     "date-fns": "^4.1.0",
+    "dotenv": "^16.6.0",
+    "pg": "^8.16.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -30,7 +37,7 @@
     "globals": "^16.0.0",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.6",
-    "puppeteer": "^24.10.2",
+    "puppeteer": "^24.11.0",
     "tailwindcss": "^4.1.10",
     "vite": "^6.3.5",
     "vitest": "^3.2.4"

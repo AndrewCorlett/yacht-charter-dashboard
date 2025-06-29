@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environment Debug</title>
+</head>
+<body>
+    <h1>Environment Variable Debug</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        console.log('=== Environment Variable Debug ===');
+        console.log('import.meta.env:', import.meta.env);
+        console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+        console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '[SET]' : '[NOT SET]');
+        console.log('VITE_USE_SUPABASE:', import.meta.env.VITE_USE_SUPABASE);
+        
+        // Test both Supabase configurations
+        console.log('\n=== Testing Supabase Configurations ===');
+        
+        // Test lib/supabase.js
+        try {
+            const { supabase, supabaseConfig, db } = await import('./src/lib/supabase.js');
+            console.log('lib/supabase.js config:', {
+                hasSupabaseClient: !!supabase,
+                configEnabled: supabaseConfig.enabled,
+                dbAvailable: db.isAvailable(),
+                hasRequiredEnvVars: supabaseConfig.hasRequiredEnvVars,
+                shouldUseSupabase: supabaseConfig.shouldUseSupabase
+            });
+        } catch (error) {
+            console.error('Error loading lib/supabase.js:', error);
+        }
+        
+        // Test services/supabase/supabaseClient.js
+        try {
+            const { supabase: supabaseClient, supabaseConfig: clientConfig } = await import('./src/services/supabase/supabaseClient.js');
+            console.log('services/supabase/supabaseClient.js config:', {
+                hasSupabaseClient: !!supabaseClient,
+                configEnabled: clientConfig.enabled,
+                useMockData: clientConfig.useMockData
+            });
+        } catch (error) {
+            console.error('Error loading services/supabase/supabaseClient.js:', error);
+        }
+        
+        document.getElementById('output').innerHTML = `
+            <p>Check the browser console for detailed environment debug information.</p>
+            <p>VITE_SUPABASE_URL: ${import.meta.env.VITE_SUPABASE_URL || 'undefined'}</p>
+            <p>VITE_USE_SUPABASE: ${import.meta.env.VITE_USE_SUPABASE || 'undefined'}</p>
+        `;
+    </script>
+</body>
+</html>

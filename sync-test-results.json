@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-06-27T15:26:24.821Z",
+  "testPassed": false,
+  "tests": [
+    {
+      "test": "Initial Data Load",
+      "passed": true,
+      "details": "SitRep loaded: Has existing Supabase data (2 bookings)"
+    },
+    {
+      "test": "Real-time Data Sync",
+      "passed": true,
+      "details": "Frontend correctly shows: Spectre, Alrisha"
+    },
+    {
+      "test": "Calendar Sync",
+      "passed": false,
+      "details": "Booking did NOT appear in calendar"
+    },
+    {
+      "test": "Bookings List Sync",
+      "passed": null,
+      "details": "Could not access bookings list component"
+    },
+    {
+      "test": "Color Coding Consistency",
+      "passed": false,
+      "details": "SitRep colors: 0, Calendar colors: 0"
+    }
+  ]
+}

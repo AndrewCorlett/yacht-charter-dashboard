@@ -9,8 +9,9 @@
  */
 
 import React, { createContext, useContext, useEffect, useReducer, useCallback, useMemo } from 'react'
-import bookingStateManager from '../services/BookingStateManager'
-import { BookingModel } from '../models/core/BookingModel'
+// Removed BookingStateManager - using UnifiedDataService for Supabase integration
+import unifiedDataService from '../services/UnifiedDataService'
+import { BookingModel } from '../models/index'
 
 // Action types for booking state
 const BookingActionTypes = {
@@ -131,75 +132,72 @@ export function BookingProvider({ children, initialBookings = [] }) {
     bookings: initialBookings
   })
 
-  // Subscribe to state manager updates
+  // Subscribe to unified data service updates
   useEffect(() => {
-    const unsubscribe = bookingStateManager.subscribe((event) => {
+    // Subscribe to unified data service
+    const unsubscribeUnified = unifiedDataService.subscribe((event) => {
+      console.log('BookingContext: Received UnifiedDataService event:', event.type, event)
+      
       switch (event.type) {
+        case 'INITIALIZED':
+        case 'REFRESHED':
         case 'BULK_UPDATE':
           dispatch({
             type: BookingActionTypes.SET_BOOKINGS,
-            payload: event.bookings
+            payload: event.bookings || unifiedDataService.getAllBookings()
           })
+          // Note: Using UnifiedDataService as single source of truth
           break
 
         case 'BOOKING_CREATED':
-          dispatch({
-            type: BookingActionTypes.ADD_BOOKING,
-            payload: event.booking
-          })
+        case 'CHARTER_CREATED':
+          if (event.booking) {
+            dispatch({
+              type: BookingActionTypes.ADD_BOOKING,
+              payload: event.booking
+            })
+          }
           break
 
         case 'BOOKING_UPDATED':
-          dispatch({
-            type: BookingActionTypes.UPDATE_BOOKING,
-            payload: event.booking
-          })
+        case 'CHARTER_UPDATED':
+          if (event.booking) {
+            dispatch({
+              type: BookingActionTypes.UPDATE_BOOKING,
+              payload: event.booking
+            })
+          }
           break
 
         case 'BOOKING_DELETED':
+        case 'CHARTER_DELETED':
           dispatch({
             type: BookingActionTypes.DELETE_BOOKING,
             payload: event.bookingId
           })
           break
-
-        case 'OPTIMISTIC_UPDATE':
-          dispatch({
-            type: BookingActionTypes.OPTIMISTIC_UPDATE,
-            payload: {
-              operationId: event.operationId,
-              type: event.operationType,
-              booking: event.booking
-            }
-          })
-          break
-
-        case 'OPTIMISTIC_ROLLBACK':
-          dispatch({
-            type: BookingActionTypes.OPTIMISTIC_ROLLBACK,
-            payload: {
-              operationId: event.operationId
-            }
-          })
-          break
       }
     })
 
-    // Initialize with current bookings from state manager
+    // Note: Removed BookingStateManager subscription - using UnifiedDataService only
+
+    // Initialize with current bookings from unified service
     if (initialBookings.length === 0) {
-      const currentBookings = bookingStateManager.getAllBookings()
+      const currentBookings = unifiedDataService.getAllBookings()
       if (currentBookings.length > 0) {
         dispatch({
           type: BookingActionTypes.SET_BOOKINGS,
           payload: currentBookings
         })
+        // Note: Using UnifiedDataService as primary data source
       }
     } else {
-      // Set initial bookings in state manager
-      bookingStateManager.setBookings(initialBookings)
+      // Note: Using UnifiedDataService as primary data source
     }
 
-    return unsubscribe
+    return () => {
+      unsubscribeUnified()
+    }
   }, [initialBookings])
 
   // Memoized context values
@@ -266,7 +264,7 @@ export function useBookingOperations() {
       clearError()
       setOperationStatus({ type: 'creating', message: 'Creating booking...' })
 
-      const booking = await bookingStateManager.createBooking(bookingData, options)
+      const booking = await unifiedDataService.addBooking(bookingData)
       
       setOperationStatus({ type: 'success', message: 'Booking created successfully' })
       setTimeout(() => setOperationStatus(null), 3000)
@@ -288,7 +286,7 @@ export function useBookingOperations() {
       clearError()
       setOperationStatus({ type: 'updating', message: 'Updating booking...' })
 
-      const booking = await bookingStateManager.updateBooking(id, updates, options)
+      const booking = await unifiedDataService.updateBooking(id, updates)
       
       setOperationStatus({ type: 'success', message: 'Booking updated successfully' })
       setTimeout(() => setOperationStatus(null), 3000)
@@ -310,7 +308,7 @@ export function useBookingOperations() {
       clearError()
       setOperationStatus({ type: 'deleting', message: 'Deleting booking...' })
 
-      const result = await bookingStateManager.deleteBooking(id, options)
+      const result = await unifiedDataService.deleteBooking(id)
       
       setOperationStatus({ type: 'success', message: 'Booking deleted successfully' })
       setTimeout(() => setOperationStatus(null), 3000)
@@ -332,7 +330,8 @@ export function useBookingOperations() {
       clearError()
       setOperationStatus({ type: 'moving', message: 'Moving booking...' })
 
-      const booking = await bookingStateManager.moveBooking(id, newLocation, options)
+      // TODO: Implement moveBooking in UnifiedDataService
+      throw new Error('Move booking feature not yet implemented with Supabase backend')
       
       setOperationStatus({ type: 'success', message: 'Booking moved successfully' })
       setTimeout(() => setOperationStatus(null), 3000)
@@ -354,7 +353,8 @@ export function useBookingOperations() {
       clearError()
       setOperationStatus({ type: 'batch', message: 'Processing batch update...' })
 
-      const results = await bookingStateManager.batchUpdate(operations, options)
+      // TODO: Implement batchUpdate in UnifiedDataService
+      throw new Error('Batch update feature not yet implemented with Supabase backend')
       
       setOperationStatus({ type: 'success', message: 'Batch update completed successfully' })
       setTimeout(() => setOperationStatus(null), 3000)
@@ -376,7 +376,8 @@ export function useBookingOperations() {
       clearError()
       setOperationStatus({ type: 'undo', message: 'Undoing last operation...' })
 
-      const result = await bookingStateManager.undoLastOperation()
+      // TODO: Implement undoLastOperation in UnifiedDataService
+      throw new Error('Undo operation feature not yet implemented with Supabase backend')
       
       if (result) {
         setOperationStatus({ type: 'success', message: 'Operation undone successfully' })
@@ -432,12 +433,27 @@ export function useBookingQueries() {
 
   // Get bookings in date range
   const getBookingsInRange = useCallback((startDate, endDate, yachtId = null) => {
-    return bookingStateManager.getBookingsInRange(startDate, endDate, yachtId)
+    return unifiedDataService.getBookingsInDateRange(startDate, endDate).filter(booking => 
+      !yachtId || booking.yacht_id === yachtId
+    )
   }, [bookings])
 
   // Get date availability
   const getDateAvailability = useCallback((date, yachtId) => {
-    return bookingStateManager.getDateAvailability(date, yachtId)
+    // Check if date has any bookings for the specified yacht
+    const dateBookings = bookings.filter(booking => {
+      if (yachtId && booking.yacht_id !== yachtId) return false
+      const bookingStart = new Date(booking.start_date)
+      const bookingEnd = new Date(booking.end_date)
+      const checkDate = new Date(date)
+      return checkDate >= bookingStart && checkDate <= bookingEnd
+    })
+    
+    return {
+      isAvailable: dateBookings.length === 0,
+      bookings: dateBookings,
+      conflictCount: dateBookings.length
+    }
   }, [bookings])
 
   // Check if date is available

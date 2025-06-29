@@ -13,12 +13,15 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { BookingModel } from '../../models/core/BookingModel.js'
-import { StatusTrackingModel, DefaultStatusFields } from '../../models/core/StatusTrackingModel.js'
-import { BookingValidationSchema } from '../../models/validation/ValidationSchemas.js'
-import { useBookings } from '../../contexts/BookingContext'
+import { BookingModel, BookingStatus, CharterType, PaymentStatus } from '../../models'
+import yachtService from '../../services/supabase/YachtService'
+import { useBookingOperations } from '../../contexts/BookingContext'
+import BookingSuccessModal from '../modals/BookingSuccessModal'
 
 function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
+  // Get booking operations from context
+  const { createBooking: createBookingInContext } = useBookingOperations()
+  
   // Form state - Quick create with essential fields only
   const [formData, setFormData] = useState({
     // Customer Information
@@ -31,22 +34,50 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     city: '',
     postcode: '',
     
+    // Yacht Selection
+    yacht: '',
+    
     // Booking Details
     startDate: '',
     endDate: '',
-    portOfDeparture: '',
-    portOfArrival: '',
+    portOfDeparture: 'Largs Marina',
+    portOfArrival: 'Largs Marina',
+    tripType: CharterType.BAREBOAT,
     
-    // Auto-generated fields
-    bookingNo: '',
-    
-    // Status
-    depositPaid: false
+    // Status - simplified for quick create
+    // Payment status will be managed in booking management page
   })
+
+  const [yachts, setYachts] = useState([])
+  const [loadingYachts, setLoadingYachts] = useState(true)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState({})
   const [successMessage, setSuccessMessage] = useState('')
+  
+  // Modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [createdBooking, setCreatedBooking] = useState(null)
+
+  // Load yachts from database
+  useEffect(() => {
+    const loadYachts = async () => {
+      try {
+        setLoadingYachts(true)
+        const yachtData = await yachtService.getYachts()
+        setYachts(yachtData)
+      } catch (error) {
+        console.error('Failed to load yachts:', error)
+        // Log error but don't set fallback yachts
+        console.error('Failed to load yachts from database:', error)
+        setYachts([])
+      } finally {
+        setLoadingYachts(false)
+      }
+    }
+
+    loadYachts()
+  }, [])
 
 
   // Handle input changes
@@ -77,17 +108,8 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
       setSuccessMessage('')
     }
   }
-  
-  // Auto-generate booking numbers and IDs
-  const generateBookingNumbers = () => {
-    const bookingModel = new BookingModel()
-    setFormData(prev => ({
-      ...prev,
-      bookingNo: bookingModel.booking_no
-    }))
-  }
 
-  // Handle form submission
+  // Handle form submission - Save directly to database
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -100,6 +122,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     if (!formData.addressLine1.trim()) errors.addressLine1 = 'Address line 1 is required'
     if (!formData.city.trim()) errors.city = 'City is required'
     if (!formData.postcode.trim()) errors.postcode = 'Postcode is required'
+    if (!formData.yacht.trim()) errors.yacht = 'Yacht selection is required'
     if (!formData.startDate) errors.startDate = 'Start date is required'
     if (!formData.endDate) errors.endDate = 'End date is required'
     
@@ -111,47 +134,71 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     setIsSubmitting(true)
     
     try {
-      // Create booking data package
-      const customerAddress = [
-        formData.addressLine1,
-        formData.addressLine2,
-        formData.city,
-        formData.postcode
-      ].filter(line => line.trim()).join('\n')
-
-      const bookingData = {
-        customer_name: `${formData.firstName} ${formData.surname}`.trim(),
-        customer_email: formData.email,
-        customer_phone: formData.phone,
-        customer_address: customerAddress,
-        address_line1: formData.addressLine1,
-        address_line2: formData.addressLine2,
+      // Get selected yacht info
+      const selectedYacht = yachts.find(y => y.id === formData.yacht)
+      
+      // Prepare form data in the format expected by BookingModel.fromFrontend()
+      const frontendData = {
+        // Customer Information 
+        firstName: formData.firstName,
+        surname: formData.surname,
+        email: formData.email,
+        phone: formData.phone,
+        street: formData.addressLine1,
         city: formData.city,
         postcode: formData.postcode,
-        start_datetime: formData.startDate,
-        end_datetime: formData.endDate,
-        port_of_departure: formData.portOfDeparture,
-        port_of_arrival: formData.portOfArrival,
-        booking_no: formData.bookingNo,
-        deposit_paid: formData.depositPaid,
-        summary: `${formData.firstName} ${formData.surname} - Quick Booking`
+        country: 'United Kingdom',
+        
+        // Yacht and Booking Details
+        yacht: formData.yacht,
+        yachtName: selectedYacht ? selectedYacht.name : '', // Include yacht name for Supabase
+        tripType: formData.tripType,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        portOfDeparture: formData.portOfDeparture || 'Marina Bay',
+        portOfArrival: formData.portOfArrival || 'Harbor Point'
       }
       
-      // Call the booking creation handler
-      if (onCreateBooking) {
-        await onCreateBooking(bookingData)
+      // Default payment status for new bookings - will be managed in booking details
+      let paymentStatus = PaymentStatus.PENDING
+      
+      // Status data - simplified for quick create
+      const statusData = {
+        depositPaid: false,
+        finalPaymentPaid: false,
+        paymentStatus: paymentStatus,
+        bookingConfirmed: false
       }
+      
+      // Create and validate booking model using the correct method signature
+      const booking = BookingModel.fromFrontend(frontendData, statusData)
+      
+      if (!booking.validate()) {
+        // Get specific validation errors from the model
+        const validationErrors = booking.getErrors()
+        console.error('Booking validation errors:', validationErrors)
+        
+        // Create detailed error message for user
+        const errorMessages = Object.entries(validationErrors).map(([field, message]) => `• ${message}`).join('\n')
+        setErrors({ 
+          submit: `Booking validation failed:\n\n${errorMessages}\n\nPlease fix the above issues and try again.` 
+        })
+        return
+      }
+      
+      // Use booking context which handles both Supabase and state management
+      const savedBooking = await createBookingInContext(booking.toDatabase())
+      
+      // Show success modal instead of inline message
+      setCreatedBooking(savedBooking)
+      setShowSuccessModal(true)
       
       // Reset form on success
       resetForm()
       setErrors({})
-      setSuccessMessage('Booking created successfully!')
-      
-      // Auto-clear success message after 5 seconds
-      setTimeout(() => setSuccessMessage(''), 5000)
     } catch (error) {
       console.error('Booking creation error:', error)
-      setErrors({ submit: 'Failed to create booking. Please try again.' })
+      setErrors({ submit: `Failed to create booking: ${error.message}` })
     } finally {
       setIsSubmitting(false)
     }
@@ -170,17 +217,17 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
       city: '',
       postcode: '',
       
+      // Yacht Selection
+      yacht: '',
+      
       // Booking Details
       startDate: '',
       endDate: '',
       portOfDeparture: '',
       portOfArrival: '',
+      tripType: CharterType.BAREBOAT,
       
-      // Auto-generated fields
-      bookingNo: '',
-      
-      // Status
-      depositPaid: false
+      // Payment status managed in booking details page
     })
   }
   
@@ -190,12 +237,32 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     setSuccessMessage('')
   }
   
-  // Auto-generate booking numbers on component mount
-  useEffect(() => {
-    if (!formData.bookingNo) {
-      generateBookingNumbers()
+  // Modal handlers
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false)
+    setCreatedBooking(null)
+  }
+  
+  const handleGoToBooking = () => {
+    if (createdBooking) {
+      // Close the modal first
+      handleCloseSuccessModal()
+      
+      // Trigger parent navigation with the created booking data
+      if (onCreateBooking) {
+        onCreateBooking(createdBooking)
+      }
+      
+      // Also dispatch a custom event for the main dashboard to handle navigation
+      window.dispatchEvent(new CustomEvent('navigateToBooking', {
+        detail: { 
+          booking: createdBooking,
+          section: 'bookings' 
+        }
+      }))
     }
-  }, [])
+  }
+  
 
   return (
     <div 
@@ -210,20 +277,32 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Customer Details */}
         <div className="space-y-3">
+          {/* Yacht Selection */}
           <div>
-            <label htmlFor="bookingNo" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
-              Booking Number
+            <label htmlFor="yacht" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Yacht *
             </label>
-            <input
-              type="text"
-              id="bookingNo"
-              name="bookingNo"
-              value={formData.bookingNo}
-              className="ios-input text-sm"
-              placeholder="Auto-generated"
-              disabled
-              style={{ opacity: 0.6 }}
-            />
+            {loadingYachts ? (
+              <div className="ios-input text-sm" style={{ opacity: 0.6 }}>Loading yachts...</div>
+            ) : (
+              <select
+                id="yacht"
+                name="yacht"
+                value={formData.yacht}
+                onChange={handleInputChange}
+                className={`ios-input text-sm ${
+                  errors.yacht ? 'border-red-500' : ''
+                }`}
+              >
+                <option value="">Select a yacht</option>
+                {yachts.map(yacht => (
+                  <option key={yacht.id} value={yacht.id}>
+                    {yacht.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {errors.yacht && <p className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.yacht}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -300,7 +379,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
                 className={`ios-input text-sm ${
                   errors.phone ? 'border-red-500' : ''
                 }`}
-                placeholder="+44 7XXX XXXXXX"
+                placeholder="Phone number"
               />
               {errors.phone && <p data-testid="error-phone" className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.phone}</p>}
             </div>
@@ -382,6 +461,23 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
             </div>
           </div>
 
+          {/* Trip Type */}
+          <div>
+            <label htmlFor="tripType" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              Charter Type
+            </label>
+            <select
+              id="tripType"
+              name="tripType"
+              value={formData.tripType}
+              onChange={handleInputChange}
+              className="ios-input text-sm"
+            >
+              <option value={CharterType.BAREBOAT}>Bareboat</option>
+              <option value={CharterType.SKIPPERED_CHARTER}>Skippered Charter</option>
+            </select>
+          </div>
+
           {/* Dates and Ports */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -433,7 +529,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
                 value={formData.portOfDeparture}
                 onChange={handleInputChange}
                 className="ios-input text-sm"
-                placeholder="e.g., Cardiff Marina"
+                placeholder="Largs Marina"
               />
             </div>
 
@@ -448,25 +544,16 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
                 value={formData.portOfArrival}
                 onChange={handleInputChange}
                 className="ios-input text-sm"
-                placeholder="e.g., Plymouth"
+                placeholder="Largs Marina"
               />
             </div>
           </div>
 
-          {/* Deposit Paid Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: 'var(--color-ios-border)' }}>
-            <label htmlFor="depositPaid" className="text-sm font-medium" style={{ color: 'var(--color-ios-text-primary)' }}>
-              💰 Deposit Paid
-            </label>
-            <input
-              type="checkbox"
-              id="depositPaid"
-              name="depositPaid"
-              checked={formData.depositPaid}
-              onChange={handleInputChange}
-              className="h-4 w-4 rounded"
-              style={{ accentColor: 'var(--color-ios-blue)' }}
-            />
+          {/* Note about payment status */}
+          <div className="p-3 rounded-lg border" style={{ borderColor: 'var(--color-ios-border)', backgroundColor: 'var(--color-ios-bg-secondary)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-ios-text-secondary)' }}>
+              💡 Payment status will be managed in the booking details page after creation
+            </p>
           </div>
         </div>
 
@@ -528,12 +615,14 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
             borderColor: 'rgba(255, 59, 48, 0.3)',
             borderRadius: 'var(--radius-ios)'
           }}>
-            <p className="text-sm flex items-center" style={{ color: 'var(--color-ios-red)' }}>
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              {errors.submit}
-            </p>
+            <div className="text-sm" style={{ color: 'var(--color-ios-red)' }}>
+              <div className="flex items-start mb-2">
+                <svg className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="whitespace-pre-line">{errors.submit}</div>
+              </div>
+            </div>
           </div>
         )}
         
@@ -553,6 +642,15 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
           </div>
         )}
       </form>
+      
+      {/* Booking Success Modal */}
+      <BookingSuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        bookingNumber={createdBooking?.booking_number}
+        bookingData={createdBooking}
+        onGoToBooking={handleGoToBooking}
+      />
     </div>
   )
 }

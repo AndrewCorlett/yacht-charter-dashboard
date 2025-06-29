@@ -1,0 +1,199 @@
+{
+  "startTime": "2025-06-27T11:57:10.166Z",
+  "tests": [
+    {
+      "name": "Calendar Booking Cells",
+      "status": "PASS",
+      "details": "Found 252 booking cells",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.525Z"
+    },
+    {
+      "name": "Booking Cell 1 - Code Display",
+      "status": "FAIL",
+      "details": "No booking code found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.527Z"
+    },
+    {
+      "name": "Booking Cell 1 - Yacht Name",
+      "status": "FAIL",
+      "details": "No yacht name found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.530Z"
+    },
+    {
+      "name": "Booking Cell 1 - Date Range",
+      "status": "FAIL",
+      "details": "No date range found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.533Z"
+    },
+    {
+      "name": "Booking Cell 2 - Code Display",
+      "status": "FAIL",
+      "details": "No booking code found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.534Z"
+    },
+    {
+      "name": "Booking Cell 2 - Yacht Name",
+      "status": "FAIL",
+      "details": "No yacht name found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.536Z"
+    },
+    {
+      "name": "Booking Cell 2 - Date Range",
+      "status": "FAIL",
+      "details": "No date range found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.539Z"
+    },
+    {
+      "name": "Booking Cell 3 - Code Display",
+      "status": "FAIL",
+      "details": "No booking code found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.540Z"
+    },
+    {
+      "name": "Booking Cell 3 - Yacht Name",
+      "status": "FAIL",
+      "details": "No yacht name found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.542Z"
+    },
+    {
+      "name": "Booking Cell 3 - Date Range",
+      "status": "FAIL",
+      "details": "No date range found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.544Z"
+    },
+    {
+      "name": "Color Coding - Background",
+      "status": "PASS",
+      "details": "Cell has background color: rgb(44, 44, 46)",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.822Z"
+    },
+    {
+      "name": "Color Coding - Overdue Tasks",
+      "status": "FAIL",
+      "details": "No red outline found for overdue tasks",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:12.823Z"
+    },
+    {
+      "name": "Calendar Cell Navigation",
+      "status": "FAIL",
+      "details": "page.waitForTimeout is not a function",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.103Z"
+    },
+    {
+      "name": "SitRep Widget - Title",
+      "status": "PASS",
+      "details": "SIT REP title found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.146Z"
+    },
+    {
+      "name": "SitRep Widget - Boats Out Section",
+      "status": "PASS",
+      "details": "BOATS OUT section found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.149Z"
+    },
+    {
+      "name": "SitRep Widget - Upcoming Charters Section",
+      "status": "PASS",
+      "details": "UPCOMING CHARTERS section found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.154Z"
+    },
+    {
+      "name": "SitRep Widget - Charter Cards",
+      "status": "PASS",
+      "details": "Found 0 charter cards",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.156Z"
+    },
+    {
+      "name": "SitRep Widget - Color Key",
+      "status": "PASS",
+      "details": "Color Key legend found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.159Z"
+    },
+    {
+      "name": "Test Booking - Cell Found",
+      "status": "PASS",
+      "details": "Test booking cell found in calendar",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.555Z"
+    },
+    {
+      "name": "Test Booking - Booking Code",
+      "status": "FAIL",
+      "details": "Test booking code not found",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.556Z"
+    },
+    {
+      "name": "Test Booking - Yacht Name",
+      "status": "PASS",
+      "details": "Test booking yacht name displayed correctly",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.556Z"
+    },
+    {
+      "name": "Test Booking - SitRep Display",
+      "status": "FAIL",
+      "details": "Test booking not found in SitRep",
+      "screenshot": null,
+      "timestamp": "2025-06-27T11:57:13.558Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "filename": "initial-dashboard.png",
+      "description": "Initial Dashboard Load",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/enhanced-dashboard-test/initial-dashboard.png",
+      "timestamp": "2025-06-27T11:57:12.461Z"
+    },
+    {
+      "filename": "enhanced-calendar-cells.png",
+      "description": "Enhanced Calendar Cells Display",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/enhanced-dashboard-test/enhanced-calendar-cells.png",
+      "timestamp": "2025-06-27T11:57:12.772Z"
+    },
+    {
+      "filename": "color-coding-system.png",
+      "description": "Color Coding System Implementation",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/enhanced-dashboard-test/color-coding-system.png",
+      "timestamp": "2025-06-27T11:57:13.036Z"
+    },
+    {
+      "filename": "enhanced-sitrep-widget.png",
+      "description": "Enhanced SitRep Widget",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/enhanced-dashboard-test/enhanced-sitrep-widget.png",
+      "timestamp": "2025-06-27T11:57:13.552Z"
+    },
+    {
+      "filename": "test-booking-verification.png",
+      "description": "Test Booking Verification",
+      "path": "/home/andrew/projects/active/Seascape-op/yacht-charter-dashboard/screenshots/enhanced-dashboard-test/test-booking-verification.png",
+      "timestamp": "2025-06-27T11:57:13.742Z"
+    }
+  ],
+  "errors": [],
+  "summary": {
+    "total": 22,
+    "passed": 9,
+    "failed": 13
+  },
+  "endTime": "2025-06-27T11:57:13.884Z",
+  "duration": 3718
+}

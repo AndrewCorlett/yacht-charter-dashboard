@@ -29,9 +29,9 @@ export class YachtAvailabilityService {
   constructor() {
     // In a real implementation, this would connect to a database or API
     this.yachts = new Map([
-      ['spectre', {
-        id: 'spectre',
-        name: 'Spectre',
+      ['calico-moon', {
+        id: 'calico-moon',
+        name: 'Calico Moon',
         maxGuests: 10,
         minBookingHours: 6,
         maintenanceSchedule: [
@@ -43,9 +43,9 @@ export class YachtAvailabilityService {
           shoulder: { start: '2025-04-01', end: '2025-05-31', multiplier: 1.2 }
         }
       }],
-      ['disk-drive', {
-        id: 'disk-drive',
-        name: 'Disk Drive',
+      ['spectre', {
+        id: 'spectre',
+        name: 'Spectre',
         maxGuests: 12,
         minBookingHours: 4,
         maintenanceSchedule: [
@@ -55,17 +55,17 @@ export class YachtAvailabilityService {
           peak: { start: '2025-07-01', end: '2025-08-15', multiplier: 1.4 }
         }
       }],
-      ['arriva', {
-        id: 'arriva',
-        name: 'Arriva',
+      ['alrisha', {
+        id: 'alrisha',
+        name: 'Alrisha',
         maxGuests: 8,
         minBookingHours: 4,
         maintenanceSchedule: [],
         seasonalRates: {}
       }],
-      ['zambada', {
-        id: 'zambada',
-        name: 'Zambada',
+      ['disk-drive', {
+        id: 'disk-drive',
+        name: 'Disk Drive',
         maxGuests: 8,
         minBookingHours: 8,
         maintenanceSchedule: [
@@ -75,17 +75,17 @@ export class YachtAvailabilityService {
           peak: { start: '2025-06-15', end: '2025-09-15', multiplier: 1.6 }
         }
       }],
-      ['melba-so', {
-        id: 'melba-so',
-        name: 'Melba So',
+      ['zavaria', {
+        id: 'zavaria',
+        name: 'Zavaria',
         maxGuests: 6,
         minBookingHours: 4,
         maintenanceSchedule: [],
         seasonalRates: {}
       }],
-      ['swansea', {
-        id: 'swansea',
-        name: 'Swansea',
+      ['mridula-sarwar', {
+        id: 'mridula-sarwar',
+        name: 'Mridula Sarwar',
         maxGuests: 10,
         minBookingHours: 6,
         maintenanceSchedule: [

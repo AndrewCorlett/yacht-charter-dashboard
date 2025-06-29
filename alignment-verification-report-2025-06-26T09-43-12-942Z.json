@@ -1,0 +1,185 @@
+{
+  "timestamp": "2025-06-26T09:43:13.183Z",
+  "gridStyles": {
+    "header": {
+      "gridTemplateColumns": "120px 120px 120px 120px 120px 120px 120px 120px",
+      "width": 616
+    },
+    "content": {
+      "gridTemplateColumns": "120px 120px 120px 120px 120px 120px 120px 120px",
+      "width": 603
+    }
+  },
+  "alignmentData": {
+    "totalColumns": 8,
+    "measurements": [
+      {
+        "columnIndex": 0,
+        "columnType": "date",
+        "header": {
+          "left": 727,
+          "right": 847,
+          "width": 120
+        },
+        "content": {
+          "left": 726,
+          "right": 846,
+          "width": 120
+        },
+        "alignment": {
+          "leftDiff": 1,
+          "rightDiff": 1,
+          "widthDiff": 0
+        }
+      },
+      {
+        "columnIndex": 1,
+        "columnType": "yacht",
+        "header": {
+          "left": 847,
+          "right": 967,
+          "width": 120
+        },
+        "content": {
+          "left": 846,
+          "right": 966,
+          "width": 120
+        },
+        "alignment": {
+          "leftDiff": 1,
+          "rightDiff": 1,
+          "widthDiff": 0
+        }
+      },
+      {
+        "columnIndex": 2,
+        "columnType": "yacht",
+        "header": {
+          "left": 967,
+          "right": 1087,
+          "width": 120
+        },
+        "content": {
+          "left": 966,
+          "right": 1086,
+          "width": 120
+        },
+        "alignment": {
+          "leftDiff": 1,
+          "rightDiff": 1,
+          "widthDiff": 0
+        }
+      },
+      {
+        "columnIndex": 3,
+        "columnType": "yacht",
+        "header": {
+          "left": 1087,
+          "right": 1207,
+          "width": 120
+        },
+        "content": {
+          "left": 1086,
+          "right": 1206,
+          "width": 120
+        },
+        "alignment": {
+          "leftDiff": 1,
+          "rightDiff": 1,
+          "widthDiff": 0
+        }
+      },
+      {
+        "columnIndex": 4,
+        "columnType": "yacht",
+        "header": {
+          "left": 1207,
+          "right": 1327,
+          "width": 120
+        },
+        "content": {
+          "left": 1206,
+          "right": 1326,
+          "width": 120
+        },
+        "alignment": {
+          "leftDiff": 1,
+          "rightDiff": 1,
+          "widthDiff": 0
+        }
+      },
+      {
+        "columnIndex": 5,
+        "columnType": "yacht",
+        "header": {
+          "left": 1327,
+          "right": 1447,
+          "width": 120
+        },
+        "content": {
+          "left": 1326,
+          "right": 1446,
+          "width": 120
+        },
+        "alignment": {
+          "leftDiff": 1,
+          "rightDiff": 1,
+          "widthDiff": 0
+        }
+      },
+      {
+        "columnIndex": 6,
+        "columnType": "yacht",
+        "header": {
+          "left": 1447,
+          "right": 1567,
+          "width": 120
+        },
+        "content": {
+          "left": 1446,
+          "right": 1566,
+          "width": 120
+        },
+        "alignment": {
+          "leftDiff": 1,
+          "rightDiff": 1,
+          "widthDiff": 0
+        }
+      },
+      {
+        "columnIndex": 7,
+        "columnType": "yacht",
+        "header": {
+          "left": 1567,
+          "right": 1687,
+          "width": 120
+        },
+        "content": {
+          "left": 1566,
+          "right": 1686,
+          "width": 120
+        },
+        "alignment": {
+          "leftDiff": 1,
+          "rightDiff": 1,
+          "widthDiff": 0
+        }
+      }
+    ],
+    "yachtNames": [
+      "Alrisha",
+      "arriva",
+      "Calico Moon",
+      "Disk Drive",
+      "Mridula Sarwar",
+      "Spectre",
+      "Zavaria"
+    ]
+  },
+  "verification": {
+    "gridTemplatesMatch": true,
+    "perfectAlignment": true,
+    "maxAlignmentError": 1,
+    "issues": []
+  }
+}

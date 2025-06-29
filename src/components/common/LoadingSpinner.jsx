@@ -15,7 +15,10 @@ function LoadingSpinner({ size = 'md', message = 'Loading...' }) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center p-8">
+    <div 
+      data-testid="loading-spinner"
+      className="flex flex-col items-center justify-center p-8"
+    >
       <div className={`${sizeClasses[size]} animate-spin`}>
         <svg
           className="w-full h-full text-blue-600"

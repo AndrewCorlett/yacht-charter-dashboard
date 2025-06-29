@@ -9,37 +9,54 @@
  * @version 1.0.0
  */
 
-// Core Models
-export {
-  default as BookingModel,
+// Core Models - Unified Single Table Design
+import BookingModelUnified, {
   BookingStatus,
-  BookingType
+  CharterType,
+  PaymentStatus,
+  DocumentTypes
+} from './core/BookingModel-unified.js'
+
+// Legacy Multi-Table Model (deprecated, for migration reference only)
+import LegacyBookingModelOriginal, {
+  BookingStatus as LegacyBookingStatus,
+  BookingType as LegacyBookingType
 } from './core/BookingModel.js'
 
-export {
-  default as CrewDetailsModel,
+// Import other models
+import CrewDetailsModelOriginal, {
   CrewPosition,
   ExperienceLevel
 } from './core/CrewDetailsModel.js'
 
-export {
-  default as CharterExperienceModel,
+import CharterExperienceModelOriginal, {
   DietaryRestriction,
   CelebrationType,
   CharterRating
 } from './core/CharterExperienceModel.js'
 
-export {
-  default as StatusTrackingModel,
+import StatusTrackingModelOriginal, {
   StatusCategory,
   StatusPriority,
   StatusState,
   DefaultStatusFields
 } from './core/StatusTrackingModel.js'
 
-// Validation Schemas
-export {
-  default as ValidationSchemas,
+// Re-export with proper names
+export const BookingModel = BookingModelUnified
+export const LegacyBookingModel = LegacyBookingModelOriginal
+export const CrewDetailsModel = CrewDetailsModelOriginal
+export const CharterExperienceModel = CharterExperienceModelOriginal
+export const StatusTrackingModel = StatusTrackingModelOriginal
+
+export { BookingStatus, CharterType, PaymentStatus, DocumentTypes }
+export { LegacyBookingStatus, LegacyBookingType }
+export { CrewPosition, ExperienceLevel }
+export { DietaryRestriction, CelebrationType, CharterRating }
+export { StatusCategory, StatusPriority, StatusState, DefaultStatusFields }
+
+// Import utilities
+import ValidationSchemasOriginal, {
   ValidationUtils,
   BookingValidationSchema,
   CrewDetailsValidationSchema,
@@ -49,9 +66,7 @@ export {
   ModelValidator
 } from './validation/ValidationSchemas.js'
 
-// Model Operations Utilities
-export {
-  default as ModelOperations,
+import ModelOperationsOriginal, {
   ModelFactory,
   ModelTransformer,
   ModelValidationService,
@@ -60,22 +75,29 @@ export {
   ModelAggregationService
 } from './utilities/ModelOperations.js'
 
-// iCS Calendar Utilities
-export {
-  default as ICSCalendarUtils,
+import ICSCalendarUtilsOriginal, {
   ICSStatus,
   ICSClassification,
   ICSFrequency
 } from './utilities/ICSCalendarUtils.js'
 
-// Booking Number Generator
-export {
-  default as BookingNumberGenerator,
+import BookingNumberGeneratorOriginal, {
   BookingNumberFormat,
   ValidationPatterns,
   YachtCodes,
   PredefinedGenerators
 } from './utilities/BookingNumberGenerator.js'
+
+// Export utilities
+export const ValidationSchemas = ValidationSchemasOriginal
+export const ModelOperations = ModelOperationsOriginal
+export const ICSCalendarUtils = ICSCalendarUtilsOriginal
+export const BookingNumberGenerator = BookingNumberGeneratorOriginal
+
+export { ValidationUtils, BookingValidationSchema, CrewDetailsValidationSchema, CharterExperienceValidationSchema, StatusTrackingValidationSchema, CrossModelValidation, ModelValidator }
+export { ModelFactory, ModelTransformer, ModelValidationService, ModelUpdateService, ModelQueryService, ModelAggregationService }
+export { ICSStatus, ICSClassification, ICSFrequency }
+export { BookingNumberFormat, ValidationPatterns, YachtCodes, PredefinedGenerators }
 
 /**
  * Model Collections - Organized exports for easy access
@@ -96,7 +118,9 @@ export const Utilities = {
 
 export const Enums = {
   BookingStatus,
-  BookingType,
+  CharterType,
+  PaymentStatus,
+  DocumentTypes,
   CrewPosition,
   ExperienceLevel,
   DietaryRestriction,

@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-06-26T08:23:19.227Z",
+  "consoleMessages": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2025-06-26T08:23:14.388Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected.",
+      "timestamp": "2025-06-26T08:23:14.396Z"
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+      "timestamp": "2025-06-26T08:23:14.471Z"
+    }
+  ],
+  "jsErrors": [
+    {
+      "message": "Cannot access 'eventEmitter' before initialization",
+      "timestamp": "2025-06-26T08:23:14.474Z"
+    }
+  ],
+  "summary": {
+    "totalConsoleMessages": 3,
+    "errorMessages": 0,
+    "jsErrors": 1
+  }
+}

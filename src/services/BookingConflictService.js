@@ -21,7 +21,7 @@ import {
   format,
   differenceInDays
 } from 'date-fns'
-import { BookingStatus, BookingType } from '../models/core/BookingModel'
+import { BookingStatus, CharterType } from '../models/index.js'
 
 /**
  * Main Booking Conflict Service Class
@@ -81,29 +81,30 @@ export class BookingConflictService {
 
     // Check each existing booking
     for (const existingBooking of yachtBookings) {
-      // Skip cancelled or no-show bookings
-      if ([BookingStatus.CANCELLED, BookingStatus.NO_SHOW].includes(existingBooking.status)) {
+      // Skip cancelled bookings (NO_SHOW status doesn't exist in unified schema)
+      if (existingBooking.booking_status === BookingStatus.CANCELLED) {
         continue
       }
 
-      // Skip blocked periods if requested
-      if (!includeBlocked && existingBooking.type === BookingType.BLOCKED) {
-        continue
-      }
+      // Skip blocked periods if requested - unified schema doesn't have BookingType.BLOCKED
+      // This functionality is deprecated as blocked periods are now handled differently
+      // if (!includeBlocked && existingBooking.type === BookingType.BLOCKED) {
+      //   continue
+      // }
 
       // Check for date overlap
       const hasOverlap = this.datesOverlap(
-        newBooking.start_datetime,
-        newBooking.end_datetime,
-        existingBooking.start_datetime,
-        existingBooking.end_datetime
+        newBooking.start_date,
+        newBooking.end_date,
+        existingBooking.start_date,
+        existingBooking.end_date
       )
 
       if (hasOverlap) {
         // Check if it's a same-day checkout/checkin scenario
         const isSameDayTransition = 
-          format(newBooking.start_datetime, 'yyyy-MM-dd') === format(existingBooking.end_datetime, 'yyyy-MM-dd') ||
-          format(newBooking.end_datetime, 'yyyy-MM-dd') === format(existingBooking.start_datetime, 'yyyy-MM-dd')
+          format(newBooking.start_date, 'yyyy-MM-dd') === format(existingBooking.end_date, 'yyyy-MM-dd') ||
+          format(newBooking.end_date, 'yyyy-MM-dd') === format(existingBooking.start_date, 'yyyy-MM-dd')
 
         if (isSameDayTransition && excludeSameDay) {
           warnings.push({
@@ -117,10 +118,10 @@ export class BookingConflictService {
             severity: this._getConflictSeverity(existingBooking),
             booking: existingBooking,
             overlapDays: this._calculateOverlapDays(
-              newBooking.start_datetime,
-              newBooking.end_datetime,
-              existingBooking.start_datetime,
-              existingBooking.end_datetime
+              newBooking.start_date,
+              newBooking.end_date,
+              existingBooking.start_date,
+              existingBooking.end_date
             )
           })
         }
@@ -128,8 +129,8 @@ export class BookingConflictService {
 
       // Check for back-to-back bookings (warnings)
       const isBackToBack = 
-        format(addDays(newBooking.end_datetime, 1), 'yyyy-MM-dd') === format(existingBooking.start_datetime, 'yyyy-MM-dd') ||
-        format(addDays(existingBooking.end_datetime, 1), 'yyyy-MM-dd') === format(newBooking.start_datetime, 'yyyy-MM-dd')
+        format(addDays(newBooking.end_date, 1), 'yyyy-MM-dd') === format(existingBooking.start_date, 'yyyy-MM-dd') ||
+        format(addDays(existingBooking.end_date, 1), 'yyyy-MM-dd') === format(newBooking.start_date, 'yyyy-MM-dd')
 
       if (isBackToBack) {
         warnings.push({
@@ -160,18 +161,26 @@ export class BookingConflictService {
     const dayStart = startOfDay(date)
     const dayEnd = endOfDay(date)
 
-    const yachtBookings = bookings.filter(booking => 
-      booking.yacht_id === yachtId &&
-      ![BookingStatus.CANCELLED, BookingStatus.NO_SHOW].includes(booking.status)
-    )
+    const yachtBookings = bookings.filter(booking => {
+      if (booking.booking_status === BookingStatus.CANCELLED) {
+        return false
+      }
+      
+      // Match by yacht_id (UUID format) or by yacht_name converted to kebab-case
+      const matchById = booking.yacht_id === yachtId
+      const matchByName = booking.yacht_name && 
+        booking.yacht_name.toLowerCase().replace(/\s+/g, '-') === yachtId
+      
+      return matchById || matchByName
+    })
 
     let status = 'available'
     let booking = null
     let isTransitionDay = false
 
     for (const b of yachtBookings) {
-      const bookingStart = startOfDay(b.start_datetime)
-      const bookingEnd = endOfDay(b.end_datetime)
+      const bookingStart = startOfDay(b.start_date)
+      const bookingEnd = endOfDay(b.end_date)
 
       // Check if date falls within booking period
       if ((isEqual(dayStart, bookingStart) || isAfter(dayStart, bookingStart)) &&
@@ -182,17 +191,23 @@ export class BookingConflictService {
           isTransitionDay = true
         }
 
-        // Determine status based on booking type and status
-        if (b.type === BookingType.BLOCKED) {
-          status = 'blocked'
-        } else if (b.type === BookingType.MAINTENANCE) {
-          status = 'maintenance'
-        } else if (b.type === BookingType.OWNER) {
-          status = 'owner'
-        } else if (b.status === BookingStatus.CONFIRMED) {
+        // Determine status based on booking status (unified schema only has charter types, not booking types)
+        // Legacy booking types (BLOCKED, MAINTENANCE, OWNER) are no longer supported
+        // if (b.type === BookingType.BLOCKED) {
+        //   status = 'blocked'
+        // } else if (b.type === BookingType.MAINTENANCE) {
+        //   status = 'maintenance'
+        // } else if (b.type === BookingType.OWNER) {
+        //   status = 'owner'
+        // } else 
+        if (b.booking_status === BookingStatus.CONFIRMED) {
           status = 'confirmed'
-        } else if ([BookingStatus.PENDING, BookingStatus.DEPOSIT_PENDING].includes(b.status)) {
-          status = 'pending'
+        } else if (b.booking_status === BookingStatus.TENTATIVE) {
+          status = 'tentative'
+        } else if (b.booking_status === BookingStatus.COMPLETED) {
+          status = 'completed'
+        } else if (b.booking_status === BookingStatus.CANCELLED) {
+          status = 'cancelled'
         }
 
         booking = b
@@ -245,9 +260,9 @@ export class BookingConflictService {
     const yachtBookings = bookings
       .filter(b => 
         b.yacht_id === yachtId &&
-        ![BookingStatus.CANCELLED, BookingStatus.NO_SHOW].includes(b.status)
+        b.booking_status !== BookingStatus.CANCELLED
       )
-      .sort((a, b) => a.start_datetime - b.start_datetime)
+      .sort((a, b) => a.start_date - b.start_date)
 
     let currentDate = startOfDay(startFrom)
     const endDate = endOfDay(endBefore)
@@ -318,8 +333,8 @@ export class BookingConflictService {
     }
 
     const requestedDays = differenceInDays(
-      requestedBooking.end_datetime,
-      requestedBooking.start_datetime
+      requestedBooking.end_date,
+      requestedBooking.start_date
     ) + 1
 
     // 1. Find alternative dates for the same yacht
@@ -329,8 +344,8 @@ export class BookingConflictService {
       {
         minDays: requestedDays,
         maxDays: requestedDays + 7,
-        startFrom: subDays(requestedBooking.start_datetime, 14),
-        endBefore: addDays(requestedBooking.end_datetime, 30)
+        startFrom: subDays(requestedBooking.start_date, 14),
+        endBefore: addDays(requestedBooking.end_date, 30)
       }
     )
 
@@ -340,7 +355,7 @@ export class BookingConflictService {
         ...slot,
         startDate: slot.startDate,
         endDate: addDays(slot.startDate, requestedDays - 1),
-        daysDifference: Math.abs(differenceInDays(slot.startDate, requestedBooking.start_datetime))
+        daysDifference: Math.abs(differenceInDays(slot.startDate, requestedBooking.start_date))
       }))
       .sort((a, b) => a.daysDifference - b.daysDifference)
       .slice(0, 5)
@@ -357,8 +372,8 @@ export class BookingConflictService {
       if (conflictCheck.isAvailable) {
         suggestions.alternativeYachts.push({
           yacht,
-          startDate: requestedBooking.start_datetime,
-          endDate: requestedBooking.end_datetime,
+          startDate: requestedBooking.start_date,
+          endDate: requestedBooking.end_date,
           days: requestedDays
         })
       }
@@ -371,8 +386,8 @@ export class BookingConflictService {
       {
         minDays: Math.max(1, requestedDays - 2),
         maxDays: requestedDays + 2,
-        startFrom: subDays(requestedBooking.start_datetime, 7),
-        endBefore: requestedBooking.start_datetime
+        startFrom: subDays(requestedBooking.start_date, 7),
+        endBefore: requestedBooking.start_date
       }
     )
 
@@ -382,8 +397,8 @@ export class BookingConflictService {
       {
         minDays: Math.max(1, requestedDays - 2),
         maxDays: requestedDays + 2,
-        startFrom: requestedBooking.end_datetime,
-        endBefore: addDays(requestedBooking.end_datetime, 7)
+        startFrom: requestedBooking.end_date,
+        endBefore: addDays(requestedBooking.end_date, 7)
       }
     )
 
@@ -402,11 +417,14 @@ export class BookingConflictService {
    * @private
    */
   static _getConflictType(booking) {
-    if (booking.type === BookingType.BLOCKED) return 'blocked_period'
-    if (booking.type === BookingType.MAINTENANCE) return 'maintenance'
-    if (booking.type === BookingType.OWNER) return 'owner_use'
-    if (booking.status === BookingStatus.CONFIRMED) return 'confirmed_booking'
-    return 'pending_booking'
+    // Legacy booking types (BLOCKED, MAINTENANCE, OWNER) are no longer supported in unified schema
+    // if (booking.type === BookingType.BLOCKED) return 'blocked_period'
+    // if (booking.type === BookingType.MAINTENANCE) return 'maintenance'
+    // if (booking.type === BookingType.OWNER) return 'owner_use'
+    if (booking.booking_status === BookingStatus.CONFIRMED) return 'confirmed_booking'
+    if (booking.booking_status === BookingStatus.TENTATIVE) return 'tentative_booking'
+    if (booking.booking_status === BookingStatus.COMPLETED) return 'completed_booking'
+    return 'unknown_booking'
   }
 
   /**
@@ -417,10 +435,13 @@ export class BookingConflictService {
    * @private
    */
   static _getConflictSeverity(booking) {
-    if (booking.status === BookingStatus.CONFIRMED) return 'high'
-    if (booking.type === BookingType.OWNER) return 'high'
-    if (booking.type === BookingType.MAINTENANCE) return 'high'
-    if (booking.type === BookingType.BLOCKED) return 'medium'
+    if (booking.booking_status === BookingStatus.CONFIRMED) return 'high'
+    if (booking.booking_status === BookingStatus.COMPLETED) return 'high'
+    // Legacy booking types (OWNER, MAINTENANCE, BLOCKED) are no longer supported in unified schema
+    // if (booking.type === BookingType.OWNER) return 'high'
+    // if (booking.type === BookingType.MAINTENANCE) return 'high'
+    // if (booking.type === BookingType.BLOCKED) return 'medium'
+    if (booking.booking_status === BookingStatus.TENTATIVE) return 'medium'
     return 'low'
   }
 

@@ -1,0 +1,72 @@
+{
+  "timestamp": "2025-06-26T08:41:44.625Z",
+  "calendarWorking": true,
+  "calendarResults": {
+    "calendarExists": true,
+    "yachtHeaders": [
+      "DatearrivaDisk DriveMelbaSpectreSwansea",
+      "Date",
+      "arriva",
+      "Disk Drive",
+      "Melba",
+      "Spectre",
+      "Swansea"
+    ],
+    "dateHeaders": [],
+    "calendarCells": 210,
+    "errors": [],
+    "warnings": [],
+    "calendarStructure": {
+      "tagName": "MAIN",
+      "className": "calendar-container-fixed p-6 flex flex-col overflow-x-hidden",
+      "children": 1,
+      "textContent": "Yacht Timeline CalendarTodayJune 2025DatearrivaDisk DriveMelbaSpectreSwanseaMon 26/05/25Tue 27/05/25Wed 28/05/25Thu 29/05/25Fri 30/05/25Sat 31/05/25Sun 01/06/25Mon 02/06/25Tue 03/06/25Wed 04/06/25Thu ..."
+    }
+  },
+  "consoleIssues": {
+    "errors": [
+      "Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. \n\nCheck the render method of `YachtTimelineCalendar`. ",
+      "Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s=\"%s\" or %s={value.toString()}. true jsx jsx true jsx"
+    ],
+    "warnings": [],
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "error",
+        "text": "Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. \n\nCheck the render method of `YachtTimelineCalendar`. "
+      },
+      {
+        "type": "error",
+        "text": "Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s=\"%s\" or %s={value.toString()}. true jsx jsx true jsx"
+      }
+    ]
+  },
+  "comparison": {
+    "sitrepYachts": [
+      "Spectre",
+      "Disk Drive",
+      "Melba",
+      "Swansea"
+    ],
+    "calendarYachts": [],
+    "matches": [],
+    "mismatches": []
+  },
+  "summary": {
+    "calendarExists": true,
+    "yachtHeadersFound": 7,
+    "calendarCellsFound": 210,
+    "errorsPresent": true
+  }
+}

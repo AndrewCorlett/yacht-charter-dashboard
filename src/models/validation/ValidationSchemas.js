@@ -9,9 +9,18 @@
  * @version 1.0.0
  */
 
+// Import from unified model
 import { 
   BookingStatus, 
-  BookingType 
+  CharterType,
+  PaymentStatus,
+  DocumentTypes
+} from '../core/BookingModel-unified.js'
+
+// Legacy imports (for migration reference)
+import { 
+  BookingStatus as LegacyBookingStatus, 
+  BookingType as LegacyBookingType 
 } from '../core/BookingModel.js'
 import { 
   CrewPosition, 

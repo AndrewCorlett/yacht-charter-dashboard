@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Full scale for proper viewport utilization */
+body {
+  margin: 0;
+  padding: 0;
+}
+
 @theme {
   /* Dusk Theme Colors - Enhanced iOS palette for twilight aesthetic */
   --color-ios-blue: #4A9EFF;
@@ -222,7 +228,7 @@ body {
     position: fixed !important;
     top: 4rem !important;
     right: 0 !important;
-    width: 50vw !important;
+    width: 60vw !important;
     height: calc(100vh - 4rem) !important;
     z-index: 20 !important;
   }

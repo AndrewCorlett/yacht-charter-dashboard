@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-06-28T22:14:23.991Z",
+  "supabaseProject": {
+    "url": "https://kbwjtihjyhapaclyytxn.supabase.co",
+    "status": "ACTIVE_HEALTHY",
+    "region": "eu-west-1"
+  },
+  "tests": {
+    "environmentCheck": {
+      "status": "failed",
+      "error": "page.waitForTimeout is not a function"
+    },
+    "pageLoad": {
+      "status": "failed",
+      "error": "page.waitForTimeout is not a function"
+    },
+    "dataService": {
+      "status": "failed",
+      "error": "page.waitForTimeout is not a function"
+    },
+    "bookingData": {
+      "status": "passed",
+      "details": {
+        "hasBookingWords": true,
+        "hasCustomerData": false,
+        "hasDateData": true,
+        "hasYachtNames": true,
+        "bookingElements": 0,
+        "textSample": "Nav\nSeascape\nSIT REP\nBOATS OUT\nNone at the moment 🚤\nUPCOMING CHARTERS\nNone at the moment 🚤\nCOLOR KEY\nFull Balance Paid\nDeposit Only Paid\nTentative\nYacht Unavailable\nRed Outline\nQUICK CREATE BOOKING\nYacht *\nLoading yachts...\nFirst Name *\nSurname *\nEmail *\nPhone *\nAddress\nAddress line 1 *\nAddress line 2\nCity *\nPostcode *\nCharter Type\nBareboat\nSkippered Charter\nStart Date *\nEnd Date *\nPort of Departure\nPort of Arrival\n\n💡 Payment status will be managed in the booking details page after creation\n\n"
+      }
+    },
+    "realTimeConnection": {
+      "status": "passed",
+      "details": {
+        "realtimeMessages": [],
+        "hasConnectionMessages": true,
+        "serviceWorking": false
+      }
+    }
+  },
+  "bookingRecords": [
+    {
+      "found": false,
+      "type": "customer_data"
+    },
+    {
+      "found": true,
+      "type": "yacht_names"
+    },
+    {
+      "found": true,
+      "type": "date_data"
+    }
+  ],
+  "consoleLogs": [
+    "[vite] connecting...",
+    "[vite] connected.",
+    "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+    "UnifiedDataService: Initializing data...",
+    "Configuration: JSHandle@object",
+    "UnifiedDataService: Attempting to load from Supabase...",
+    "Attempting to load bookings from Supabase...",
+    "Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5
+  }
+}

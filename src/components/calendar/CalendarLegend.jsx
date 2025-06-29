@@ -14,10 +14,11 @@
 
 function CalendarLegend() {
   const legendItems = [
-    { color: 'bg-green-200', label: 'Confirmed Booking', borderColor: 'border-green-400' },
-    { color: 'bg-red-200', label: 'Unavailable', borderColor: 'border-red-400' },
-    { color: 'bg-pink-300', label: 'Cardiff', borderColor: 'border-pink-400' },
-    { color: 'bg-white', label: 'Available', borderColor: 'border-gray-300' }
+    { color: 'bg-green-500/20', label: 'Full Balance Paid', borderColor: 'border-green-500/40' },
+    { color: 'bg-blue-500/20', label: 'Deposit Only Paid', borderColor: 'border-blue-500/40' },
+    { color: 'bg-orange-500/20', label: 'Tentative (No Deposit)', borderColor: 'border-orange-500/40' },
+    { color: 'bg-gray-500/20', label: 'Cancelled/Refunded', borderColor: 'border-gray-500/40' },
+    { color: 'bg-ios-bg-primary', label: 'Available', borderColor: 'border-ios-gray-2' }
   ]
 
   return (
