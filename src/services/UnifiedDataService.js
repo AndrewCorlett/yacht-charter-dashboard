@@ -12,7 +12,7 @@
 import { sampleCharters } from '../data/mockData.js'
 import { eventEmitter } from '../utils/eventEmitter.js'
 import BookingModel, { BookingStatus, CharterType, PaymentStatus } from '../models/index.js'
-import { supabase, supabaseConfig, db } from '../lib/supabase.js'
+import { supabase, supabaseConfig } from '../services/supabase/supabaseClient.js'
 
 /**
  * Data transformation utilities
@@ -194,7 +194,7 @@ class UnifiedDataService {
     this.bookings = []
     this.subscribers = new Set()
     this.lastUpdate = Date.now()
-    this.useSupabase = supabaseConfig.enabled && db.isAvailable()
+    this.useSupabase = supabaseConfig.enabled && !!supabase
     this.isInitialized = false
     this.subscriptions = []
     
@@ -211,7 +211,7 @@ class UnifiedDataService {
       useSupabase: this.useSupabase,
       hasSupabaseClient: !!supabase,
       configEnabled: supabaseConfig.enabled,
-      dbAvailable: db.isAvailable()
+      dbAvailable: !!supabase
     })
     
     if (this.useSupabase) {
@@ -258,7 +258,12 @@ class UnifiedDataService {
     try {
       console.log('Attempting to load bookings from Supabase...')
       // Load bookings from Supabase
-      const supabaseBookings = await db.getBookings()
+      const { data: supabaseBookings, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
       this.bookings = supabaseBookings || []
       
       console.log('Raw Supabase bookings:', this.bookings)
@@ -278,7 +283,7 @@ class UnifiedDataService {
    * Set up real-time subscriptions to Supabase
    */
   setupRealtimeSubscriptions() {
-    if (!supabase || !db.isAvailable()) {
+    if (!supabase) {
       console.log('UnifiedDataService: Skipping real-time subscriptions (Supabase not available)')
       return
     }
@@ -286,7 +291,12 @@ class UnifiedDataService {
     console.log('UnifiedDataService: Setting up real-time subscriptions...')
 
     // Subscribe to booking changes
-    const bookingSubscription = db.subscribeToBookings((payload) => {
+    const bookingSubscription = supabase
+      .channel('bookings-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'bookings' },
+        (payload) => {
       console.log('UnifiedDataService: Real-time booking change:', payload)
       
       switch (payload.eventType) {
@@ -310,6 +320,7 @@ class UnifiedDataService {
       // Keep charters in sync
       this.syncChartersFromBookings()
     })
+      .subscribe()
 
     // Only add valid subscriptions
     this.subscriptions = []
@@ -492,7 +503,14 @@ class UnifiedDataService {
     if (this.useSupabase && supabase) {
       try {
         // Update in Supabase
-        const updatedBooking = await db.updateBooking(id, updates)
+        const { data: updatedBooking, error } = await supabase
+          .from('bookings')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single()
+        
+        if (error) throw error
         
         // Update local state
         const index = this.bookings.findIndex(booking => booking.id === id)
@@ -541,7 +559,13 @@ class UnifiedDataService {
     if (this.useSupabase && supabase) {
       try {
         // Create in Supabase
-        const newBooking = await db.createBooking(booking)
+        const { data: newBooking, error } = await supabase
+          .from('bookings')
+          .insert([booking])
+          .select()
+          .single()
+        
+        if (error) throw error
         
         // Add to local state
         this.bookings.push(newBooking)
@@ -586,7 +610,12 @@ class UnifiedDataService {
     if (this.useSupabase && supabase) {
       try {
         // Delete from Supabase
-        await db.deleteBooking(id)
+        const { error } = await supabase
+          .from('bookings')
+          .delete()
+          .eq('id', id)
+        
+        if (error) throw error
         
         // Remove from local state
         const index = this.bookings.findIndex(booking => booking.id === id)
@@ -694,7 +723,7 @@ class UnifiedDataService {
   async refresh() {
     console.log('UnifiedDataService: Force refreshing data...')
     
-    if (this.useSupabase && db.isAvailable()) {
+    if (this.useSupabase && supabase) {
       try {
         await this.loadFromSupabase()
         console.log('UnifiedDataService: Successfully refreshed from Supabase')
