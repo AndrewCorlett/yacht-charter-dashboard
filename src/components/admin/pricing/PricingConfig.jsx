@@ -8,11 +8,16 @@
  * @created 2025-06-24
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ConfigSection, ConfigGrid, ConfigCard, ActionButton } from '../AdminConfigLayout'
+import { pricingService } from '../../../services/supabase/pricingService'
 
 function PricingConfig() {
   const [pricingRules, setPricingRules] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [editingRule, setEditingRule] = useState(null)
+  const [editFormData, setEditFormData] = useState({})
 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [filterConfig, setFilterConfig] = useState({
@@ -20,6 +25,25 @@ function PricingConfig() {
     ruleType: 'all',
     isActive: 'all'
   })
+
+  // Load pricing rules on component mount
+  useEffect(() => {
+    loadPricingRules()
+  }, [])
+
+  const loadPricingRules = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const rules = await pricingService.getPricingRules()
+      setPricingRules(rules)
+    } catch (err) {
+      console.error('Error loading pricing rules:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Sort and filter pricing rules
   const sortedAndFilteredRules = useMemo(() => {
@@ -53,16 +77,64 @@ function PricingConfig() {
     setSortConfig({ key, direction })
   }
 
-  const handleDeleteRule = (ruleId) => {
-    setPricingRules(rules => rules.filter(rule => rule.id !== ruleId))
+  const handleDeleteRule = async (ruleId) => {
+    try {
+      await pricingService.deletePricingRule(ruleId)
+      setPricingRules(rules => rules.filter(rule => rule.id !== ruleId))
+    } catch (err) {
+      console.error('Error deleting pricing rule:', err)
+      setError(err.message)
+    }
   }
 
-  const handleToggleActive = (ruleId) => {
-    setPricingRules(rules => 
-      rules.map(rule => 
-        rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
+  const handleToggleActive = async (ruleId) => {
+    try {
+      const updatedRule = await pricingService.togglePricingRuleActive(ruleId)
+      setPricingRules(rules => 
+        rules.map(rule => 
+          rule.id === ruleId ? updatedRule : rule
+        )
       )
-    )
+    } catch (err) {
+      console.error('Error toggling pricing rule:', err)
+      setError(err.message)
+    }
+  }
+
+  const handleEditRule = (ruleId) => {
+    const rule = pricingRules.find(r => r.id === ruleId)
+    if (rule) {
+      setEditingRule(ruleId)
+      setEditFormData({
+        ruleName: rule.ruleName,
+        rate: rule.rate,
+        seasonalMultiplier: rule.seasonalMultiplier,
+        minDays: rule.minDays,
+        startDate: rule.startDate,
+        endDate: rule.endDate
+      })
+    }
+  }
+
+  const handleSaveEdit = async () => {
+    try {
+      const updatedRule = await pricingService.updatePricingRule(editingRule, editFormData)
+      setPricingRules(rules => 
+        rules.map(rule => 
+          rule.id === editingRule ? updatedRule : rule
+        )
+      )
+      setEditingRule(null)
+      setEditFormData({})
+    } catch (err) {
+      console.error('Error updating pricing rule:', err)
+      setError(err.message)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingRule(null)
+    setEditFormData({})
   }
 
   const getRuleTypeColor = (ruleType) => {
@@ -93,6 +165,36 @@ function PricingConfig() {
       </svg>
     </button>
   )
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading pricing rules...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="flex">
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-red-800">Error loading pricing rules</h3>
+            <p className="mt-2 text-sm text-red-700">{error}</p>
+            <div className="mt-4">
+              <button
+                onClick={loadPricingRules}
+                className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -221,10 +323,21 @@ function PricingConfig() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-gray-900">
-                      {rule.currency} {rule.rate.toLocaleString()}
-                      <span className="text-gray-500 text-sm">/{rule.rateType}</span>
-                    </div>
+                    {editingRule === rule.id ? (
+                      <input
+                        type="number"
+                        value={editFormData.rate || ''}
+                        onChange={(e) => setEditFormData({...editFormData, rate: parseFloat(e.target.value)})}
+                        className="w-20 px-2 py-1 border rounded text-sm"
+                        min="0"
+                        step="0.01"
+                      />
+                    ) : (
+                      <div className="text-gray-900">
+                        {rule.currency} {rule.rate.toLocaleString()}
+                        <span className="text-gray-500 text-sm">/{rule.rateType}</span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">
@@ -254,24 +367,43 @@ function PricingConfig() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => console.log('Edit rule', rule.id)}
-                        className="text-blue-600 hover:text-blue-900 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => console.log('Copy rule', rule.id)}
-                        className="text-gray-600 hover:text-gray-900 text-sm"
-                      >
-                        Copy
-                      </button>
-                      <button
-                        onClick={() => handleDeleteRule(rule.id)}
-                        className="text-red-600 hover:text-red-900 text-sm"
-                      >
-                        Delete
-                      </button>
+                      {editingRule === rule.id ? (
+                        <>
+                          <button
+                            onClick={handleSaveEdit}
+                            className="text-green-600 hover:text-green-900 text-sm font-medium"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="text-gray-600 hover:text-gray-900 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleEditRule(rule.id)}
+                            className="text-blue-600 hover:text-blue-900 text-sm"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => console.log('Copy rule', rule.id)}
+                            className="text-gray-600 hover:text-gray-900 text-sm"
+                          >
+                            Copy
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRule(rule.id)}
+                            className="text-red-600 hover:text-red-900 text-sm"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -50,8 +50,6 @@ function YachtSelector({ onYachtSelect, selectedYacht }) {
           berths: 6,
           max_pob: 8,
           year_built: 2018,
-          daily_rate: 250.00,
-          weekly_rate: 1500.00,
           description: 'Luxury sailing yacht perfect for family adventures'
         },
         {
@@ -64,8 +62,6 @@ function YachtSelector({ onYachtSelect, selectedYacht }) {
           berths: 8,
           max_pob: 10,
           year_built: 2020,
-          daily_rate: 350.00,
-          weekly_rate: 2100.00,
           description: 'Modern motor yacht with premium amenities'
         },
         {
@@ -78,8 +74,6 @@ function YachtSelector({ onYachtSelect, selectedYacht }) {
           berths: 8,
           max_pob: 12,
           year_built: 2019,
-          daily_rate: 300.00,
-          weekly_rate: 1800.00,
           description: 'Spacious catamaran ideal for large groups'
         },
         {
@@ -92,8 +86,6 @@ function YachtSelector({ onYachtSelect, selectedYacht }) {
           berths: 4,
           max_pob: 6,
           year_built: 2017,
-          daily_rate: 200.00,
-          weekly_rate: 1200.00,
           description: 'Compact sailing yacht perfect for couples'
         },
         {
@@ -106,8 +98,6 @@ function YachtSelector({ onYachtSelect, selectedYacht }) {
           berths: 10,
           max_pob: 12,
           year_built: 2021,
-          daily_rate: 500.00,
-          weekly_rate: 3000.00,
           description: 'Flagship luxury motor yacht with full crew'
         },
         {
@@ -120,8 +110,6 @@ function YachtSelector({ onYachtSelect, selectedYacht }) {
           berths: 6,
           max_pob: 8,
           year_built: 2019,
-          daily_rate: 275.00,
-          weekly_rate: 1650.00,
           description: 'Racing yacht with performance and comfort'
         }
       ]
@@ -223,17 +211,6 @@ function YachtSelector({ onYachtSelect, selectedYacht }) {
               <div className="flex justify-between">
                 <span className="text-gray-400">{LABELS.YACHT.MAX_POB}:</span>
                 <span className="text-white">{yacht.max_pob}</span>
-              </div>
-            </div>
-
-            {/* [Yacht Pricing] - Daily and weekly rates */}
-            <div className="mt-4 pt-3 border-t border-gray-700">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">From:</span>
-                <div className="text-right">
-                  <div className="text-white font-medium">£{yacht.daily_rate}/day</div>
-                  <div className="text-gray-400">£{yacht.weekly_rate}/week</div>
-                </div>
               </div>
             </div>
 

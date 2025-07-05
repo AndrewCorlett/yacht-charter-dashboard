@@ -8,6 +8,8 @@ import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 import { useBookingOperations } from '../../contexts/BookingContext'
 import { BookingModel } from '../../models'
 import yachtService from '../../services/supabase/YachtService'
+import documentAutoGenerator from '../../services/supabase/DocumentAutoGenerator'
+import CharterCostSection from './CharterCostSection'
 
 function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBookingManagementClick }) {
   // Get booking operations from context
@@ -33,7 +35,11 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     postcode: bookingData.postcode || '',
     country: bookingData.country || '',
     // Crew experience file
-    crewExperienceFile: bookingData.crewExperienceFile || null
+    crewExperienceFile: bookingData.crewExperienceFile || null,
+    // Charter cost data
+    charterCost: bookingData.charterCost || 0,
+    deposit: bookingData.deposit || 0,
+    securityDeposit: bookingData.securityDeposit || 0
   })
 
   const [statusData, setStatusData] = useState({
@@ -62,6 +68,10 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
   const [documentModal, setDocumentModal] = useState({ isOpen: false, documentType: null })
   const [partialDownloadModal, setPartialDownloadModal] = useState({ isOpen: false, missingDocuments: [] })
   const [lastBulkDownload, setLastBulkDownload] = useState(null)
+  
+  // Document generation state
+  const [generatingDocument, setGeneratingDocument] = useState(null)
+  const [generationError, setGenerationError] = useState(null)
 
   // Yacht data state for database-driven dropdown
   const [yachts, setYachts] = useState([])
@@ -96,6 +106,15 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     setFormData(prev => ({
       ...prev,
       crewExperienceFile: fileInfo
+    }))
+  }
+
+  const handleCharterCostChange = (costs) => {
+    setFormData(prev => ({
+      ...prev,
+      charterCost: costs.charterCost,
+      deposit: costs.deposit,
+      securityDeposit: costs.securityDeposit
     }))
   }
 
@@ -188,9 +207,138 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     handleNavigation(() => onBookingManagementClick && onBookingManagementClick())
   }
 
+  // Helper functions for document generation
+  const getTemplateType = (documentType) => {
+    const mapping = {
+      'Contract': 'contract',
+      'Deposit Invoice': 'depositInvoice',
+      'Deposit Receipt': 'depositReceipt',
+      'Remaining Balance Invoice': 'balanceInvoice',
+      'Remaining Balance Receipt': 'balanceReceipt',
+      'Hand-over Notes': 'handoverNotes'
+    }
+    return mapping[documentType] || 'contract'
+  }
+
+  const getPaymentStatus = (statusData) => {
+    if (statusData.finalPaymentPaid) return 'full_payment'
+    if (statusData.depositPaid) return 'deposit_paid'
+    return 'pending'
+  }
+
   // Document generation functions
-  const handleGenerateDocument = (documentType) => {
-    setDocumentModal({ isOpen: true, documentType })
+  const handleGenerateDocument = async (documentType) => {
+    if (generatingDocument) {
+      console.log('Document generation already in progress')
+      return
+    }
+
+    try {
+      setGeneratingDocument(documentType)
+      setGenerationError(null)
+
+      console.log(`[BookingPanel] Starting auto-generation of ${documentType}`)
+
+      // Convert document type to template type
+      const templateType = getTemplateType(documentType)
+      
+      // Find the selected yacht to get details
+      const selectedYacht = yachts.find(y => y.id === formData.yacht)
+      console.log('[BookingPanel] Selected yacht for generation:', selectedYacht)
+      console.log('[BookingPanel] Form data yacht ID:', formData.yacht)
+      
+      // Prepare booking data (convert from frontend format to database format)
+      const bookingForGeneration = {
+        id: bookingData.id,
+        booking_number: bookingData.bookingNumber,
+        customer_first_name: formData.firstName,
+        customer_surname: formData.surname,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        customer_street: formData.street,
+        customer_city: formData.city,
+        customer_postcode: formData.postcode,
+        customer_country: formData.country,
+        yacht_name: bookingData.yachtName || selectedYacht?.name || 'Yacht name not found',
+        yacht_type: bookingData.yachtType || selectedYacht?.type || 'Type unknown',
+        yacht_location: bookingData.yachtLocation || selectedYacht?.location || 'Location unknown',
+        yacht_id: formData.yacht,
+        charter_type: formData.tripType,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        port_of_departure: formData.portOfDeparture,
+        port_of_arrival: formData.portOfArrival,
+        total_amount: formData.charterCost || bookingData.totalAmount || 1500.00,
+        deposit_amount: formData.deposit || bookingData.depositAmount || 300.00,
+        security_deposit: formData.securityDeposit || bookingData.securityDeposit || 500.00,
+        deposit_paid: statusData.depositPaid,
+        payment_status: getPaymentStatus(statusData),
+        booking_confirmed: statusData.bookingConfirmed,
+        contract_sent: statusData.contractSent,
+        contract_signed: statusData.contractSigned
+      }
+
+      // Debug: Log the booking data being sent
+      console.log('[BookingPanel] Booking data being sent to generator:', bookingForGeneration)
+      console.log('[BookingPanel] Template type:', templateType)
+      console.log('[BookingPanel] Selected yacht data:', selectedYacht)
+
+      // Get settings data (yacht owner info, pricing, etc.)
+      const settingsData = await documentAutoGenerator.getSettingsData(bookingForGeneration.yacht_id)
+      console.log('[BookingPanel] Settings data received:', settingsData)
+
+      // Generate the document
+      const generatedBlob = await documentAutoGenerator.generateDocument(templateType, bookingForGeneration, settingsData)
+
+      // Update document state to show it's generated
+      setDocumentStates(prev => ({
+        ...prev,
+        [documentType]: {
+          ...prev[documentType],
+          generated: true,
+          updated: lastBulkDownload ? new Date() > lastBulkDownload : false
+        }
+      }))
+
+      // Auto-download the generated document
+      console.log('[BookingPanel] Generated blob size:', generatedBlob.size, 'bytes')
+      console.log('[BookingPanel] Generated blob type:', generatedBlob.type)
+      
+      // Determine file extension based on blob type
+      let fileExtension = '.txt' // fallback
+      if (generatedBlob.type.includes('pdf')) {
+        fileExtension = '.pdf'
+      } else if (generatedBlob.type.includes('wordprocessingml') || generatedBlob.type.includes('docx')) {
+        fileExtension = '.docx'
+      } else if (generatedBlob.type.includes('msword')) {
+        fileExtension = '.doc'
+      }
+      
+      const filename = `${documentType.replace(/\s+/g, '_')}_${bookingForGeneration.booking_number}_${new Date().toISOString().slice(0, 10)}${fileExtension}`
+      console.log('[BookingPanel] Download filename:', filename)
+      
+      // Validate blob before download
+      if (!generatedBlob || generatedBlob.size === 0) {
+        throw new Error('Generated document is empty or corrupted')
+      }
+      
+      const url = URL.createObjectURL(generatedBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      console.log(`[BookingPanel] Successfully generated and downloaded ${documentType}`)
+
+    } catch (error) {
+      console.error(`[BookingPanel] Error generating ${documentType}:`, error)
+      setGenerationError(`Failed to generate ${documentType}: ${error.message}`)
+    } finally {
+      setGeneratingDocument(null)
+    }
   }
 
   const handleDocumentGenerated = (documentType) => {
@@ -451,6 +599,14 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
               </div>
             </div>
 
+            {/* Charter Cost Section */}
+            <CharterCostSection
+              yacht={formData.yacht}
+              startDate={formData.startDate}
+              endDate={formData.endDate}
+              onCostChange={handleCharterCostChange}
+            />
+
             {/* Crew Experience File Upload */}
             <FileUpload
               title="Crew Experience"
@@ -504,6 +660,14 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
             {/* Auto-Create Documents */}
             <div className="bg-gray-800 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-4">Auto-Create Documents</h3>
+              
+              {/* Error display */}
+              {generationError && (
+                <div className="mb-4 p-3 bg-red-900/30 border border-red-600 rounded text-red-300 text-sm">
+                  {generationError}
+                </div>
+              )}
+              
               <div className="space-y-2">
                 {[
                   'Contract',
@@ -514,20 +678,33 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
                   'Hand-over Notes'
                 ].map(docType => {
                   const statusIcon = getDocumentStatusIcon(docType)
+                  const isGenerating = generatingDocument === docType
                   
                   return (
                     <div key={docType} className="flex items-center gap-2">
                       <button
                         onClick={() => handleGenerateDocument(docType)}
-                        className="flex-1 text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                        disabled={isGenerating || generatingDocument}
+                        className={`flex-1 text-left p-3 rounded transition-colors ${
+                          isGenerating || generatingDocument
+                            ? 'bg-gray-600 cursor-not-allowed'
+                            : 'bg-gray-700 hover:bg-gray-600'
+                        }`}
                       >
-                        <span className="text-sm">- {docType}</span>
+                        <span className="text-sm">
+                          {isGenerating ? '⏳ Generating...' : `- ${docType}`}
+                        </span>
                       </button>
                       <button
                         onClick={() => handleGenerateDocument(docType)}
-                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+                        disabled={isGenerating || generatingDocument}
+                        className={`px-3 py-2 text-white text-sm font-medium rounded transition-colors ${
+                          isGenerating || generatingDocument
+                            ? 'bg-gray-600 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
                       >
-                        Generate
+                        {isGenerating ? 'Generating...' : 'Auto-Create'}
                       </button>
                       {statusIcon && (
                         <button

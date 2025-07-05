@@ -35,8 +35,6 @@ export const LABELS = {
     BEAM: '[Beam (Meters)]',
     INSURANCE_POLICY: '[Insurance Policy Number]',
     INSURANCE_EXPIRY: '[Insurance Expiry Date]',
-    DAILY_RATE: '[Daily Rate]',
-    WEEKLY_RATE: '[Weekly Rate]',
     DESCRIPTION: '[Description]'
   },
 
@@ -117,8 +115,6 @@ export const LABELS = {
     HIGH_SEASON_RATE: '[High Season Rate]',
     LOW_SEASON_RATE: '[Low Season Rate]',
     BASE_RATE: '[Base Rate]',
-    DAILY_RATE: '[Daily Rate]',
-    WEEKLY_RATE: '[Weekly Rate]',
     SEASON_START: '[Season Start Date]',
     SEASON_END: '[Season End Date]',
     CURRENCY: '[Currency]',

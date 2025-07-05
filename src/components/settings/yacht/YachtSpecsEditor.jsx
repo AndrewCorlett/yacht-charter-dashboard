@@ -44,9 +44,6 @@ function YachtSpecsEditor({ yacht, onSave, loading }) {
     insurance_policy_number: '',
     insurance_expiry_date: '',
     
-    // Pricing
-    daily_rate: '',
-    weekly_rate: ''
   })
 
   // [Form State] - Tracks changes and validation
@@ -74,8 +71,6 @@ function YachtSpecsEditor({ yacht, onSave, loading }) {
         engine_type: yacht.engine_type || '',
         insurance_policy_number: yacht.insurance_policy_number || '',
         insurance_expiry_date: yacht.insurance_expiry_date || '',
-        daily_rate: yacht.daily_rate || '',
-        weekly_rate: yacht.weekly_rate || ''
       })
       setHasChanges(false)
       setErrors({})
@@ -116,7 +111,7 @@ function YachtSpecsEditor({ yacht, onSave, loading }) {
     }
 
     // Numeric field validation
-    const numericFields = ['length_feet', 'year_built', 'cabins', 'berths', 'max_pob', 'daily_rate', 'weekly_rate']
+    const numericFields = ['length_feet', 'year_built', 'cabins', 'berths', 'max_pob']
     numericFields.forEach(field => {
       if (specs[field] && isNaN(Number(specs[field]))) {
         newErrors[field] = 'Must be a valid number'
@@ -172,8 +167,6 @@ function YachtSpecsEditor({ yacht, onSave, loading }) {
         engine_type: yacht.engine_type || '',
         insurance_policy_number: yacht.insurance_policy_number || '',
         insurance_expiry_date: yacht.insurance_expiry_date || '',
-        daily_rate: yacht.daily_rate || '',
-        weekly_rate: yacht.weekly_rate || ''
       })
       setHasChanges(false)
       setErrors({})
@@ -345,18 +338,6 @@ function YachtSpecsEditor({ yacht, onSave, loading }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {renderInputField(LABELS.YACHT.INSURANCE_POLICY, 'insurance_policy_number', 'text', 'Insurance policy number')}
           {renderInputField(LABELS.YACHT.INSURANCE_EXPIRY, 'insurance_expiry_date', 'date')}
-        </div>
-      </div>
-
-      {/* [Pricing Section] */}
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h4 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-          <span>💰</span>
-          Base Pricing
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {renderInputField(LABELS.YACHT.DAILY_RATE + ' (£)', 'daily_rate', 'number', 'Daily rate in pounds')}
-          {renderInputField(LABELS.YACHT.WEEKLY_RATE + ' (£)', 'weekly_rate', 'number', 'Weekly rate in pounds')}
         </div>
       </div>
 

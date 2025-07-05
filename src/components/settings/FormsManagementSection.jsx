@@ -18,6 +18,7 @@
 import { useState, useEffect } from 'react'
 import { LABELS } from '../../config/labels'
 import FileUpload from '../common/FileUpload'
+import formsTemplateService from '../../services/supabase/FormsTemplateService'
 
 function FormsManagementSection() {
   // [Form Templates State] - Tracks uploaded form templates and their metadata
@@ -85,20 +86,19 @@ function FormsManagementSection() {
     try {
       console.log('[FormsManagement] Loading form templates from Supabase...')
       
-      // TODO: Implement Supabase storage query to fetch form templates
-      // This would query the form_templates table
+      const templates = await formsTemplateService.listTemplates()
       
-      // Mock data for now - replace with actual Supabase query
-      const mockTemplates = {
-        contract: null,
-        initialTerms: null,
-        depositInvoice: null,
-        depositReceipt: null,
-        balanceInvoice: null
+      // Convert to expected format
+      const formattedTemplates = {
+        contract: templates.contract || null,
+        initialTerms: templates.initialTerms || null,
+        depositInvoice: templates.depositInvoice || null,
+        depositReceipt: templates.depositReceipt || null,
+        balanceInvoice: templates.balanceInvoice || null
       }
       
-      setFormTemplates(mockTemplates)
-      console.log('[FormsManagement] Form templates loaded:', mockTemplates)
+      setFormTemplates(formattedTemplates)
+      console.log('[FormsManagement] Form templates loaded:', formattedTemplates)
       
     } catch (error) {
       console.error('[FormsManagement] Error loading form templates:', error)
@@ -125,22 +125,20 @@ function FormsManagementSection() {
     try {
       console.log(`[FormsManagement] Uploading ${templateType} template:`, fileInfo)
       
-      // TODO: Implement Supabase storage upload
-      // 1. Upload file to Supabase storage bucket 'form-templates'
-      // 2. Save metadata to form_templates table
-      // 3. Update local state with new template info
-      
-      // Mock upload simulation - replace with actual Supabase upload
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Upload to Supabase using the real service
+      const result = await formsTemplateService.uploadTemplate(templateType, fileInfo.file)
       
       // Update form templates state with uploaded file info
       setFormTemplates(prev => ({
         ...prev,
         [templateType]: {
-          ...fileInfo,
-          uploadedAt: new Date().toISOString(),
-          version: 1,
-          url: `https://mock-supabase-url.com/storage/form-templates/${templateType}-${Date.now()}.${fileInfo.type?.split('/')[1] || 'pdf'}`
+          name: result.fileName,
+          size: result.fileSize,
+          type: result.fileType,
+          url: result.publicUrl,
+          filePath: result.filePath,
+          uploadedAt: result.uploadedAt,
+          version: result.version
         }
       }))
 
@@ -163,7 +161,8 @@ function FormsManagementSection() {
       console.error(`[FormsManagement] Error uploading ${templateType} template:`, error)
       setUploadStatus(prev => ({
         ...prev,
-        [templateType]: 'error'
+        [templateType]: 'error',
+        errorMessage: error.message
       }))
     }
   }
@@ -176,9 +175,13 @@ function FormsManagementSection() {
     try {
       console.log(`[FormsManagement] Deleting ${templateType} template`)
       
-      // TODO: Implement Supabase storage deletion
-      // 1. Delete file from storage bucket
-      // 2. Remove metadata from form_templates table
+      const template = formTemplates[templateType]
+      if (!template?.filePath) {
+        throw new Error('No file path found for template')
+      }
+      
+      // Delete from Supabase
+      await formsTemplateService.deleteTemplate(templateType, template.filePath)
       
       // Update local state
       setFormTemplates(prev => ({
@@ -205,7 +208,8 @@ function FormsManagementSection() {
       console.error(`[FormsManagement] Error deleting ${templateType} template:`, error)
       setUploadStatus(prev => ({
         ...prev,
-        [templateType]: 'error'
+        [templateType]: 'error',
+        errorMessage: error.message
       }))
     }
   }
@@ -214,22 +218,44 @@ function FormsManagementSection() {
    * [Handle Template Download] - Downloads template file
    * @param {string} templateType - Type of template to download
    */
-  const handleTemplateDownload = (templateType) => {
+  const handleTemplateDownload = async (templateType) => {
     const template = formTemplates[templateType]
-    if (!template?.url) {
-      console.warn(`[FormsManagement] No download URL for ${templateType} template`)
+    if (!template?.filePath) {
+      console.warn(`[FormsManagement] No file path for ${templateType} template`)
       return
     }
 
-    console.log(`[FormsManagement] Downloading ${templateType} template`)
-    
-    // Create download link
-    const link = document.createElement('a')
-    link.href = template.url
-    link.download = template.name || `${templateType}_template.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    try {
+      console.log(`[FormsManagement] Downloading ${templateType} template`)
+      
+      // Download file blob from Supabase
+      const blob = await formsTemplateService.downloadTemplate(template.filePath)
+      
+      // Create download link
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = template.name || `${templateType}_template.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      // Clean up object URL
+      URL.revokeObjectURL(url)
+      
+    } catch (error) {
+      console.error(`[FormsManagement] Error downloading ${templateType} template:`, error)
+      // Fallback to direct URL download if blob download fails
+      if (template.url) {
+        const link = document.createElement('a')
+        link.href = template.url
+        link.download = template.name || `${templateType}_template.pdf`
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    }
   }
 
   /**

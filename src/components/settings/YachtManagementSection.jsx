@@ -19,7 +19,6 @@ import { LABELS } from '../../config/labels'
 import YachtSelector from './yacht/YachtSelector'
 import YachtSpecsEditor from './yacht/YachtSpecsEditor'
 import YachtOwnerDetails from './yacht/YachtOwnerDetails'
-import YachtCharterCosts from './yacht/YachtCharterCosts'
 
 function YachtManagementSection() {
   // [Selected Yacht State] - Currently selected yacht for editing
@@ -43,12 +42,6 @@ function YachtManagementSection() {
       label: LABELS.YACHT_MANAGEMENT.OWNER_DETAILS,
       icon: '👤',
       description: 'Yacht owner contact and emergency information'
-    },
-    {
-      key: 'costs',
-      label: LABELS.YACHT_MANAGEMENT.CHARTER_COSTS,
-      icon: '💰',
-      description: 'Seasonal pricing and charter cost configuration'
     }
   ]
 
@@ -131,14 +124,6 @@ function YachtManagementSection() {
             loading={loading}
           />
         )
-      case 'costs':
-        return (
-          <YachtCharterCosts 
-            yacht={selectedYacht} 
-            onSave={(data) => handleDataSave('costs', data)}
-            loading={loading}
-          />
-        )
       default:
         return (
           <YachtSpecsEditor 
@@ -156,7 +141,7 @@ function YachtManagementSection() {
       <div>
         <h2 className="text-2xl font-bold mb-2">{LABELS.SETTINGS.YACHT_MANAGEMENT}</h2>
         <p className="text-gray-400">
-          Manage yacht fleet information, specifications, owner details, and charter pricing.
+          Manage yacht fleet information, specifications, and owner details.
           Select a yacht below to view and edit its details.
         </p>
       </div>

@@ -16,8 +16,9 @@
  * @created 2025-06-28
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { LABELS } from '../../config/labels'
+import YachtPricingConfigService from '../../services/supabase/yachtPricingConfigService'
 
 function PricingSection() {
   // [Pricing State] - Manages yacht pricing data and UI state
@@ -28,68 +29,49 @@ function PricingSection() {
   const [editingYacht, setEditingYacht] = useState(null)
   const [seasonDates, setSeasonDates] = useState({
     highSeasonStart: '2024-06-01',
-    highSeasonEnd: '2024-09-30',
-    lowSeasonStart: '2024-10-01',
-    lowSeasonEnd: '2024-05-31'
+    highSeasonEnd: '2024-09-30'
   })
+  const [error, setError] = useState(null)
 
   // [Load Data] - Fetch yachts and pricing data on component mount
   useEffect(() => {
     loadYachtsAndPricing()
-  }, [])
+  }, []) // Only run once on mount
 
   /**
    * [Load Yachts and Pricing] - Fetches yacht list and pricing data from Supabase
    */
   const loadYachtsAndPricing = async () => {
     setLoading(true)
+    setError(null)
     try {
-      // TODO: Implement Supabase queries
-      // 1. Fetch yacht list from yachts table
-      // 2. Fetch pricing data from yacht_pricing table
+      // Fetch yacht list and pricing configurations from Supabase
+      const [yachtsData, pricingConfigsData] = await Promise.all([
+        YachtPricingConfigService.getAllYachtsForPricing(),
+        YachtPricingConfigService.getAllYachtPricingConfigs()
+      ])
       
-      console.log('Loading yachts and pricing data from Supabase...')
+      // Transform pricing data to frontend format
+      // If no pricing configs exist yet, create empty array
+      const transformedPricingData = pricingConfigsData ? pricingConfigsData.map(config => 
+        YachtPricingConfigService.transformFromDatabase(config)
+      ) : []
       
-      // Mock yacht data - replace with actual Supabase query
-      const mockYachts = [
-        { id: 'yacht-1', name: 'Serenity', type: 'Sailing Yacht', location: 'Mediterranean' },
-        { id: 'yacht-2', name: 'Atlantis', type: 'Motor Yacht', location: 'Caribbean' },
-        { id: 'yacht-3', name: 'Poseidon', type: 'Catamaran', location: 'Greek Islands' }
-      ]
+      // Set season dates from first config if available
+      if (transformedPricingData.length > 0) {
+        const firstConfig = transformedPricingData[0]
+        setSeasonDates({
+          highSeasonStart: firstConfig.highSeasonStartDate,
+          highSeasonEnd: firstConfig.highSeasonEndDate
+        })
+      }
       
-      // Mock pricing data - replace with actual Supabase query
-      const mockPricingData = [
-        {
-          yachtId: 'yacht-1',
-          highSeasonRate: 2500,
-          lowSeasonRate: 1800,
-          currency: 'GBP',
-          rateType: 'weekly',
-          lastUpdated: new Date().toISOString()
-        },
-        {
-          yachtId: 'yacht-2',
-          highSeasonRate: 3200,
-          lowSeasonRate: 2400,
-          currency: 'GBP',
-          rateType: 'weekly',
-          lastUpdated: new Date().toISOString()
-        },
-        {
-          yachtId: 'yacht-3',
-          highSeasonRate: 1900,
-          lowSeasonRate: 1400,
-          currency: 'GBP',
-          rateType: 'weekly',
-          lastUpdated: new Date().toISOString()
-        }
-      ]
-      
-      setYachts(mockYachts)
-      setPricingData(mockPricingData)
+      setYachts(yachtsData)
+      setPricingData(transformedPricingData)
       
     } catch (error) {
       console.error('Error loading yachts and pricing:', error)
+      setError('Failed to load yacht pricing data. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -102,37 +84,43 @@ function PricingSection() {
    */
   const updatePricing = async (yachtId, newPricing) => {
     setSaving(true)
+    setError(null)
     try {
-      // TODO: Implement Supabase update
-      // 1. Update yacht_pricing table with new rates
-      // 2. Log pricing change in audit table
+      // Prepare pricing data with season dates
+      const pricingConfigData = {
+        yachtId: yachtId,
+        highSeasonStartDate: seasonDates.highSeasonStart,
+        highSeasonEndDate: seasonDates.highSeasonEnd,
+        highSeasonRate: newPricing.highSeasonRate,
+        highSeasonDeposit: newPricing.highSeasonDeposit || newPricing.deposit,
+        highSeasonSecurityDeposit: newPricing.highSeasonSecurityDeposit || newPricing.securityDeposit,
+        lowSeasonRate: newPricing.lowSeasonRate,
+        lowSeasonDeposit: newPricing.lowSeasonDeposit || newPricing.deposit,
+        lowSeasonSecurityDeposit: newPricing.lowSeasonSecurityDeposit || newPricing.securityDeposit,
+        currency: newPricing.currency || 'GBP',
+        rateType: newPricing.rateType || 'weekly',
+        minimumCharterDays: newPricing.minimumCharterDays || 7,
+        updatedBy: 'admin'
+      }
       
-      console.log(`Updating pricing for yacht ${yachtId}:`, newPricing)
+      // Save to Supabase
+      const savedConfig = await YachtPricingConfigService.upsertYachtPricingConfig(
+        YachtPricingConfigService.transformToDatabase(pricingConfigData)
+      )
       
-      // Mock save operation - replace with actual Supabase update
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Transform and update local state
+      const transformedConfig = YachtPricingConfigService.transformFromDatabase(savedConfig)
       
-      // Update local state
       setPricingData(prev => {
         const existingIndex = prev.findIndex(p => p.yachtId === yachtId)
         if (existingIndex >= 0) {
           // Update existing pricing
           const updated = [...prev]
-          updated[existingIndex] = {
-            ...updated[existingIndex],
-            ...newPricing,
-            lastUpdated: new Date().toISOString()
-          }
+          updated[existingIndex] = transformedConfig
           return updated
         } else {
           // Add new pricing
-          return [...prev, {
-            yachtId,
-            ...newPricing,
-            currency: 'GBP',
-            rateType: 'weekly',
-            lastUpdated: new Date().toISOString()
-          }]
+          return [...prev, transformedConfig]
         }
       })
       
@@ -140,24 +128,31 @@ function PricingSection() {
       
     } catch (error) {
       console.error('Error updating pricing:', error)
+      setError('Failed to save pricing configuration. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
   /**
-   * [Get Yacht Pricing] - Gets pricing data for a specific yacht
+   * [Get Yacht Pricing] - Gets pricing data for a specific yacht (memoized)
    * @param {string} yachtId - ID of the yacht
    * @returns {Object} Pricing data or default values
    */
-  const getYachtPricing = (yachtId) => {
+  const getYachtPricing = useCallback((yachtId) => {
     return pricingData.find(p => p.yachtId === yachtId) || {
       highSeasonRate: 0,
       lowSeasonRate: 0,
+      highSeasonDeposit: 0,
+      lowSeasonDeposit: 0,
+      highSeasonSecurityDeposit: 0,
+      lowSeasonSecurityDeposit: 0,
+      deposit: 0, // Fallback for compatibility
+      securityDeposit: 0, // Fallback for compatibility
       currency: 'GBP',
       rateType: 'weekly'
     }
-  }
+  }, [pricingData])
 
   /**
    * [Handle Edit Click] - Starts editing mode for a yacht
@@ -186,13 +181,13 @@ function PricingSection() {
    * [Pricing Row Component] - Individual yacht pricing row
    */
   const PricingRow = ({ yacht }) => {
-    const pricing = getYachtPricing(yacht.id)
+    const pricing = useMemo(() => getYachtPricing(yacht.id), [yacht.id, getYachtPricing])
     const isEditing = editingYacht === yacht.id
     const [formData, setFormData] = useState(pricing)
 
     useEffect(() => {
       setFormData(pricing)
-    }, [pricing, yacht.id])
+    }, [pricing])
 
     if (isEditing) {
       return (
@@ -202,7 +197,7 @@ function PricingSection() {
               <span className="text-lg mr-2">⚓</span>
               <div>
                 <div className="text-sm font-medium">{yacht.name}</div>
-                <div className="text-xs text-gray-400">{yacht.type}</div>
+                <div className="text-xs text-gray-400">{yacht.engine_type || 'Yacht'}</div>
               </div>
             </div>
           </td>
@@ -223,6 +218,42 @@ function PricingSection() {
               className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
               placeholder="0"
             />
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <div className="space-y-2">
+              <input
+                type="number"
+                value={formData.highSeasonDeposit || formData.deposit || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, highSeasonDeposit: parseFloat(e.target.value) || 0, deposit: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
+                placeholder="High season"
+              />
+              <input
+                type="number"
+                value={formData.lowSeasonDeposit || formData.deposit || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, lowSeasonDeposit: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
+                placeholder="Low season"
+              />
+            </div>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <div className="space-y-2">
+              <input
+                type="number"
+                value={formData.highSeasonSecurityDeposit || formData.securityDeposit || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, highSeasonSecurityDeposit: parseFloat(e.target.value) || 0, securityDeposit: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
+                placeholder="High season"
+              />
+              <input
+                type="number"
+                value={formData.lowSeasonSecurityDeposit || formData.securityDeposit || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, lowSeasonSecurityDeposit: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
+                placeholder="Low season"
+              />
+            </div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap">
             <select
@@ -263,7 +294,7 @@ function PricingSection() {
             <span className="text-lg mr-2">⚓</span>
             <div>
               <div className="text-sm font-medium">{yacht.name}</div>
-              <div className="text-xs text-gray-400">{yacht.type} • {yacht.location}</div>
+              <div className="text-xs text-gray-400">{yacht.engine_type || 'Yacht'} • {yacht.location || 'Unknown'}</div>
             </div>
           </div>
         </td>
@@ -278,6 +309,30 @@ function PricingSection() {
             £{pricing.lowSeasonRate?.toLocaleString() || '0'}
           </div>
           <div className="text-xs text-gray-400">per week</div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="space-y-1">
+            <div className="text-sm font-medium">
+              £{(pricing.highSeasonDeposit || pricing.deposit || 0).toLocaleString()}
+            </div>
+            <div className="text-xs text-gray-400">High season</div>
+            <div className="text-sm text-gray-300">
+              £{(pricing.lowSeasonDeposit || pricing.deposit || 0).toLocaleString()}
+            </div>
+            <div className="text-xs text-gray-400">Low season</div>
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="space-y-1">
+            <div className="text-sm font-medium">
+              £{(pricing.highSeasonSecurityDeposit || pricing.securityDeposit || 0).toLocaleString()}
+            </div>
+            <div className="text-xs text-gray-400">High season</div>
+            <div className="text-sm text-gray-300">
+              £{(pricing.lowSeasonSecurityDeposit || pricing.securityDeposit || 0).toLocaleString()}
+            </div>
+            <div className="text-xs text-gray-400">Low season</div>
+          </div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <span className="text-sm">{pricing.currency || 'GBP'}</span>
@@ -316,6 +371,16 @@ function PricingSection() {
         </p>
       </div>
 
+      {/* [Error Display] */}
+      {error && (
+        <div className="bg-red-900/50 border border-red-700 rounded-lg p-4">
+          <div className="flex items-center">
+            <span className="text-red-400 mr-2">⚠️</span>
+            <span className="text-red-200">{error}</span>
+          </div>
+        </div>
+      )}
+
       {/* [Season Configuration] - Define high and low season date ranges */}
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <h3 className="text-lg font-medium mb-4">📅 Season Configuration</h3>
@@ -345,25 +410,13 @@ function PricingSection() {
           </div>
           <div>
             <h4 className="font-medium mb-3 text-blue-400">❄️ {LABELS.SEASON.LOW_SEASON}</h4>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Start Date</label>
-                <input
-                  type="date"
-                  value={seasonDates.lowSeasonStart}
-                  onChange={(e) => setSeasonDates(prev => ({ ...prev, lowSeasonStart: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">End Date</label>
-                <input
-                  type="date"
-                  value={seasonDates.lowSeasonEnd}
-                  onChange={(e) => setSeasonDates(prev => ({ ...prev, lowSeasonEnd: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500"
-                />
-              </div>
+            <div className="bg-gray-700 rounded p-4">
+              <p className="text-sm text-gray-300 mb-2">
+                Low season automatically applies to all dates outside the high season period.
+              </p>
+              <p className="text-xs text-gray-400">
+                Current low season: All dates except {seasonDates.highSeasonStart} to {seasonDates.highSeasonEnd}
+              </p>
             </div>
           </div>
         </div>
@@ -392,6 +445,12 @@ function PricingSection() {
                   {LABELS.PRICING.LOW_SEASON_RATE}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Deposit
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Security Deposit
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   {LABELS.PRICING.CURRENCY}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -408,41 +467,6 @@ function PricingSection() {
         </div>
       </div>
 
-      {/* [Pricing Summary] - Display pricing statistics */}
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-lg font-medium mb-4">📊 Pricing Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <div className="text-gray-400">Total Yachts</div>
-            <div className="text-xl font-bold">{yachts.length}</div>
-          </div>
-          <div>
-            <div className="text-gray-400">Avg High Season</div>
-            <div className="text-xl font-bold">
-              £{Math.round(
-                pricingData.reduce((sum, p) => sum + (p.highSeasonRate || 0), 0) / Math.max(pricingData.length, 1)
-              ).toLocaleString()}
-            </div>
-          </div>
-          <div>
-            <div className="text-gray-400">Avg Low Season</div>
-            <div className="text-xl font-bold">
-              £{Math.round(
-                pricingData.reduce((sum, p) => sum + (p.lowSeasonRate || 0), 0) / Math.max(pricingData.length, 1)
-              ).toLocaleString()}
-            </div>
-          </div>
-          <div>
-            <div className="text-gray-400">Last Updated</div>
-            <div className="text-sm">
-              {pricingData.length > 0 
-                ? new Date(Math.max(...pricingData.map(p => new Date(p.lastUpdated)))).toLocaleDateString()
-                : 'Never'
-              }
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

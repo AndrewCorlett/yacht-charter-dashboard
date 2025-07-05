@@ -28,7 +28,7 @@ class YachtService {
       // Get all yachts from the yachts table
       const { data, error } = await supabase
         .from('yachts')
-        .select('id, name, length_feet, cabins, berths, daily_rate, weekly_rate, location')
+        .select('id, name, length_feet, cabins, berths, location')
         .order('name', { ascending: true })
 
       queryHelpers.handleError(error, 'getYachts')
@@ -40,8 +40,6 @@ class YachtService {
         length: yacht.length_feet,
         cabins: yacht.cabins,
         berths: yacht.berths,
-        daily_rate: yacht.daily_rate,
-        weekly_rate: yacht.weekly_rate,
         location: yacht.location,
         status: 'active'
       }))

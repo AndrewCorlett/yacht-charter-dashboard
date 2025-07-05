@@ -7,7 +7,8 @@
  */
 
 import { supabase, supabaseConfig, TABLES, queryHelpers, RealtimeSubscription } from './supabaseClient.js'
-import { BookingModel, BookingNumberGenerator, BookingNumberFormat } from '../../models'
+import BookingModel from '../../models/core/BookingModel-unified.js'
+import { BookingNumberGenerator, BookingNumberFormat, YachtCodes } from '../../models/utilities/BookingNumberGenerator.js'
 
 class BookingService {
   constructor() {
@@ -28,7 +29,9 @@ class BookingService {
       
       // Generate booking number if not provided
       if (!booking.booking_number) {
-        booking.booking_number = await this.generateBookingNumber(booking.yacht_id)
+        // Use yacht name for booking number generation, fallback to yacht_id
+        const yachtIdentifier = booking.yacht_name || booking.yacht_id
+        booking.booking_number = await this.generateBookingNumber(yachtIdentifier, booking.start_date)
       }
 
       // Set timestamps
@@ -435,29 +438,23 @@ class BookingService {
   }
 
   /**
-   * Helper: Generate booking number using sophisticated generator
+   * Helper: Generate booking number using new YYWWBCNN format
    */
-  async generateBookingNumber(yachtId = null) {
+  async generateBookingNumber(yachtId = null, startDate = null) {
+    console.log('[BookingService] Generating booking number for yacht:', yachtId, 'startDate:', startDate)
+    
     try {
-      // Create generator with year-month-sequence format for better organization
+      if (!yachtId) {
+        throw new Error('Yacht ID is required for booking number generation')
+      }
+      
+      if (!startDate) {
+        throw new Error('Start date is required for booking number generation')
+      }
+
+      // Create generator with new year-week-yacht-sequence format
       const generator = new BookingNumberGenerator({
-        format: BookingNumberFormat.YEAR_MONTH_SEQ,
-        prefix: 'BK',
-        sequenceLength: 3,
-        sequenceProvider: async (key, value = null) => {
-          // Use database-backed sequence for collision safety
-          if (value !== null) {
-            // This would be implemented with a sequences table in production
-            return value
-          }
-          
-          // For now, get count from existing bookings to ensure uniqueness
-          const { count } = await supabase
-            .from(TABLES.BOOKINGS)
-            .select('*', { count: 'exact', head: true })
-          
-          return (count || 0) + 1
-        }
+        format: BookingNumberFormat.YEAR_WEEK_YACHT_SEQ
       })
 
       // Load existing booking numbers for collision detection
@@ -473,16 +470,36 @@ class BookingService {
         })
       }
 
+      // Create existing bookings provider for gap-filling logic
+      const existingBookingsProvider = async (yy, boatCode) => {
+        console.log(`[BookingService] Querying existing bookings for year ${yy} and boat ${boatCode}`)
+        
+        const { data } = await supabase
+          .from(TABLES.BOOKINGS)
+          .select('booking_number')
+          .like('booking_number', `${yy}%${boatCode}%`)
+        
+        const existingCodes = data ? data.map(b => b.booking_number).filter(Boolean) : []
+        console.log(`[BookingService] Found existing codes:`, existingCodes)
+        return existingCodes
+      }
+
       // Generate the booking number
-      return await generator.generateBookingNumber({ yachtId })
+      const charterStartDate = new Date(startDate)
+      console.log('[BookingService] Charter start date:', charterStartDate)
+      
+      const bookingCode = await generator.generateBookingNumber({ 
+        yachtId, 
+        date: charterStartDate,
+        existingBookingsProvider
+      })
+      
+      console.log('[BookingService] Generated booking code:', bookingCode)
+      return bookingCode
+      
     } catch (error) {
       console.error('Booking number generation error:', error)
-      // Fallback to simple generation
-      const prefix = 'BK'
-      const year = new Date().getFullYear()
-      const month = String(new Date().getMonth() + 1).padStart(2, '0')
-      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-      return `${prefix}${year}${month}${random}`
+      throw error // Don't use fallback, we want to see the error
     }
   }
 

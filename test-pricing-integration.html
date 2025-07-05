@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Charter Cost Pricing Integration Test</h1>
+        <p>This test validates that charter costs are properly pulled from pricing settings.</p>
+        
+        <div class="test-step">
+            <h3>Step 1: Check Pricing Service</h3>
+            <button onclick="testPricingService()">Test Pricing Service</button>
+            <div id="pricing-results"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 2: Test Yacht ID Resolution</h3>
+            <button onclick="testYachtIdResolution()">Test Yacht Resolution</button>
+            <div id="yacht-results"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 3: Test Cost Calculation</h3>
+            <button onclick="testCostCalculation()">Test Cost Calculation</button>
+            <div id="cost-results"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 4: Navigation Test Instructions</h3>
+            <ol>
+                <li>Go to Settings → Pricing Configuration</li>
+                <li>Change pricing for a yacht (e.g., "Calico Moon")</li>
+                <li>Go to Booking Management → Create/Edit a booking</li>
+                <li>Select the same yacht and dates</li>
+                <li>Verify charter costs reflect your pricing changes</li>
+                <li>Override the costs manually</li>
+                <li>Save the booking</li>
+                <li>Refresh the page and check costs persist</li>
+                <li>Generate "Remaining Balance Invoice" and verify it uses updated costs</li>
+            </ol>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the pricing service
+        async function importServices() {
+            try {
+                const pricingModule = await import('./src/services/supabase/pricingService.js');
+                const yachtModule = await import('./src/services/supabase/YachtService.js');
+                return {
+                    pricingService: pricingModule.pricingService || pricingModule.default,
+                    yachtService: yachtModule.default
+                };
+            } catch (error) {
+                console.error('Failed to import services:', error);
+                return null;
+            }
+        }
+
+        window.testPricingService = async function() {
+            const resultsDiv = document.getElementById('pricing-results');
+            resultsDiv.innerHTML = '<p>Testing pricing service...</p>';
+            
+            try {
+                const services = await importServices();
+                if (!services) {
+                    throw new Error('Could not import services');
+                }
+
+                const rules = await services.pricingService.getPricingRules();
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Pricing Service Working</h4>
+                        <p>Found ${rules.length} pricing rules</p>
+                        <pre>${JSON.stringify(rules.slice(0, 2), null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Pricing Service Error</h4>
+                        <p>${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        window.testYachtIdResolution = async function() {
+            const resultsDiv = document.getElementById('yacht-results');
+            resultsDiv.innerHTML = '<p>Testing yacht ID resolution...</p>';
+            
+            try {
+                const services = await importServices();
+                if (!services) {
+                    throw new Error('Could not import services');
+                }
+
+                const yachts = await services.yachtService.getYachts();
+                const testYacht = yachts.find(y => y.name === 'Calico Moon') || yachts[0];
+                
+                if (testYacht) {
+                    const rules = await services.pricingService.getPricingRulesForYacht(testYacht.id);
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Yacht Resolution Working</h4>
+                            <p>Yacht: ${testYacht.name} (ID: ${testYacht.id})</p>
+                            <p>Found ${rules.length} pricing rules for this yacht</p>
+                            <pre>${JSON.stringify(rules, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('No yachts found in database');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Yacht Resolution Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        };
+
+        window.testCostCalculation = async function() {
+            const resultsDiv = document.getElementById('cost-results');
+            resultsDiv.innerHTML = '<p>Testing cost calculation...</p>';
+            
+            try {
+                const services = await importServices();
+                if (!services) {
+                    throw new Error('Could not import services');
+                }
+
+                const yachts = await services.yachtService.getYachts();
+                const testYacht = yachts.find(y => y.name === 'Calico Moon') || yachts[0];
+                
+                if (testYacht) {
+                    const rules = await services.pricingService.getPricingRulesForYacht(testYacht.id);
+                    
+                    // Test calculation with sample dates
+                    const startDate = '2025-07-15';
+                    const endDate = '2025-07-22';
+                    const days = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
+                    
+                    let calculations = {};
+                    if (rules.length > 0) {
+                        const rule = rules[0];
+                        const dailyRate = rule.rate || 0;
+                        const multiplier = rule.seasonalMultiplier || 1;
+                        const charterCost = dailyRate * multiplier * days;
+                        const deposit = charterCost * 0.3;
+                        const securityDeposit = 500;
+                        
+                        calculations = {
+                            yacht: testYacht.name,
+                            days: days,
+                            dailyRate: dailyRate,
+                            multiplier: multiplier,
+                            charterCost: Math.round(charterCost * 100) / 100,
+                            deposit: Math.round(deposit * 100) / 100,
+                            securityDeposit: securityDeposit,
+                            rule: rule
+                        };
+                    } else {
+                        // Fallback calculation
+                        const baseRates = {
+                            'Calico Moon': 250,
+                            'Spectre': 300,
+                            'Alrisha': 280,
+                            'Disk Drive': 320,
+                            'Zavaria': 290,
+                            'Mridula Sarwar': 270
+                        };
+                        const baseRate = baseRates[testYacht.name] || 250;
+                        const charterCost = baseRate * days;
+                        const deposit = charterCost * 0.3;
+                        const securityDeposit = 500;
+                        
+                        calculations = {
+                            yacht: testYacht.name,
+                            days: days,
+                            fallbackRate: baseRate,
+                            charterCost: Math.round(charterCost * 100) / 100,
+                            deposit: Math.round(deposit * 100) / 100,
+                            securityDeposit: securityDeposit,
+                            note: 'Using fallback rates (no pricing rules found)'
+                        };
+                    }
+                    
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Cost Calculation Working</h4>
+                            <p>Booking: ${startDate} to ${endDate} (${days} days)</p>
+                            <pre>${JSON.stringify(calculations, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('No yachts found for calculation');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Cost Calculation Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>

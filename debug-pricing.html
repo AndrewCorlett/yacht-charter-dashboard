@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Pricing Connection</title>
+</head>
+<body>
+    <h1>Pricing Debug Test</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        import { supabase } from './src/lib/supabase.js'
+        
+        const output = document.getElementById('output')
+        
+        async function testConnection() {
+            output.innerHTML += '<p>Testing Supabase connection...</p>'
+            
+            try {
+                if (!supabase) {
+                    output.innerHTML += '<p style="color: red;">❌ Supabase client not available</p>'
+                    return
+                }
+                
+                output.innerHTML += '<p>✅ Supabase client available</p>'
+                
+                // Test basic query
+                const { data, error } = await supabase
+                    .from('pricing_rules')
+                    .select('*')
+                    .limit(1)
+                
+                if (error) {
+                    output.innerHTML += `<p style="color: red;">❌ Query error: ${error.message}</p>`
+                    return
+                }
+                
+                output.innerHTML += `<p>✅ Query successful, found ${data.length} records</p>`
+                
+                if (data.length > 0) {
+                    output.innerHTML += `<pre>${JSON.stringify(data[0], null, 2)}</pre>`
+                }
+                
+            } catch (err) {
+                output.innerHTML += `<p style="color: red;">❌ Exception: ${err.message}</p>`
+            }
+        }
+        
+        testConnection()
+    </script>
+</body>
+</html>

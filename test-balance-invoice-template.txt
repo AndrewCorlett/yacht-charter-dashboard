@@ -1,0 +1,44 @@
+SEASCAPE YACHT CHARTER
+REMAINING BALANCE INVOICE
+
+Document Number: {{document_number}}
+Date: {{document_date}}
+
+BILL TO:
+{{customer_name}}
+{{customer_email}}
+{{customer_phone}}
+{{customer_full_address}}
+
+YACHT CHARTER DETAILS:
+Booking Reference: {{booking_number}}
+Yacht: {{yacht_name}} ({{yacht_type}})
+Base Location: {{yacht_location}}
+Charter Type: {{charter_type}}
+Charter Dates: {{start_date}} to {{end_date}}
+Duration: {{charter_duration}} days
+Departure Port: {{port_of_departure}}
+Arrival Port: {{port_of_arrival}}
+
+FINANCIAL SUMMARY:
+Total Charter Amount: £{{total_amount}}
+Deposit Amount: £{{deposit_amount}}
+Previous Payments: £{{previous_payments}}
+-------------------------------------------
+AMOUNT DUE: £{{amount_due}}
+
+Deposit Status: {{deposit_status}}
+Payment Terms: {{payment_terms}}
+Balance Due Date: {{balance_due_date}}
+
+REMIT TO:
+{{owner_name}}
+{{owner_email}}
+{{owner_phone}}
+{{owner_address}}
+
+Thank you for choosing SeaScape Yacht Charter.
+We look forward to providing you with an excellent charter experience.
+
+This invoice was auto-generated from your booking data.
+Please contact us if you have any questions about this invoice.

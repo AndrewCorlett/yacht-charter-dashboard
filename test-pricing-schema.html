@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Schema Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success {
+            border-left: 4px solid #28a745;
+            background: #d4edda;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .error {
+            border-left: 4px solid #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .warning {
+            border-left: 4px solid #ffc107;
+            background: #fff3cd;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Pricing Schema & Data Test</h1>
+        <p>This test checks if the enhanced pricing schema is deployed and working correctly.</p>
+        
+        <button onclick="testPricingSchema()">Test Pricing Schema</button>
+        <div id="schema-results"></div>
+
+        <button onclick="testDiskDriveData()">Test Disk Drive Pricing Data</button>
+        <div id="diskdrive-results"></div>
+
+        <h3>Manual Schema Deployment</h3>
+        <p>If the schema fields are missing, run this SQL in your Supabase SQL Editor:</p>
+        <pre>
+-- Add enhanced pricing fields to pricing_rules table
+ALTER TABLE pricing_rules ADD COLUMN IF NOT EXISTS season_type TEXT CHECK (season_type IN ('high', 'low', 'other'));
+ALTER TABLE pricing_rules ADD COLUMN IF NOT EXISTS season_start_date DATE;
+ALTER TABLE pricing_rules ADD COLUMN IF NOT EXISTS season_end_date DATE;
+ALTER TABLE pricing_rules ADD COLUMN IF NOT EXISTS charter_total DECIMAL(10,2);
+ALTER TABLE pricing_rules ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10,2);
+ALTER TABLE pricing_rules ADD COLUMN IF NOT EXISTS security_deposit DECIMAL(10,2);
+        </pre>
+    </div>
+
+    <script type="module">
+        window.testPricingSchema = async function() {
+            const resultsDiv = document.getElementById('schema-results');
+            resultsDiv.innerHTML = '<p>Testing pricing schema...</p>';
+            
+            try {
+                // Import Supabase client directly
+                const { supabase } = await import('./src/lib/supabase.js');
+                
+                // Try to fetch a pricing rule with enhanced fields
+                const { data, error } = await supabase
+                    .from('pricing_rules')
+                    .select('id, rule_name, base_rate, security_deposit, deposit_amount, charter_total, season_type')
+                    .limit(1);
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data && data.length > 0) {
+                    const rule = data[0];
+                    let html = '<div class="success"><h4>✅ Schema Test Results</h4>';
+                    
+                    // Check which enhanced fields exist
+                    const enhancedFields = ['security_deposit', 'deposit_amount', 'charter_total', 'season_type'];
+                    const missingFields = [];
+                    const existingFields = [];
+                    
+                    enhancedFields.forEach(field => {
+                        if (rule.hasOwnProperty(field)) {
+                            existingFields.push(field);
+                        } else {
+                            missingFields.push(field);
+                        }
+                    });
+                    
+                    html += '<p><strong>Existing enhanced fields:</strong> ' + existingFields.join(', ') + '</p>';
+                    if (missingFields.length > 0) {
+                        html += '<p><strong>Missing fields:</strong> ' + missingFields.join(', ') + '</p>';
+                        html += '<div class="warning">⚠️ Some enhanced fields are missing. Please run the schema migration SQL.</div>';
+                    }
+                    
+                    html += '<pre>' + JSON.stringify(rule, null, 2) + '</pre>';
+                    html += '</div>';
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="warning">⚠️ No pricing rules found in database</div>';
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Schema Test Error</h4>
+                        <p>${error.message}</p>
+                        <pre>${error.stack || ''}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        window.testDiskDriveData = async function() {
+            const resultsDiv = document.getElementById('diskdrive-results');
+            resultsDiv.innerHTML = '<p>Testing Disk Drive pricing data...</p>';
+            
+            try {
+                // Import services
+                const pricingModule = await import('./src/services/supabase/pricingService.js');
+                const yachtModule = await import('./src/services/supabase/YachtService.js');
+                
+                const pricingService = pricingModule.pricingService || pricingModule.default;
+                const yachtService = yachtModule.default;
+                
+                // Find Disk Drive yacht
+                const yachts = await yachtService.getYachts();
+                const diskDrive = yachts.find(y => y.name === 'Disk Drive');
+                
+                if (!diskDrive) {
+                    throw new Error('Disk Drive yacht not found');
+                }
+                
+                // Get pricing rules for Disk Drive
+                const rules = await pricingService.getPricingRulesForYacht(diskDrive.id);
+                
+                let html = '<div class="success"><h4>✅ Disk Drive Pricing Data</h4>';
+                html += '<p><strong>Yacht:</strong> ' + diskDrive.name + ' (ID: ' + diskDrive.id + ')</p>';
+                html += '<p><strong>Found Rules:</strong> ' + rules.length + '</p>';
+                
+                if (rules.length > 0) {
+                    rules.forEach((rule, index) => {
+                        html += '<div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">';
+                        html += '<h5>Rule ' + (index + 1) + ': ' + rule.ruleName + '</h5>';
+                        html += '<p><strong>Base Rate:</strong> £' + rule.rate + '</p>';
+                        html += '<p><strong>Security Deposit:</strong> £' + (rule.securityDeposit || 'Not set') + '</p>';
+                        html += '<p><strong>Deposit Amount:</strong> £' + (rule.depositAmount || 'Not set') + '</p>';
+                        html += '<p><strong>Charter Total:</strong> £' + (rule.charterTotal || 'Not set') + '</p>';
+                        html += '<p><strong>Season Type:</strong> ' + (rule.seasonType || 'Not set') + '</p>';
+                        html += '</div>';
+                    });
+                } else {
+                    html += '<div class="warning">⚠️ No pricing rules found for Disk Drive</div>';
+                }
+                
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Disk Drive Test Error</h4>
+                        <p>${error.message}</p>
+                        <pre>${error.stack || ''}</pre>
+                    </div>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>
