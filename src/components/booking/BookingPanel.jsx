@@ -4,57 +4,97 @@ import UnsavedChangesModal from '../common/UnsavedChangesModal'
 import FileUpload from '../common/FileUpload'
 import DocumentGenerationModal from '../modals/DocumentGenerationModal'
 import PartialDownloadWarningModal from '../modals/PartialDownloadWarningModal'
+import BookingConflictWarningModal from '../modals/BookingConflictWarningModal'
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 import { useBookingOperations } from '../../contexts/BookingContext'
 import { BookingModel } from '../../models'
 import yachtService from '../../services/supabase/YachtService'
 import documentAutoGenerator from '../../services/supabase/DocumentAutoGenerator'
+import BookingConflictService from '../../services/BookingConflictService'
 import CharterCostSection from './CharterCostSection'
+import BookingNumberEditor from './BookingNumberEditor'
 
 function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBookingManagementClick }) {
   // Get booking operations from context
   const { updateBooking: updateBookingInContext, deleteBooking: deleteBookingInContext } = useBookingOperations()
   
   // Transform booking data from database format to frontend format
-  const bookingData = booking?.toFrontend ? booking.toFrontend() : (booking ? BookingModel.fromDatabase(booking).toFrontend() : {})
+  const initialBookingData = booking?.toFrontend ? booking.toFrontend() : (booking ? BookingModel.fromDatabase(booking).toFrontend() : {})
+  
+  // Local booking data state that can be updated
+  const [bookingData, setBookingData] = useState(initialBookingData)
   
   const [formData, setFormData] = useState({
-    yacht: bookingData.yacht || '',
-    tripType: bookingData.tripType || 'bareboat',
-    startDate: bookingData.startDate || '',
-    endDate: bookingData.endDate || '',
-    portOfDeparture: bookingData.portOfDeparture || '',
-    portOfArrival: bookingData.portOfArrival || '',
-    firstName: bookingData.firstName || '',
-    surname: bookingData.surname || '',
-    email: bookingData.email || '',
-    phone: bookingData.phone || '',
+    yacht: initialBookingData.yacht || '',
+    tripType: initialBookingData.tripType || 'bareboat',
+    startDate: initialBookingData.startDate || '',
+    endDate: initialBookingData.endDate || '',
+    portOfDeparture: initialBookingData.portOfDeparture || '',
+    portOfArrival: initialBookingData.portOfArrival || '',
+    firstName: initialBookingData.firstName || '',
+    surname: initialBookingData.surname || '',
+    email: initialBookingData.email || '',
+    phone: initialBookingData.phone || '',
     // Address fields
-    street: bookingData.street || '',
-    city: bookingData.city || '',
-    postcode: bookingData.postcode || '',
-    country: bookingData.country || '',
+    street: initialBookingData.street || '',
+    city: initialBookingData.city || '',
+    postcode: initialBookingData.postcode || '',
+    country: initialBookingData.country || '',
     // Crew experience file
-    crewExperienceFile: bookingData.crewExperienceFile || null,
+    crewExperienceFile: initialBookingData.crewExperienceFile || null,
     // Charter cost data
-    charterCost: bookingData.charterCost || 0,
-    deposit: bookingData.deposit || 0,
-    securityDeposit: bookingData.securityDeposit || 0
+    charterCost: initialBookingData.charterCost || 0,
+    deposit: initialBookingData.deposit || 0,
+    securityDeposit: initialBookingData.securityDeposit || 0
   })
 
   const [statusData, setStatusData] = useState({
-    bookingConfirmed: bookingData.status?.bookingConfirmed || false,
-    depositPaid: bookingData.status?.depositPaid || false,
-    finalPaymentPaid: bookingData.status?.finalPaymentPaid || false,
-    contractSent: bookingData.status?.contractSent || false,
-    contractSigned: bookingData.status?.contractSigned || false,
-    depositInvoiceSent: bookingData.status?.depositInvoiceSent || false,
-    receiptIssued: bookingData.status?.receiptIssued || false
+    bookingConfirmed: initialBookingData.status?.bookingConfirmed || false,
+    depositPaid: initialBookingData.status?.depositPaid || false,
+    finalPaymentPaid: initialBookingData.status?.finalPaymentPaid || false,
+    contractSent: initialBookingData.status?.contractSent || false,
+    contractSigned: initialBookingData.status?.contractSigned || false,
+    depositInvoiceSent: initialBookingData.status?.depositInvoiceSent || false,
+    receiptIssued: initialBookingData.status?.receiptIssued || false
   })
+
+  // Status date tracking
+  const [statusDates, setStatusDates] = useState({
+    bookingConfirmed: initialBookingData.bookingConfirmedAt || null,
+    depositPaid: initialBookingData.depositPaidAt || null,
+    finalPaymentPaid: initialBookingData.finalPaymentMadeAt || null,
+    contractSent: initialBookingData.contractSentAt || null,
+    contractSigned: initialBookingData.contractSignedAt || null,
+    depositInvoiceSent: initialBookingData.depositInvoiceSentAt || null,
+    receiptIssued: initialBookingData.receiptIssuedAt || null
+  })
+  
+
+  // Date editing state
+  const [editingDate, setEditingDate] = useState(null)
+
+  // Update local booking data when prop changes
+  useEffect(() => {
+    const newBookingData = booking?.toFrontend ? booking.toFrontend() : (booking ? BookingModel.fromDatabase(booking).toFrontend() : {})
+    setBookingData(newBookingData)
+  }, [booking])
+
+  // Update status dates when booking data changes
+  useEffect(() => {
+    setStatusDates({
+      bookingConfirmed: bookingData.bookingConfirmedAt || null,
+      depositPaid: bookingData.depositPaidAt || null,
+      finalPaymentPaid: bookingData.finalPaymentMadeAt || null,
+      contractSent: bookingData.contractSentAt || null,
+      contractSigned: bookingData.contractSignedAt || null,
+      depositInvoiceSent: bookingData.depositInvoiceSentAt || null,
+      receiptIssued: bookingData.receiptIssuedAt || null
+    })
+  }, [bookingData.id, bookingData.bookingConfirmedAt, bookingData.depositPaidAt, bookingData.finalPaymentMadeAt, bookingData.contractSentAt, bookingData.contractSignedAt, bookingData.depositInvoiceSentAt, bookingData.receiptIssuedAt])
 
   // Document generation state - use data from booking if available
   const [documentStates, setDocumentStates] = useState(
-    bookingData.documentStates || {
+    initialBookingData.documentStates || {
       'Contract': { generated: false, downloaded: false, updated: false },
       'Deposit Invoice': { generated: false, downloaded: false, updated: false },
       'Deposit Receipt': { generated: false, downloaded: false, updated: false },
@@ -67,6 +107,7 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
   // Modal states
   const [documentModal, setDocumentModal] = useState({ isOpen: false, documentType: null })
   const [partialDownloadModal, setPartialDownloadModal] = useState({ isOpen: false, missingDocuments: [] })
+  const [conflictModal, setConflictModal] = useState({ isOpen: false, conflictDetails: null, pendingBookingData: null })
   const [lastBulkDownload, setLastBulkDownload] = useState(null)
   
   // Document generation state
@@ -119,10 +160,48 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
   }
 
   const handleStatusChange = (field) => {
+    const newValue = !statusData[field]
     setStatusData(prev => ({
       ...prev,
-      [field]: !prev[field]
+      [field]: newValue
     }))
+    
+    // Update the date when toggling on, clear when toggling off
+    setStatusDates(prev => ({
+      ...prev,
+      [field]: newValue ? new Date().toISOString() : null
+    }))
+  }
+
+  const handleDateChange = (field, dateValue) => {
+    setStatusDates(prev => ({
+      ...prev,
+      [field]: dateValue
+    }))
+  }
+
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    }) + ' ' + date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
   }
 
   // Unsaved changes tracking
@@ -134,9 +213,9 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     handleDiscardAndGo,
     handleCancel,
     resetDirtyState
-  } = useUnsavedChanges(formData, statusData, bookingData)
+  } = useUnsavedChanges({ ...formData, statusData, statusDates }, statusData, bookingData)
 
-  const handleSave = async () => {
+  const handleSave = async (skipConflictCheck = false) => {
     try {
       // Find the selected yacht to get both ID and name
       const selectedYacht = yachts.find(y => y.id === formData.yacht)
@@ -157,23 +236,62 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
         contractSigned: statusData.contractSigned,
         depositInvoiceSent: statusData.depositInvoiceSent,
         receiptIssued: statusData.receiptIssued,
+        // Add status date fields
+        bookingConfirmedAt: statusDates.bookingConfirmed,
+        depositPaidAt: statusDates.depositPaid,
+        finalPaymentMadeAt: statusDates.finalPaymentPaid,
+        contractSentAt: statusDates.contractSent,
+        contractSignedAt: statusDates.contractSigned,
+        depositInvoiceSentAt: statusDates.depositInvoiceSent,
+        receiptIssuedAt: statusDates.receiptIssued,
         // Keep the nested status for frontend compatibility
         status: statusData
       }
-      
-      if (bookingData.id) {
-        // Update existing booking through context
-        await updateBookingInContext(bookingData.id, updatedBookingData)
-        resetDirtyState()
+
+      // Check for conflicts before saving (unless skipping)
+      if (!skipConflictCheck && formData.yacht && formData.startDate && formData.endDate) {
+        const conflictResult = await BookingConflictService.checkDatabaseConflicts({
+          yacht_id: formData.yacht,
+          start_date: formData.startDate,
+          end_date: formData.endDate
+        }, bookingData.id) // Exclude current booking if updating
+
+        if (conflictResult.hasConflicts) {
+          // Show conflict warning modal
+          setConflictModal({
+            isOpen: true,
+            conflictDetails: conflictResult.warningDetails,
+            pendingBookingData: updatedBookingData
+          })
+          return // Don't proceed with save until user confirms
+        }
       }
       
-      // Also call the parent onSave if provided for UI updates
-      if (onSave) {
-        onSave(updatedBookingData)
-      }
+      // Proceed with save
+      await performSave(updatedBookingData)
+      
     } catch (error) {
       console.error('Failed to save booking:', error)
       // Error is handled by the context
+    }
+  }
+
+  const performSave = async (updatedBookingData) => {
+    if (bookingData.id) {
+      // Update existing booking through context
+      await updateBookingInContext(bookingData.id, updatedBookingData)
+      resetDirtyState()
+    }
+    
+    // Also call the parent onSave if provided for UI updates
+    if (onSave) {
+      onSave(updatedBookingData)
+    }
+  }
+
+  const handleConflictProceed = (userConfirmed) => {
+    if (userConfirmed && conflictModal.pendingBookingData) {
+      performSave(conflictModal.pendingBookingData)
     }
   }
 
@@ -205,6 +323,24 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
 
   const handleBookingManagementNavigation = () => {
     handleNavigation(() => onBookingManagementClick && onBookingManagementClick())
+  }
+
+  const handleBookingNumberUpdate = async (updatedBooking) => {
+    try {
+      // Note: updateBookingNumber already updates the database directly
+      // We don't need to call updateBookingInContext again as it would cause schema issues
+      
+      // Update local booking data for immediate UI refresh
+      const updatedFrontendData = updatedBooking.toFrontend()
+      setBookingData(updatedFrontendData)
+      
+      // Call parent onSave if provided for UI updates
+      if (onSave) {
+        onSave(updatedFrontendData)
+      }
+    } catch (error) {
+      console.error('Failed to update booking number:', error)
+    }
   }
 
   // Helper functions for document generation
@@ -266,6 +402,8 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
         charter_type: formData.tripType,
         start_date: formData.startDate,
         end_date: formData.endDate,
+        start_time: formData.startTime || '11:00',
+        end_time: formData.endTime || '17:00',
         port_of_departure: formData.portOfDeparture,
         port_of_arrival: formData.portOfArrival,
         total_amount: formData.charterCost || bookingData.totalAmount || 1500.00,
@@ -374,6 +512,115 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
     document.body.removeChild(element)
   }
 
+  const handleGenerateAndEmail = async (documentType) => {
+    if (generatingDocument) {
+      console.log('Document generation already in progress')
+      return
+    }
+
+    try {
+      setGeneratingDocument(documentType)
+      setGenerationError(null)
+
+      console.log(`[BookingPanel] Starting auto-generation and email for ${documentType}`)
+
+      // Convert document type to template type
+      const templateType = getTemplateType(documentType)
+      
+      // Find the selected yacht to get details
+      const selectedYacht = yachts.find(y => y.id === formData.yacht)
+      
+      // Prepare booking data (same as regular generation)
+      const bookingForGeneration = {
+        id: bookingData.id,
+        booking_number: bookingData.bookingNumber,
+        customer_first_name: formData.firstName,
+        customer_surname: formData.surname,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        customer_street: formData.street,
+        customer_city: formData.city,
+        customer_postcode: formData.postcode,
+        customer_country: formData.country,
+        yacht_name: bookingData.yachtName || selectedYacht?.name || 'Yacht name not found',
+        yacht_type: bookingData.yachtType || selectedYacht?.type || 'Type unknown',
+        yacht_location: bookingData.yachtLocation || selectedYacht?.location || 'Location unknown',
+        yacht_id: formData.yacht,
+        charter_type: formData.tripType,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        start_time: formData.startTime || '11:00',
+        end_time: formData.endTime || '17:00',
+        port_of_departure: formData.portOfDeparture,
+        port_of_arrival: formData.portOfArrival,
+        total_amount: formData.charterCost || bookingData.totalAmount || 1500.00,
+        deposit_amount: formData.deposit || bookingData.depositAmount || 300.00,
+        security_deposit: formData.securityDeposit || bookingData.securityDeposit || 500.00,
+        deposit_paid: statusData.depositPaid,
+        payment_status: getPaymentStatus(statusData),
+        booking_confirmed: statusData.bookingConfirmed,
+        contract_sent: statusData.contractSent,
+        contract_signed: statusData.contractSigned
+      }
+
+      // Get settings data
+      const settingsData = await documentAutoGenerator.getSettingsData(bookingForGeneration.yacht_id)
+
+      // Generate the document
+      const generatedBlob = await documentAutoGenerator.generateDocument(templateType, bookingForGeneration, settingsData)
+
+      // Update document state
+      setDocumentStates(prev => ({
+        ...prev,
+        [documentType]: {
+          ...prev[documentType],
+          generated: true,
+          updated: lastBulkDownload ? new Date() > lastBulkDownload : false
+        }
+      }))
+
+      // Create email draft
+      const fileName = `${documentType.replace(/\s+/g, '_')}_${bookingForGeneration.booking_number}_${new Date().toISOString().slice(0, 10)}`
+      const subject = `Charter ${documentType} - ${bookingForGeneration.yacht_name} - ${bookingForGeneration.start_date}`
+      const body = `Dear ${bookingForGeneration.customer_first_name} ${bookingForGeneration.customer_surname},
+
+Please see attached your ${documentType.toLowerCase()} for the charter of "${bookingForGeneration.yacht_name}" scheduled for ${bookingForGeneration.start_date} at ${bookingForGeneration.port_of_departure}.
+
+Charter Details:
+- Yacht: ${bookingForGeneration.yacht_name}
+- Dates: ${bookingForGeneration.start_date} to ${bookingForGeneration.end_date}
+- Time: ${bookingForGeneration.start_time} - ${bookingForGeneration.end_time}
+- Port of Departure: ${bookingForGeneration.port_of_departure}
+
+If you have any questions or require any clarification, please don't hesitate to contact us.
+
+Best regards,
+SeaScape Yacht Charter Team`
+
+      // Create mailto link and download file for manual attachment
+      const mailtoLink = `mailto:${encodeURIComponent(bookingForGeneration.customer_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+      
+      // Open email client
+      window.location.href = mailtoLink
+      
+      // Also trigger download so user can manually attach
+      const url = URL.createObjectURL(generatedBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName + (generatedBlob.type.includes('pdf') ? '.pdf' : '.docx')
+      link.click()
+      URL.revokeObjectURL(url)
+
+      console.log(`[BookingPanel] Email draft created for ${documentType}`)
+
+    } catch (error) {
+      console.error(`[BookingPanel] Error generating ${documentType} for email:`, error)
+      setGenerationError(`Failed to generate ${documentType}: ${error.message}`)
+    } finally {
+      setGeneratingDocument(null)
+    }
+  }
+
   const handleDownloadAll = () => {
     const allDocumentTypes = Object.keys(documentStates)
     const generatedDocuments = allDocumentTypes.filter(type => documentStates[type].generated)
@@ -440,6 +687,27 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
       />
 
       <div className="p-6">
+        {/* Booking Number Section */}
+        {bookingData?.bookingNumber && (
+          <div className="mb-6 bg-gray-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-400">Booking Number:</span>
+                <BookingNumberEditor
+                  bookingId={bookingData.id}
+                  currentNumber={bookingData.bookingNumber}
+                  onSave={handleBookingNumberUpdate}
+                />
+              </div>
+              {bookingData.bookingType === 'external' && (
+                <span className="px-2 py-1 text-xs bg-yellow-600 text-white rounded">
+                  External Booking
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Booking Form */}
           <div className="space-y-6">
@@ -511,6 +779,28 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
                   value={formData.portOfArrival}
                   onChange={(e) => handleInputChange('portOfArrival', e.target.value)}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500 mt-1"
+                />
+              </div>
+            </div>
+
+            {/* Times */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Start Time</label>
+                <input
+                  type="time"
+                  value={formData.startTime || '11:00'}
+                  onChange={(e) => handleInputChange('startTime', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">End Time</label>
+                <input
+                  type="time"
+                  value={formData.endTime || '17:00'}
+                  onChange={(e) => handleInputChange('endTime', e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -601,10 +891,25 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
 
             {/* Charter Cost Section */}
             <CharterCostSection
-              yacht={formData.yacht}
+              yacht={bookingData.yachtName || bookingData.yacht}
               startDate={formData.startDate}
               endDate={formData.endDate}
               onCostChange={handleCharterCostChange}
+              bookingId={bookingData.id}
+              initialCosts={{
+                charterCost: formData.charterCost,
+                deposit: formData.deposit,
+                securityDeposit: formData.securityDeposit
+              }}
+              onSave={(costs) => {
+                // Update local form data when charter costs are saved
+                setFormData(prev => ({
+                  ...prev,
+                  charterCost: costs.charterCost,
+                  deposit: costs.deposit,
+                  securityDeposit: costs.securityDeposit
+                }))
+              }}
             />
 
             {/* Crew Experience File Upload */}
@@ -633,16 +938,63 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
               ].map(status => (
                 <div
                   key={status.key}
-                  onClick={() => handleStatusChange(status.key)}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${
+                  className={`p-3 rounded-lg border transition-colors ${
                     statusData[status.key]
                       ? 'bg-green-900/30 border-green-600 text-green-300'
                       : 'bg-gray-800 border-gray-600 hover:bg-gray-700'
                   }`}
                 >
-                  <span className="text-lg">{status.icon}</span>
-                  <span className="font-medium">{status.label}</span>
-                  <div className="ml-auto">
+                  {/* Main toggle row */}
+                  <div 
+                    onClick={() => handleStatusChange(status.key)}
+                    className="flex items-center gap-3 cursor-pointer"
+                  >
+                    <span className="text-lg">{status.icon}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{status.label}</span>
+                        
+                        {/* Date display on the right side of the label */}
+                        {statusData[status.key] && statusDates[status.key] && (
+                          <div className="ml-4">
+                            {editingDate === status.key ? (
+                              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="datetime-local"
+                                  value={formatDateForInput(statusDates[status.key])}
+                                  onChange={(e) => handleDateChange(status.key, e.target.value ? new Date(e.target.value).toISOString() : null)}
+                                  className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-xs"
+                                />
+                                <button
+                                  onClick={() => setEditingDate(null)}
+                                  className="text-green-400 hover:text-green-300 text-xs px-1"
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  onClick={() => setEditingDate(null)}
+                                  className="text-gray-400 hover:text-gray-300 text-xs px-1"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <div 
+                                className="text-gray-400 cursor-pointer hover:text-gray-300 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditingDate(status.key)
+                                }}
+                              >
+                                {formatDateForDisplay(statusDates[status.key])} <span className="opacity-60">(click to edit)</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Toggle checkbox on the right */}
                     <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                       statusData[status.key] ? 'bg-green-600 border-green-600' : 'border-gray-500'
                     }`}>
@@ -705,6 +1057,18 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
                         }`}
                       >
                         {isGenerating ? 'Generating...' : 'Auto-Create'}
+                      </button>
+                      <button
+                        onClick={() => handleGenerateAndEmail(docType)}
+                        disabled={isGenerating || generatingDocument}
+                        className={`px-3 py-2 text-white text-sm font-medium rounded transition-colors ${
+                          isGenerating || generatingDocument
+                            ? 'bg-gray-600 cursor-not-allowed'
+                            : 'bg-green-600 hover:bg-green-700'
+                        }`}
+                        title="Generate document and create draft email"
+                      >
+                        📧 Email
                       </button>
                       {statusIcon && (
                         <button
@@ -794,6 +1158,15 @@ function BookingPanel({ booking, onSave, onDelete, onBack, onSeascapeClick, onBo
         missingDocuments={partialDownloadModal.missingDocuments}
         onDownloadAnyway={handlePartialDownloadAnyway}
         onCancel={handlePartialDownloadCancel}
+      />
+
+      {/* Booking Conflict Warning Modal */}
+      <BookingConflictWarningModal
+        isOpen={conflictModal.isOpen}
+        onClose={() => setConflictModal({ isOpen: false, conflictDetails: null, pendingBookingData: null })}
+        onProceed={handleConflictProceed}
+        conflictDetails={conflictModal.conflictDetails}
+        bookingData={formData}
       />
     </div>
   )

@@ -101,9 +101,10 @@ class DocumentAutoGenerator {
       customer_full_address: this.formatAddress(bookingData),
       
       // === YACHT INFORMATION ===
-      yacht_name: bookingData.yacht_name || 'Yacht name not specified',
-      yacht_type: bookingData.yacht_type || 'Type not specified',
+      yacht_name: bookingData.yacht_name || settingsData.yachtDetails?.name || 'Yacht name not specified',
+      yacht_type: settingsData.yachtDetails?.yacht_type || bookingData.yacht_type || 'Type not specified',
       yacht_location: bookingData.yacht_location || 'Location not specified',
+      max_pob: settingsData.yachtDetails?.max_pob || 'Not specified',
       
       // === CHARTER DETAILS ===
       booking_number: bookingData.booking_number || 'TEMP-BOOKING',
@@ -123,6 +124,11 @@ class DocumentAutoGenerator {
       owner_email: settingsData.yachtOwner?.owner_email || 'info@seascapeyachtcharter.com',
       owner_phone: settingsData.yachtOwner?.owner_phone || 'Contact for details',
       owner_address: this.formatOwnerAddress(settingsData.yachtOwner),
+      owner_address_line1: settingsData.yachtOwner?.owner_address_line1 || '',
+      owner_address_line2: settingsData.yachtOwner?.owner_address_line2 || '',
+      owner_city: settingsData.yachtOwner?.owner_city || '',
+      owner_postcode: settingsData.yachtOwner?.owner_postcode || '',
+      owner_country: settingsData.yachtOwner?.owner_country || 'United Kingdom',
       
       // === PAYMENT INFORMATION ===
       deposit_paid: bookingData.deposit_paid,
@@ -146,14 +152,26 @@ class DocumentAutoGenerator {
 
   /**
    * Calculate amounts based on template type and payment status
+   * Uses booking's saved charter costs instead of pricing configuration
    * @param {string} templateType - Type of template
    * @param {Object} bookingData - Booking data
    * @returns {Object} Calculated amounts
    */
   calculateAmounts(templateType, bookingData) {
+    console.log('[DocumentAutoGenerator] Calculating amounts from booking data:', bookingData)
+    
+    // Use saved charter costs from booking data
     const totalAmount = parseFloat(bookingData.total_amount) || 0
     const depositAmount = parseFloat(bookingData.deposit_amount) || 0
+    const securityDeposit = parseFloat(bookingData.security_deposit) || 0
     const depositPaid = bookingData.deposit_paid || false
+
+    console.log('[DocumentAutoGenerator] Using amounts:', {
+      totalAmount,
+      depositAmount,
+      securityDeposit,
+      depositPaid
+    })
 
     if (templateType === 'balanceInvoice') {
       // For balance invoice: show remaining amount if deposit paid, otherwise full amount
@@ -162,6 +180,7 @@ class DocumentAutoGenerator {
       return {
         total_amount: totalAmount.toFixed(2),
         deposit_amount: depositAmount.toFixed(2),
+        security_deposit: securityDeposit.toFixed(2),
         amount_due: amountDue.toFixed(2),
         previous_payments: depositPaid ? depositAmount.toFixed(2) : '0.00',
         remaining_balance: amountDue.toFixed(2),
@@ -172,6 +191,7 @@ class DocumentAutoGenerator {
       return {
         total_amount: totalAmount.toFixed(2),
         deposit_amount: depositAmount.toFixed(2),
+        security_deposit: securityDeposit.toFixed(2),
         amount_due: depositAmount.toFixed(2),
         remaining_balance: (totalAmount - depositAmount).toFixed(2)
       }
@@ -181,6 +201,7 @@ class DocumentAutoGenerator {
     return {
       total_amount: totalAmount.toFixed(2),
       deposit_amount: depositAmount.toFixed(2),
+      security_deposit: securityDeposit.toFixed(2),
       amount_due: totalAmount.toFixed(2)
     }
   }
@@ -283,6 +304,7 @@ class DocumentAutoGenerator {
       // Financial information
       'total_amount': `£${data.total_amount}`,
       'deposit_amount': `£${data.deposit_amount}`,
+      'security_deposit': `£${data.security_deposit}`,
       'amount_due': `£${data.amount_due}`,
       'previous_payments': data.previous_payments ? `£${data.previous_payments}` : '£0.00',
       'remaining_balance': data.remaining_balance ? `£${data.remaining_balance}` : '£0.00',
@@ -322,7 +344,7 @@ class DocumentAutoGenerator {
           }
           console.log(`[DocumentAutoGenerator] Filled field '${fieldName}' with '${value}'`)
         }
-      } catch (error) {
+      } catch {
         // Field doesn't exist or couldn't be filled - this is normal
         console.log(`[DocumentAutoGenerator] Field '${fieldName}' not found or couldn't be filled`)
       }
@@ -448,7 +470,7 @@ class DocumentAutoGenerator {
     try {
       // Add a new page
       const page = pdfDoc.addPage([595.28, 841.89]) // A4 size
-      const { width, height } = page.getSize()
+      const { height } = page.getSize()
       
       // Load fonts
       const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
@@ -714,8 +736,14 @@ class DocumentAutoGenerator {
         
         // === EXACT TEMPLATE PLACEHOLDER MAPPINGS ===
         // Current date placeholders
+        'Current date': data.document_date,
         'current date': data.document_date,
         current_date: data.document_date,
+        
+        // Yacht information placeholders
+        yacht_type: data.yacht_type,
+        name: data.yacht_name,
+        max_pob: data.max_pob,
         
         // Customer placeholders (exact matches to your template)
         customer_first_name: data.customer_first_name,
@@ -726,24 +754,29 @@ class DocumentAutoGenerator {
         customer_postcode: data.customer_postcode,
         customer_country: data.customer_country,
         
+        // Owner placeholders (exact matches to your template)
+        owner_name: data.owner_name,
+        owner_address_line1: data.owner_address_line1,
+        ' owner_address_line2': data.owner_address_line2,
+        owner_address_line2: data.owner_address_line2,
+        owner_city: data.owner_city,
+        owner_postcode: data.owner_postcode,
+        owner_country: data.owner_country,
+        
         // Date placeholders
         'start _date': data.start_date,
         start_date: data.start_date,
         'end _date': data.end_date,
         end_date: data.end_date,
         
-        // Financial placeholders (with underscores and spaces)
-        'charter_fee': `£${data.total_amount}`,
+        // Financial placeholders (exact matches to your template)
         charter_fee: `£${data.total_amount}`,
         'outstanding _balance': `£${data.amount_due}`,
         outstanding_balance: `£${data.amount_due}`,
-        'security _deposit': `£${data.deposit_amount}`,
-        security_deposit: `£${data.deposit_amount}`,
+        'security _deposit': `£${data.security_deposit}`,
         booking_number: data.booking_number,
-        'deposit_amount': `£${data.deposit_amount}`,
         'receipt _date': data.document_date,
         receipt_date: data.document_date,
-        'outstanding_balance': `£${data.amount_due}`,
         
         // Add some convenient combined fields
         customer_full_name: data.customer_name,
@@ -958,21 +991,8 @@ class DocumentAutoGenerator {
    */
   async getYachtOwnerDetails(yachtId) {
     try {
-      // TODO: Re-enable once yacht_owner_details table is deployed to database
-      console.log('[DocumentAutoGenerator] yacht_owner_details table not yet deployed, using defaults for yacht:', yachtId)
+      console.log('[DocumentAutoGenerator] Fetching yacht owner details for yacht:', yachtId)
       
-      // Return default owner details until table is available
-      return {
-        owner_name: 'Yacht Owner',
-        owner_email: 'owner@seascape.com',
-        owner_phone: '+44 1234 567890',
-        owner_address_line1: 'Yacht Marina',
-        owner_city: 'Coastal City',
-        owner_country: 'United Kingdom'
-      }
-      
-      // When table is ready, uncomment this:
-      /*
       const { data, error } = await supabase
         .from('yacht_owner_details')
         .select('*')
@@ -980,15 +1000,35 @@ class DocumentAutoGenerator {
         .single()
 
       if (error) {
-        console.warn('[DocumentAutoGenerator] No owner details found for yacht:', yachtId)
-        return null
+        console.warn('[DocumentAutoGenerator] No owner details found for yacht:', yachtId, error)
+        // Return default owner details if none found
+        return {
+          owner_name: 'Yacht Owner',
+          owner_email: 'owner@seascape.com',
+          owner_phone: '+44 1234 567890',
+          owner_address_line1: 'Yacht Marina',
+          owner_address_line2: '',
+          owner_city: 'Coastal City',
+          owner_postcode: '',
+          owner_country: 'United Kingdom'
+        }
       }
 
+      console.log('[DocumentAutoGenerator] Found owner details:', data)
       return data
-      */
     } catch (error) {
       console.error('[DocumentAutoGenerator] Error fetching owner details:', error)
-      return null
+      // Return default owner details on error
+      return {
+        owner_name: 'Yacht Owner',
+        owner_email: 'owner@seascape.com',
+        owner_phone: '+44 1234 567890',
+        owner_address_line1: 'Yacht Marina',
+        owner_address_line2: '',
+        owner_city: 'Coastal City',
+        owner_postcode: '',
+        owner_country: 'United Kingdom'
+      }
     }
   }
 
@@ -1017,19 +1057,57 @@ class DocumentAutoGenerator {
   }
 
   /**
+   * Get yacht details from yachts table
+   * @param {string} yachtId - Yacht ID
+   * @returns {Promise<Object>} Yacht details
+   */
+  async getYachtDetails(yachtId) {
+    try {
+      console.log('[DocumentAutoGenerator] Fetching yacht details for yacht:', yachtId)
+      
+      const { data, error } = await supabase
+        .from('yachts')
+        .select('yacht_type, max_pob, name')
+        .eq('id', yachtId)
+        .single()
+
+      if (error) {
+        console.warn('[DocumentAutoGenerator] No yacht details found for yacht:', yachtId, error)
+        return {
+          yacht_type: 'Type unknown',
+          max_pob: null,
+          name: 'Unknown'
+        }
+      }
+
+      console.log('[DocumentAutoGenerator] Found yacht details:', data)
+      return data
+    } catch (error) {
+      console.error('[DocumentAutoGenerator] Error fetching yacht details:', error)
+      return {
+        yacht_type: 'Type unknown',
+        max_pob: null,
+        name: 'Unknown'
+      }
+    }
+  }
+
+  /**
    * Get complete settings data for document generation
    * @param {string} yachtId - Yacht ID
    * @returns {Promise<Object>} Complete settings data
    */
   async getSettingsData(yachtId) {
-    const [yachtOwner, pricing] = await Promise.all([
+    const [yachtOwner, pricing, yachtDetails] = await Promise.all([
       this.getYachtOwnerDetails(yachtId),
-      this.getYachtPricing(yachtId)
+      this.getYachtPricing(yachtId),
+      this.getYachtDetails(yachtId)
     ])
 
     return {
       yachtOwner,
-      pricing
+      pricing,
+      yachtDetails
     }
   }
 }

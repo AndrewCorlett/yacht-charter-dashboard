@@ -41,6 +41,14 @@ export const PaymentStatus = {
 }
 
 /**
+ * Booking type enumeration for distinguishing regular vs external bookings
+ */
+export const BookingType = {
+  REGULAR: 'regular',
+  EXTERNAL: 'external'
+}
+
+/**
  * Document types for tracking generation/download status
  */
 export const DocumentTypes = {
@@ -99,6 +107,7 @@ export class BookingModel {
     // High-level statuses
     this.booking_status = data.booking_status || BookingStatus.TENTATIVE
     this.payment_status = data.payment_status || PaymentStatus.PENDING
+    // this.booking_type = data.booking_type || BookingType.REGULAR // TEMPORARILY DISABLED - REQUIRES MIGRATION
     
     // Detailed status flags (from frontend statusData)
     this.booking_confirmed = Boolean(data.booking_confirmed || data.bookingConfirmed)
@@ -108,6 +117,15 @@ export class BookingModel {
     this.contract_signed = Boolean(data.contract_signed || data.contractSigned)
     this.deposit_invoice_sent = Boolean(data.deposit_invoice_sent || data.depositInvoiceSent)
     this.receipt_issued = Boolean(data.receipt_issued || data.receiptIssued)
+    
+    // Status timestamp tracking - NOW AVAILABLE: Added timestamp columns for status changes
+    this.booking_confirmed_at = this._parseDateTime(data.booking_confirmed_at)
+    this.deposit_paid_at = this._parseDateTime(data.deposit_paid_at)
+    this.final_payment_paid_at = this._parseDateTime(data.final_payment_paid_at)
+    this.contract_sent_at = this._parseDateTime(data.contract_sent_at)
+    this.contract_signed_at = this._parseDateTime(data.contract_signed_at)
+    this.deposit_invoice_sent_at = this._parseDateTime(data.deposit_invoice_sent_at)
+    this.receipt_issued_at = this._parseDateTime(data.receipt_issued_at)
     
     // === FINANCIAL INFORMATION ===
     this.base_rate = this._parseDecimal(data.base_rate)
@@ -268,6 +286,10 @@ export class BookingModel {
       this._errors.set('payment_status', 'Invalid payment status')
     }
 
+    // if (!Object.values(BookingType).includes(this.booking_type)) {
+    //   this._errors.set('booking_type', 'Invalid booking type')
+    // } // TEMPORARILY DISABLED - REQUIRES MIGRATION
+
     // === FINANCIAL VALIDATION ===
     if (this.base_rate !== null && this.base_rate < 0) {
       this._errors.set('base_rate', 'Base rate cannot be negative')
@@ -311,17 +333,23 @@ export class BookingModel {
   }
 
   /**
-   * Validate phone number format (basic international format)
+   * Validate phone number format (flexible for international customers)
    * @param {string} phone - Phone to validate
    * @returns {boolean} True if valid
    * @private
    */
   _isValidPhone(phone) {
-    // More flexible phone validation - accepts any numeric format
-    // Removed strict +44 requirement as mentioned in Session 13
-    const cleaned = phone.replace(/[\s\-\(\)\+]/g, '')
-    // Must be at least 10 digits and contain only digits
-    return /^\d{10,15}$/.test(cleaned)
+    if (!phone || typeof phone !== 'string') return false
+    // Remove all non-digit characters except +
+    const cleaned = phone.replace(/[\s\-\(\)]/g, '')
+    // Allow international format (+country code) or domestic format (including numbers starting with 0)
+    // Minimum 6 digits (area code + 6 digits), maximum 15 digits (E.164 standard)
+    // International: starts with + followed by digits, domestic: just digits
+    const internationalRegex = /^\+[1-9]\d{5,14}$/
+    const domesticRegex = /^[0-9]\d{5,14}$/
+    
+    return (internationalRegex.test(cleaned) || domesticRegex.test(cleaned)) && 
+           cleaned.length >= 6 && cleaned.length <= 16
   }
 
   /**
@@ -407,6 +435,7 @@ export class BookingModel {
       // Yacht information (denormalized)
       yacht_id: this.yacht_id,
       yacht_name: this.yacht_name,
+      yacht_type: this.yacht_type,
       yacht_location: this.yacht_location,
       
       // Booking details
@@ -419,12 +448,17 @@ export class BookingModel {
       // Status tracking
       booking_status: this.booking_status,
       payment_status: this.payment_status,
+      // booking_type: this.booking_type, // TEMPORARILY DISABLED - REQUIRES MIGRATION
       booking_confirmed: this.booking_confirmed,
       deposit_paid: this.deposit_paid,
+      final_payment_paid: this.final_payment_paid,
       contract_sent: this.contract_sent,
       contract_signed: this.contract_signed,
       deposit_invoice_sent: this.deposit_invoice_sent,
       receipt_issued: this.receipt_issued,
+      
+      // Status timestamps - REMOVED: These columns don't exist in the database
+      // The actual database only has document-specific timestamps like contract_generated_at, etc.
       
       // Financial information
       base_rate: this.base_rate,
@@ -512,6 +546,7 @@ export class BookingModel {
       // Status tracking (mapped to form field names)
       bookingStatus: this.booking_status,
       paymentStatus: this.payment_status,
+      // bookingType: this.booking_type, // TEMPORARILY DISABLED - REQUIRES MIGRATION
       
       // Status flags (for frontend statusData)
       status: {
@@ -523,6 +558,15 @@ export class BookingModel {
         depositInvoiceSent: this.deposit_invoice_sent,
         receiptIssued: this.receipt_issued
       },
+      
+      // Status timestamps - NOW AVAILABLE: Added timestamp fields for frontend
+      bookingConfirmedAt: this.booking_confirmed_at,
+      depositPaidAt: this.deposit_paid_at,
+      finalPaymentMadeAt: this.final_payment_paid_at, // Note: frontend expects "Made" not "Paid"
+      contractSentAt: this.contract_sent_at,
+      contractSignedAt: this.contract_signed_at,
+      depositInvoiceSentAt: this.deposit_invoice_sent_at,
+      receiptIssuedAt: this.receipt_issued_at,
       
       // Financial information
       baseRate: this.base_rate,

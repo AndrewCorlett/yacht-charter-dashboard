@@ -1,0 +1,75 @@
+{
+  "timestamp": "2025-07-05T09:23:47.410Z",
+  "results": [
+    {
+      "name": "Dependencies",
+      "passed": false,
+      "details": {
+        "error": "require is not defined",
+        "suggestion": "Check package.json file exists"
+      },
+      "timestamp": "2025-07-05T09:23:47.410Z"
+    },
+    {
+      "name": "Screenshot Directory",
+      "passed": true,
+      "details": {
+        "path": "./test-screenshots/comprehensive-booking-workflow",
+        "writable": true
+      },
+      "timestamp": "2025-07-05T09:23:47.411Z"
+    },
+    {
+      "name": "Puppeteer Installation",
+      "passed": true,
+      "details": {
+        "version": "Available and functional"
+      },
+      "timestamp": "2025-07-05T09:23:48.600Z"
+    },
+    {
+      "name": "Development Server",
+      "passed": true,
+      "details": {
+        "url": "http://localhost:5173",
+        "status": 200
+      },
+      "timestamp": "2025-07-05T09:23:48.613Z"
+    },
+    {
+      "name": "Application Load",
+      "passed": false,
+      "details": {
+        "error": "React not detected",
+        "pageErrors": 0,
+        "suggestion": "Check browser console for errors"
+      },
+      "timestamp": "2025-07-05T09:23:50.205Z"
+    },
+    {
+      "name": "Quick Create Form",
+      "passed": true,
+      "details": {
+        "elementsFound": 7,
+        "missingElements": 0
+      },
+      "timestamp": "2025-07-05T09:23:51.625Z"
+    },
+    {
+      "name": "Yacht Dropdown Data",
+      "passed": false,
+      "details": {
+        "error": "page.waitForTimeout is not a function",
+        "suggestion": "Verify yacht service and database connection"
+      },
+      "timestamp": "2025-07-05T09:23:52.913Z"
+    }
+  ],
+  "overallSuccess": false,
+  "summary": {
+    "totalChecks": 7,
+    "passedChecks": 4,
+    "failedChecks": 3,
+    "successRate": 57
+  }
+}

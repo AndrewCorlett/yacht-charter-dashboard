@@ -83,16 +83,28 @@ export class YachtPricingConfigService {
    */
   static async upsertYachtPricingConfig(pricingConfig) {
     try {
+      // Helper function to safely parse numeric values with minimum validation
+      const safeParseFloat = (value, minValue = 0) => {
+        const parsed = parseFloat(value)
+        return isNaN(parsed) ? minValue : Math.max(parsed, minValue)
+      }
+      
+      // Helper function for rates that must be > 0
+      const safeParseRate = (value) => {
+        const parsed = parseFloat(value)
+        return isNaN(parsed) || parsed <= 0 ? 1 : parsed // Default to 1 for rates that must be > 0
+      }
+
       const configData = {
         yacht_id: pricingConfig.yacht_id,
         high_season_start_date: pricingConfig.high_season_start_date,
         high_season_end_date: pricingConfig.high_season_end_date,
-        high_season_rate: parseFloat(pricingConfig.high_season_rate),
-        high_season_deposit: parseFloat(pricingConfig.high_season_deposit),
-        high_season_security_deposit: parseFloat(pricingConfig.high_season_security_deposit),
-        low_season_rate: parseFloat(pricingConfig.low_season_rate),
-        low_season_deposit: parseFloat(pricingConfig.low_season_deposit),
-        low_season_security_deposit: parseFloat(pricingConfig.low_season_security_deposit),
+        high_season_rate: safeParseRate(pricingConfig.high_season_rate),
+        high_season_deposit: safeParseFloat(pricingConfig.high_season_deposit, 0),
+        high_season_security_deposit: safeParseFloat(pricingConfig.high_season_security_deposit, 0),
+        low_season_rate: safeParseRate(pricingConfig.low_season_rate),
+        low_season_deposit: safeParseFloat(pricingConfig.low_season_deposit, 0),
+        low_season_security_deposit: safeParseFloat(pricingConfig.low_season_security_deposit, 0),
         currency_code: pricingConfig.currency_code || 'GBP',
         rate_type: pricingConfig.rate_type || 'weekly',
         minimum_charter_days: parseInt(pricingConfig.minimum_charter_days) || 7,
@@ -262,16 +274,28 @@ export class YachtPricingConfigService {
    * @returns {Object} Database format pricing data
    */
   static transformToDatabase(frontendData) {
+    // Helper function to safely parse numeric values with minimum validation
+    const safeParseFloat = (value, minValue = 0) => {
+      const parsed = parseFloat(value)
+      return isNaN(parsed) ? minValue : Math.max(parsed, minValue)
+    }
+    
+    // Helper function for rates that must be > 0
+    const safeParseRate = (value) => {
+      const parsed = parseFloat(value)
+      return isNaN(parsed) || parsed <= 0 ? 1 : parsed // Default to 1 for rates that must be > 0
+    }
+
     return {
       yacht_id: frontendData.yachtId,
       high_season_start_date: frontendData.highSeasonStartDate,
       high_season_end_date: frontendData.highSeasonEndDate,
-      high_season_rate: parseFloat(frontendData.highSeasonRate) || 0,
-      high_season_deposit: parseFloat(frontendData.highSeasonDeposit) || 0,
-      high_season_security_deposit: parseFloat(frontendData.highSeasonSecurityDeposit) || 0,
-      low_season_rate: parseFloat(frontendData.lowSeasonRate) || 0,
-      low_season_deposit: parseFloat(frontendData.lowSeasonDeposit) || 0,
-      low_season_security_deposit: parseFloat(frontendData.lowSeasonSecurityDeposit) || 0,
+      high_season_rate: safeParseRate(frontendData.highSeasonRate),
+      high_season_deposit: safeParseFloat(frontendData.highSeasonDeposit, 0),
+      high_season_security_deposit: safeParseFloat(frontendData.highSeasonSecurityDeposit, 0),
+      low_season_rate: safeParseRate(frontendData.lowSeasonRate),
+      low_season_deposit: safeParseFloat(frontendData.lowSeasonDeposit, 0),
+      low_season_security_deposit: safeParseFloat(frontendData.lowSeasonSecurityDeposit, 0),
       currency_code: frontendData.currency || 'GBP',
       rate_type: frontendData.rateType || 'weekly',
       minimum_charter_days: parseInt(frontendData.minimumCharterDays) || 7,

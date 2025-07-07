@@ -175,6 +175,7 @@ export const db = {
       // Status fields
       'bookingStatus': 'booking_status',
       'paymentStatus': 'payment_status',
+      'bookingType': 'booking_type',
       'bookingConfirmed': 'booking_confirmed',
       'depositPaid': 'deposit_paid',
       'finalPaymentPaid': 'final_payment_paid',
@@ -238,11 +239,11 @@ export const db = {
         'customer_postcode', 'customer_country', 'yacht_id', 'yacht_name', 
         'yacht_type', 'yacht_location', 'charter_type', 'start_date', 'end_date',
         'port_of_departure', 'port_of_arrival', 'booking_status', 'payment_status',
-        'booking_confirmed', 'deposit_paid', 'final_payment_paid', 'contract_sent', 
-        'contract_signed', 'deposit_invoice_sent', 'receipt_issued', 'base_rate',
-        'total_amount', 'deposit_amount', 'balance_due', 'crew_experience_file_name',
-        'crew_experience_file_url', 'crew_experience_file_size', 'special_requirements',
-        'notes', 'created_at', 'updated_at', 'created_by', 'updated_by'
+        'booking_type', 'booking_confirmed', 'deposit_paid', 'final_payment_paid', 
+        'contract_sent', 'contract_signed', 'deposit_invoice_sent', 'receipt_issued', 
+        'base_rate', 'total_amount', 'deposit_amount', 'balance_due', 
+        'crew_experience_file_name', 'crew_experience_file_url', 'crew_experience_file_size', 
+        'special_requirements', 'notes', 'created_at', 'updated_at', 'created_by', 'updated_by'
       ];
       
       if (validDatabaseFields.includes(dbFieldName)) {

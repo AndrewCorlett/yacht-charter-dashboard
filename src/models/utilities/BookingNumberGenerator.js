@@ -18,6 +18,7 @@ export const BookingNumberFormat = {
   YEAR_MONTH_SEQ: 'year_month_seq',   // BK2401001, BK2401002...
   DATE_SEQUENTIAL: 'date_sequential', // BK20240624001
   YACHT_SEQUENTIAL: 'yacht_sequential', // SP001, DD002... (by yacht)
+  YEAR_WEEK_YACHT_SEQ: 'year_week_yacht_seq', // 2520ZA06 (YYWWBCNN)
   CUSTOM: 'custom'                    // Custom format
 }
 
@@ -29,19 +30,120 @@ export const ValidationPatterns = {
   [BookingNumberFormat.YEAR_SEQUENTIAL]: /^[A-Z]{2,4}\d{2}\d{3,6}$/,
   [BookingNumberFormat.YEAR_MONTH_SEQ]: /^[A-Z]{2,4}\d{4}\d{3,6}$/,
   [BookingNumberFormat.DATE_SEQUENTIAL]: /^[A-Z]{2,4}\d{8}\d{3}$/,
-  [BookingNumberFormat.YACHT_SEQUENTIAL]: /^[A-Z]{2,4}\d{3,6}$/
+  [BookingNumberFormat.YACHT_SEQUENTIAL]: /^[A-Z]{2,4}\d{3,6}$/,
+  [BookingNumberFormat.YEAR_WEEK_YACHT_SEQ]: /^\d{2}\d{2}[A-Z]{2}\d{2}$/
 }
 
 /**
  * Yacht code mappings for yacht-specific booking numbers
+ * Updated to match the specification: CM, SP, AL, DD, ZA
+ * Supports multiple formats for yacht IDs (names, UUIDs, etc.)
  */
 export const YachtCodes = {
+  // Original yacht names (kebab-case)
+  'calico-moon': 'CM',
   'spectre': 'SP',
+  'alrisha': 'AL',
   'disk-drive': 'DD',
-  'arriva': 'AR',
-  'zambada': 'ZM',
-  'melba-so': 'MS',
-  'swansea': 'SW'
+  'zavaria': 'ZA',
+  
+  // Alternative yacht names (various formats)
+  'Calico Moon': 'CM',
+  'Spectre': 'SP',
+  'Alrisha': 'AL',
+  'Disk Drive': 'DD',
+  'Zavaria': 'ZA',
+  
+  // Lowercase versions
+  'calico moon': 'CM',
+  'spectre': 'SP',
+  'alrisha': 'AL',
+  'disk drive': 'DD',
+  'zavaria': 'ZA'
+}
+
+/**
+ * Get yacht code from yacht ID/name with flexible matching
+ * @param {string} yachtId - Yacht ID or name
+ * @returns {string} Yacht code (CM, SP, AL, DD, ZA)
+ */
+export function getYachtCode(yachtId) {
+  if (!yachtId || typeof yachtId !== 'string') {
+    throw new Error(`Invalid yacht ID: ${yachtId}`)
+  }
+  
+  // Direct lookup first
+  if (YachtCodes[yachtId]) {
+    return YachtCodes[yachtId]
+  }
+  
+  // Try case-insensitive lookup
+  const lowerYachtId = yachtId.toLowerCase()
+  for (const [key, code] of Object.entries(YachtCodes)) {
+    if (key.toLowerCase() === lowerYachtId) {
+      return code
+    }
+  }
+  
+  // Try partial matching for yacht names
+  const normalizedYachtId = yachtId.toLowerCase().replace(/[^a-z]/g, '')
+  const knownYachts = {
+    'calicomoon': 'CM',
+    'spectre': 'SP', 
+    'alrisha': 'AL',
+    'diskdrive': 'DD',
+    'zavaria': 'ZA'
+  }
+  
+  if (knownYachts[normalizedYachtId]) {
+    return knownYachts[normalizedYachtId]
+  }
+  
+  throw new Error(`Unknown yacht ID: ${yachtId}. Valid yacht IDs: ${Object.keys(YachtCodes).join(', ')}`)
+}
+
+/**
+ * Calculate ISO 8601 week number for a given date
+ * @param {Date} date - Date to calculate week for
+ * @returns {number} ISO week number (1-53)
+ */
+export function getISOWeek(date) {
+  // Clone date to avoid modifying original
+  const targetDate = new Date(date.getTime())
+  
+  // Set to Thursday of the week (ISO 8601 standard)
+  const dayNumber = (targetDate.getDay() + 6) % 7 // Monday = 0, Sunday = 6
+  targetDate.setDate(targetDate.getDate() - dayNumber + 3)
+  
+  // January 4th is always in the first week of the year
+  const jan4 = new Date(targetDate.getFullYear(), 0, 4)
+  
+  // Calculate the difference in days and divide by 7
+  const weekNumber = Math.round(((targetDate.getTime() - jan4.getTime()) / 86400000 - 3 + (jan4.getDay() + 6) % 7) / 7) + 1
+  
+  return weekNumber
+}
+
+/**
+ * Find the highest sequence number from existing numbers
+ * @param {Array<number>} existingNumbers - Array of existing numbers
+ * @returns {number} Highest sequence number, or 0 if none exist
+ */
+export function findHighestSequence(existingNumbers) {
+  if (!existingNumbers || existingNumbers.length === 0) {
+    return 0
+  }
+  return Math.max(...existingNumbers)
+}
+
+/**
+ * Get next sequence number using max-increment logic
+ * @param {Array<number>} existingNumbers - Array of existing numbers
+ * @returns {number} Next sequence number (highest + 1)
+ */
+export function getNextSequenceNumber(existingNumbers) {
+  const highest = findHighestSequence(existingNumbers)
+  return highest + 1
 }
 
 /**
@@ -136,6 +238,10 @@ export class BookingNumberGenerator {
           
         case BookingNumberFormat.YACHT_SEQUENTIAL:
           bookingNumber = await this._generateYachtSequential(yachtId, customPrefix)
+          break
+          
+        case BookingNumberFormat.YEAR_WEEK_YACHT_SEQ:
+          bookingNumber = await this._generateYearWeekYachtSequential(date, yachtId, options)
           break
           
         case BookingNumberFormat.CUSTOM:
@@ -234,6 +340,116 @@ export class BookingNumberGenerator {
     const sequenceKey = `yacht_${yachtId || 'unknown'}`
     const sequence = await this.sequenceProvider(sequenceKey)
     return `${prefix}${sequence.toString().padStart(this.sequenceLength, '0')}`
+  }
+
+  /**
+   * Generate year-week-yacht sequential number (2520ZA06)
+   * Format: YYWWBCNN where:
+   * - YY: Last 2 digits of charter start year
+   * - WW: ISO week number (zero-padded)
+   * - BC: Boat code (uppercase)
+   * - NN: Sequential booking number for yacht within year (max-increment, zero-padded)
+   * @param {Date} date - Charter start date
+   * @param {string} yachtId - Yacht identifier
+   * @param {Object} options - Additional options including existing bookings provider
+   * @returns {Promise<string>} Generated booking code
+   * @private
+   */
+  async _generateYearWeekYachtSequential(date, yachtId, options = {}) {
+    if (!date) {
+      throw new Error('Charter start date required for year-week-yacht format')
+    }
+    
+    if (!yachtId) {
+      throw new Error('Yacht ID required for year-week-yacht format')
+    }
+    
+    // Get yacht code using flexible matching
+    const boatCode = getYachtCode(yachtId)
+    
+    // Calculate YY (last 2 digits of year)
+    const year = date.getFullYear()
+    const yy = year.toString().slice(-2)
+    
+    // Calculate WW (ISO week number, zero-padded)
+    const weekNumber = getISOWeek(date)
+    const ww = weekNumber.toString().padStart(2, '0')
+    
+    // Get existing booking numbers for this yacht and year for max-increment logic
+    const existingNumbers = await this._getExistingBookingNumbers(yy, boatCode, options)
+    
+    // Get next sequence number using max-increment logic
+    const sequenceNumber = getNextSequenceNumber(existingNumbers)
+    const nn = sequenceNumber.toString().padStart(2, '0')
+    
+    // Construct the booking code: YYWWBCNN
+    const bookingCode = `${yy}${ww}${boatCode}${nn}`
+    
+    return bookingCode
+  }
+
+  /**
+   * Get existing booking numbers for max-increment logic
+   * @param {string} yy - Year (2 digits)
+   * @param {string} boatCode - Boat code (2 letters)
+   * @param {Object} options - Options including existingBookingsProvider
+   * @returns {Promise<Array<number>>} Array of existing sequence numbers
+   * @private
+   */
+  async _getExistingBookingNumbers(yy, boatCode, options = {}) {
+    // If an existing bookings provider is given, use it
+    if (options.existingBookingsProvider && typeof options.existingBookingsProvider === 'function') {
+      try {
+        const existingCodes = await options.existingBookingsProvider(yy, boatCode)
+        return this._extractSequenceNumbers(existingCodes, yy, boatCode)
+      } catch (error) {
+        console.warn('[BookingNumberGenerator] Error fetching existing bookings:', error)
+        return []
+      }
+    }
+    
+    // Fallback: check our internal existing numbers cache
+    const pattern = new RegExp(`^${yy}\\d{2}${boatCode}(\\d{2})$`)
+    const existingSequenceNumbers = []
+    
+    for (const existingNumber of this._existingNumbers) {
+      const match = existingNumber.match(pattern)
+      if (match) {
+        const sequenceNum = parseInt(match[1], 10)
+        if (!isNaN(sequenceNum)) {
+          existingSequenceNumbers.push(sequenceNum)
+        }
+      }
+    }
+    
+    return existingSequenceNumbers
+  }
+
+  /**
+   * Extract sequence numbers from booking codes
+   * @param {Array<string>} bookingCodes - Array of booking codes
+   * @param {string} yy - Year (2 digits)
+   * @param {string} boatCode - Boat code (2 letters)
+   * @returns {Array<number>} Array of sequence numbers
+   * @private
+   */
+  _extractSequenceNumbers(bookingCodes, yy, boatCode) {
+    const pattern = new RegExp(`^${yy}\\d{2}${boatCode}(\\d{2})$`)
+    const sequenceNumbers = []
+    
+    for (const code of bookingCodes) {
+      if (typeof code === 'string') {
+        const match = code.match(pattern)
+        if (match) {
+          const sequenceNum = parseInt(match[1], 10)
+          if (!isNaN(sequenceNum)) {
+            sequenceNumbers.push(sequenceNum)
+          }
+        }
+      }
+    }
+    
+    return sequenceNumbers
   }
 
   /**

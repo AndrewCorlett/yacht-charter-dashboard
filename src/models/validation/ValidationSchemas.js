@@ -84,15 +84,22 @@ export class ValidationUtils {
   }
 
   /**
-   * Validate phone number format
+   * Validate phone number format (flexible for international customers)
    * @param {string} phone - Phone to validate
    * @returns {boolean} True if valid
    */
   static isValidPhone(phone) {
     if (!phone || typeof phone !== 'string') return false
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
+    // Remove all non-digit characters except +
     const cleaned = phone.replace(/[\s\-\(\)]/g, '')
-    return phoneRegex.test(cleaned) && cleaned.length >= 10
+    // Allow international format (+country code) or domestic format (including numbers starting with 0)
+    // Minimum 6 digits (area code + 6 digits), maximum 15 digits (E.164 standard)
+    // International: starts with + followed by digits, domestic: just digits
+    const internationalRegex = /^\+[1-9]\d{5,14}$/
+    const domesticRegex = /^[0-9]\d{5,14}$/
+    
+    return (internationalRegex.test(cleaned) || domesticRegex.test(cleaned)) && 
+           cleaned.length >= 6 && cleaned.length <= 16
   }
 
   /**
@@ -453,10 +460,10 @@ export class BookingValidationSchema {
     }
     warnings.push(...financialValidation.warnings)
 
-    // Enhanced phone validation (optional)
+    // Enhanced phone validation (optional) - supports international and domestic formats
     if (data.customer_phone) {
-      if (!ValidationUtils.isValidInternationalPhone(data.customer_phone)) {
-        errors.customer_phone = 'Invalid phone number format (use international format: +1234567890)'
+      if (!ValidationUtils.isValidPhone(data.customer_phone)) {
+        errors.customer_phone = 'Invalid phone number format (minimum 6 digits, can include country code)'
       }
     }
 

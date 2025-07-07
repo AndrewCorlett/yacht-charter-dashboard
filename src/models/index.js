@@ -14,6 +14,7 @@ import BookingModelUnified, {
   BookingStatus,
   CharterType,
   PaymentStatus,
+  BookingType,
   DocumentTypes
 } from './core/BookingModel-unified.js'
 
@@ -49,7 +50,7 @@ export const CrewDetailsModel = CrewDetailsModelOriginal
 export const CharterExperienceModel = CharterExperienceModelOriginal
 export const StatusTrackingModel = StatusTrackingModelOriginal
 
-export { BookingStatus, CharterType, PaymentStatus, DocumentTypes }
+export { BookingStatus, CharterType, PaymentStatus, BookingType, DocumentTypes }
 export { LegacyBookingStatus, LegacyBookingType }
 export { CrewPosition, ExperienceLevel }
 export { DietaryRestriction, CelebrationType, CharterRating }
@@ -85,7 +86,11 @@ import BookingNumberGeneratorOriginal, {
   BookingNumberFormat,
   ValidationPatterns,
   YachtCodes,
-  PredefinedGenerators
+  PredefinedGenerators,
+  getISOWeek,
+  findHighestSequence,
+  getNextSequenceNumber,
+  getYachtCode
 } from './utilities/BookingNumberGenerator.js'
 
 // Export utilities
@@ -97,7 +102,7 @@ export const BookingNumberGenerator = BookingNumberGeneratorOriginal
 export { ValidationUtils, BookingValidationSchema, CrewDetailsValidationSchema, CharterExperienceValidationSchema, StatusTrackingValidationSchema, CrossModelValidation, ModelValidator }
 export { ModelFactory, ModelTransformer, ModelValidationService, ModelUpdateService, ModelQueryService, ModelAggregationService }
 export { ICSStatus, ICSClassification, ICSFrequency }
-export { BookingNumberFormat, ValidationPatterns, YachtCodes, PredefinedGenerators }
+export { BookingNumberFormat, ValidationPatterns, YachtCodes, PredefinedGenerators, getISOWeek, findHighestSequence, getNextSequenceNumber, getYachtCode }
 
 /**
  * Model Collections - Organized exports for easy access
@@ -120,6 +125,7 @@ export const Enums = {
   BookingStatus,
   CharterType,
   PaymentStatus,
+  BookingType,
   DocumentTypes,
   CrewPosition,
   ExperienceLevel,

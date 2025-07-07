@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:3005": "vite --port 3005",
+    "dev:force": "vite --port 3005 --force",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -12,13 +14,17 @@
     "test:e2e": "vitest run src/tests/e2e --reporter=verbose",
     "test:e2e:watch": "vitest src/tests/e2e",
     "test:unit": "vitest run src/tests/unit",
-    "test:all": "npm run test:unit && npm run test:e2e"
+    "test:all": "npm run test:unit && npm run test:e2e",
+    "test:booking-workflow": "node run-booking-workflow-test.js",
+    "test:validate-env": "node validate-test-environment.js",
+    "test:booking-full": "npm run test:validate-env && npm run test:booking-workflow"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.2",
+    "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.50.3",
     "date-fns": "^4.1.0",
     "docxtemplater": "^3.65.1",
-    "dotenv": "^16.6.0",
+    "dotenv": "^16.6.1",
     "pdf-lib": "^1.17.1",
     "pg": "^8.16.2",
     "pizzip": "^3.2.0",
@@ -40,7 +46,7 @@
     "globals": "^16.0.0",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.6",
-    "puppeteer": "^24.11.0",
+    "puppeteer": "^24.11.2",
     "tailwindcss": "^4.1.10",
     "vite": "^6.3.5",
     "vitest": "^3.2.4"

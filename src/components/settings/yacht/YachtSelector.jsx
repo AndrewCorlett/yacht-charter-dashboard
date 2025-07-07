@@ -13,6 +13,7 @@
 
 import { useState, useEffect } from 'react'
 import { LABELS } from '../../../config/labels'
+import yachtService from '../../../services/supabase/YachtService'
 
 function YachtSelector({ onYachtSelect, selectedYacht }) {
   // [Yachts State] - List of all available yachts
@@ -35,87 +36,10 @@ function YachtSelector({ onYachtSelect, selectedYacht }) {
     try {
       console.log('[YachtSelector] Loading yachts from Supabase...')
       
-      // TODO: Implement Supabase query to fetch yachts
-      // This would use: await supabase.from('yachts').select('*').order('name')
-      
-      // Mock yacht data for now - replace with actual Supabase query
-      const mockYachts = [
-        {
-          id: '1',
-          name: 'Calico Moon',
-          yacht_type: 'Sailing Yacht',
-          location: 'Portsmouth',
-          length_feet: 45,
-          cabins: 3,
-          berths: 6,
-          max_pob: 8,
-          year_built: 2018,
-          description: 'Luxury sailing yacht perfect for family adventures'
-        },
-        {
-          id: '2',
-          name: 'Spectre',
-          yacht_type: 'Motor Yacht',
-          location: 'Southampton',
-          length_feet: 52,
-          cabins: 4,
-          berths: 8,
-          max_pob: 10,
-          year_built: 2020,
-          description: 'Modern motor yacht with premium amenities'
-        },
-        {
-          id: '3',
-          name: 'Alrisha',
-          yacht_type: 'Catamaran',
-          location: 'Poole',
-          length_feet: 48,
-          cabins: 4,
-          berths: 8,
-          max_pob: 12,
-          year_built: 2019,
-          description: 'Spacious catamaran ideal for large groups'
-        },
-        {
-          id: '4',
-          name: 'Disk Drive',
-          yacht_type: 'Sailing Yacht',
-          location: 'Portsmouth',
-          length_feet: 38,
-          cabins: 2,
-          berths: 4,
-          max_pob: 6,
-          year_built: 2017,
-          description: 'Compact sailing yacht perfect for couples'
-        },
-        {
-          id: '5',
-          name: 'Zavaria',
-          yacht_type: 'Motor Yacht',
-          location: 'Brighton',
-          length_feet: 65,
-          cabins: 5,
-          berths: 10,
-          max_pob: 12,
-          year_built: 2021,
-          description: 'Flagship luxury motor yacht with full crew'
-        },
-        {
-          id: '6',
-          name: 'Mridula Sarwar',
-          yacht_type: 'Sailing Yacht',
-          location: 'Cowes',
-          length_feet: 42,
-          cabins: 3,
-          berths: 6,
-          max_pob: 8,
-          year_built: 2019,
-          description: 'Racing yacht with performance and comfort'
-        }
-      ]
-      
-      setYachts(mockYachts)
-      console.log('[YachtSelector] Yachts loaded:', mockYachts.length)
+      // Use YachtService to fetch real yacht data from database
+      const yachtData = await yachtService.getYachts()
+      setYachts(yachtData)
+      console.log('[YachtSelector] Yachts loaded:', yachtData.length)
       
     } catch (loadError) {
       console.error('[YachtSelector] Error loading yachts:', loadError)

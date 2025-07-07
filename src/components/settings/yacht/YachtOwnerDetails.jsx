@@ -13,6 +13,8 @@
 
 import { useState, useEffect } from 'react'
 import { LABELS } from '../../../config/labels'
+import FileUpload from '../../common/FileUpload'
+import yachtService from '../../../services/supabase/YachtService'
 
 function YachtOwnerDetails({ yacht, onSave, loading }) {
   // [Owner Details State] - Current yacht owner information
@@ -32,7 +34,11 @@ function YachtOwnerDetails({ yacht, onSave, loading }) {
       best_time_to_contact: 'business_hours',
       emergency_contact_only: false
     },
-    notes: ''
+    notes: '',
+    signature_file_name: '',
+    signature_file_url: '',
+    signature_file_size: null,
+    signature_uploaded_at: null
   })
 
   // [Form State] - Tracks changes and validation
@@ -51,36 +57,58 @@ function YachtOwnerDetails({ yacht, onSave, loading }) {
    * [Load Owner Details] - Fetches owner data from Supabase
    */
   const loadOwnerDetails = async () => {
+    if (!yacht?.id) return
+    
     try {
-      // TODO: Implement Supabase query to fetch owner details
-      // This would use: await supabase.from('yacht_owner_details').select('*').eq('yacht_id', yacht.id).single()
+      console.log('[YachtOwnerDetails] Loading owner details for yacht:', yacht.id)
       
-      // Mock owner data for now - replace with actual Supabase query
-      const mockOwnerData = {
-        owner_name: 'Captain James Wilson',
-        owner_email: 'james.wilson@example.com',
-        owner_phone: '+44 7700 900123',
-        owner_address_line1: '123 Marina Way',
-        owner_address_line2: 'Harbour View',
-        owner_city: 'Portsmouth',
-        owner_postcode: 'PO1 2AB',
-        owner_country: 'United Kingdom',
-        emergency_contact_name: 'Sarah Wilson',
-        emergency_contact_phone: '+44 7700 900456',
-        contact_preferences: {
+      // Fetch real owner data from Supabase
+      const ownerData = await yachtService.getYachtOwnerDetails(yacht.id)
+      
+      if (ownerData) {
+        // Ensure contact_preferences is an object
+        const preferences = ownerData.contact_preferences || {
           preferred_method: 'email',
           best_time_to_contact: 'business_hours',
           emergency_contact_only: false
-        },
-        notes: 'Prefers email communication. Available most weekdays 9-5.'
+        }
+        
+        setOwnerDetails({
+          ...ownerData,
+          contact_preferences: preferences
+        })
+      } else {
+        // No owner details found, set defaults
+        setOwnerDetails({
+          owner_name: '',
+          owner_email: '',
+          owner_phone: '',
+          owner_address_line1: '',
+          owner_address_line2: '',
+          owner_city: '',
+          owner_postcode: '',
+          owner_country: 'United Kingdom',
+          emergency_contact_name: '',
+          emergency_contact_phone: '',
+          contact_preferences: {
+            preferred_method: 'email',
+            best_time_to_contact: 'business_hours',
+            emergency_contact_only: false
+          },
+          notes: '',
+          signature_file_name: '',
+          signature_file_url: '',
+          signature_file_size: null,
+          signature_uploaded_at: null
+        })
       }
       
-      setOwnerDetails(mockOwnerData)
       setHasChanges(false)
       setErrors({})
       
     } catch (error) {
       console.error('[YachtOwnerDetails] Error loading owner details:', error)
+      setErrors({ general: 'Failed to load owner details. Please try again.' })
     }
   }
 
@@ -173,6 +201,32 @@ function YachtOwnerDetails({ yacht, onSave, loading }) {
    */
   const handleReset = () => {
     loadOwnerDetails()
+  }
+
+  /**
+   * [Handle Signature Upload] - Handles signature file upload
+   * @param {Object|null} fileInfo - File information or null to remove
+   */
+  const handleSignatureUpload = (fileInfo) => {
+    if (fileInfo) {
+      setOwnerDetails(prev => ({
+        ...prev,
+        signature_file_name: fileInfo.name,
+        signature_file_url: fileInfo.url,
+        signature_file_size: fileInfo.size,
+        signature_uploaded_at: new Date().toISOString()
+      }))
+    } else {
+      // Remove signature file
+      setOwnerDetails(prev => ({
+        ...prev,
+        signature_file_name: null,
+        signature_file_url: null,
+        signature_file_size: null,
+        signature_uploaded_at: null
+      }))
+    }
+    setHasChanges(true)
   }
 
   /**
@@ -396,6 +450,38 @@ function YachtOwnerDetails({ yacht, onSave, loading }) {
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={loading}
           />
+        </div>
+      </div>
+
+      {/* [Owner Signature] */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h4 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+          <span>✍️</span>
+          Owner Signature
+        </h4>
+        <div className="space-y-3">
+          <p className="text-sm text-gray-400">
+            Upload a signature image for contract purposes. Accepted formats: PNG, JPG, JPEG. Maximum size: 5MB.
+          </p>
+          <FileUpload
+            onFileUpload={handleSignatureUpload}
+            acceptedTypes=".png,.jpg,.jpeg,.gif"
+            maxSize={5 * 1024 * 1024} // 5MB
+            title="Signature Upload"
+            description="Upload PNG, JPG, or JPEG signature image"
+            currentFile={
+              ownerDetails.signature_file_name ? {
+                name: ownerDetails.signature_file_name,
+                url: ownerDetails.signature_file_url,
+                size: ownerDetails.signature_file_size
+              } : null
+            }
+          />
+          {ownerDetails.signature_uploaded_at && (
+            <p className="text-xs text-gray-500">
+              Uploaded: {new Date(ownerDetails.signature_uploaded_at).toLocaleString()}
+            </p>
+          )}
         </div>
       </div>
 

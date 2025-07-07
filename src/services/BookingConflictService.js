@@ -22,6 +22,7 @@ import {
   differenceInDays
 } from 'date-fns'
 import { BookingStatus, CharterType } from '../models/index.js'
+import { supabase, TABLES } from './supabase/supabaseClient.js'
 
 /**
  * Main Booking Conflict Service Class
@@ -548,6 +549,161 @@ export class BookingConflictService {
       bookingDays,
       daysInAdvance
     }
+  }
+
+  /**
+   * Check for date conflicts using Supabase database
+   * @param {Object} bookingData - The booking being created/updated
+   * @param {string} bookingData.yacht_id - Yacht UUID
+   * @param {string} bookingData.start_date - Start date (YYYY-MM-DD)
+   * @param {string} bookingData.end_date - End date (YYYY-MM-DD)
+   * @param {string} [excludeBookingId] - Booking ID to exclude (for updates)
+   * @returns {Promise<Object>} Conflict detection result with user-friendly warnings
+   */
+  static async checkDatabaseConflicts(bookingData, excludeBookingId = null) {
+    if (!supabase) throw new Error('Supabase not initialized')
+
+    try {
+      const { yacht_id, start_date, end_date } = bookingData
+      
+      if (!yacht_id || !start_date || !end_date) {
+        return {
+          hasConflicts: false,
+          conflicts: [],
+          message: 'Insufficient data for conflict check',
+          canProceed: true
+        }
+      }
+
+      // Build query to find overlapping bookings for the same yacht
+      let query = supabase
+        .from(TABLES.BOOKINGS)
+        .select(`
+          id,
+          booking_number,
+          start_date,
+          end_date,
+          customer_first_name,
+          customer_surname,
+          booking_status
+        `)
+        .eq('yacht_id', yacht_id)
+        .in('booking_status', ['tentative', 'confirmed']) // Only check active bookings
+        .or(`
+          and(start_date.lte.${end_date},end_date.gte.${start_date}),
+          and(start_date.lte.${start_date},end_date.gte.${end_date}),
+          and(start_date.gte.${start_date},end_date.lte.${end_date})
+        `)
+
+      // Exclude the current booking if updating
+      if (excludeBookingId) {
+        query = query.neq('id', excludeBookingId)
+      }
+
+      const { data: conflictingBookings, error } = await query
+
+      if (error) {
+        console.error('Error checking booking conflicts:', error)
+        throw error
+      }
+
+      const hasConflicts = conflictingBookings && conflictingBookings.length > 0
+
+      return {
+        hasConflicts,
+        conflicts: conflictingBookings || [],
+        message: hasConflicts 
+          ? `Found ${conflictingBookings.length} conflicting booking(s) for this yacht`
+          : 'No conflicts detected',
+        warningDetails: hasConflicts ? this._formatConflictWarning(conflictingBookings, start_date, end_date) : null,
+        canProceed: true, // Always allow operator to proceed with warning
+        requiresConfirmation: hasConflicts
+      }
+
+    } catch (error) {
+      console.error('Booking conflict check failed:', error)
+      return {
+        hasConflicts: false,
+        conflicts: [],
+        message: 'Conflict check failed',
+        error: error.message,
+        canProceed: true,
+        requiresConfirmation: false
+      }
+    }
+  }
+
+  /**
+   * Format conflict information for user warning display
+   * @param {Array} conflicts - Array of conflicting bookings
+   * @param {string} newStartDate - New booking start date
+   * @param {string} newEndDate - New booking end date
+   * @returns {Object} Formatted warning information
+   * @private
+   */
+  static _formatConflictWarning(conflicts, newStartDate, newEndDate) {
+    const overlappingDates = this._calculateOverlappingDateStrings(conflicts, newStartDate, newEndDate)
+    
+    let warningMessage
+    let detailMessage
+    
+    if (conflicts.length === 1) {
+      const conflict = conflicts[0]
+      const overlap = overlappingDates[0]
+      warningMessage = `⚠️ YACHT DOUBLE BOOKING DETECTED`
+      detailMessage = `This yacht is already booked by ${conflict.customer_first_name} ${conflict.customer_surname} (${conflict.booking_number}) from ${overlap.startDate} to ${overlap.endDate}.`
+    } else {
+      const dateRanges = overlappingDates.map(o => `${o.startDate} to ${o.endDate}`).join(', ')
+      warningMessage = `⚠️ MULTIPLE YACHT CONFLICTS DETECTED`
+      detailMessage = `This yacht has ${conflicts.length} conflicting bookings on the following dates: ${dateRanges}.`
+    }
+
+    return {
+      title: warningMessage,
+      message: detailMessage,
+      conflictCount: conflicts.length,
+      overlappingDates,
+      conflictingBookings: conflicts.map(booking => ({
+        bookingNumber: booking.booking_number,
+        customerName: `${booking.customer_first_name} ${booking.customer_surname}`,
+        dateRange: `${booking.start_date} to ${booking.end_date}`,
+        status: booking.booking_status
+      })),
+      actionMessage: 'Do you want to proceed anyway? This will create a double booking.'
+    }
+  }
+
+  /**
+   * Calculate which specific dates overlap (string format for display)
+   * @param {Array} conflicts - Conflicting bookings
+   * @param {string} newStartDate - New booking start date (YYYY-MM-DD)
+   * @param {string} newEndDate - New booking end date (YYYY-MM-DD)
+   * @returns {Array} Array of overlapping date ranges as strings
+   * @private
+   */
+  static _calculateOverlappingDateStrings(conflicts, newStartDate, newEndDate) {
+    const overlaps = []
+    const newStart = new Date(newStartDate)
+    const newEnd = new Date(newEndDate)
+
+    conflicts.forEach(booking => {
+      const existingStart = new Date(booking.start_date)
+      const existingEnd = new Date(booking.end_date)
+
+      // Calculate overlap range
+      const overlapStart = new Date(Math.max(newStart.getTime(), existingStart.getTime()))
+      const overlapEnd = new Date(Math.min(newEnd.getTime(), existingEnd.getTime()))
+
+      if (overlapStart <= overlapEnd) {
+        overlaps.push({
+          startDate: overlapStart.toISOString().split('T')[0],
+          endDate: overlapEnd.toISOString().split('T')[0],
+          conflictWith: booking.booking_number
+        })
+      }
+    })
+
+    return overlaps
   }
 }
 

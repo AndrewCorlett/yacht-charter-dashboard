@@ -19,6 +19,7 @@ import { LABELS } from '../../config/labels'
 import YachtSelector from './yacht/YachtSelector'
 import YachtSpecsEditor from './yacht/YachtSpecsEditor'
 import YachtOwnerDetails from './yacht/YachtOwnerDetails'
+import yachtService from '../../services/supabase/YachtService'
 
 function YachtManagementSection() {
   // [Selected Yacht State] - Currently selected yacht for editing
@@ -75,13 +76,16 @@ function YachtManagementSection() {
       console.log(`[YachtManagement] Saving ${section} data for yacht:`, selectedYacht.id)
       console.log(`[YachtManagement] Data to save:`, data)
       
-      // TODO: Implement Supabase save operations
-      // This will be connected to the database in the next step
+      let result
+      if (section === 'specs') {
+        // Update yacht specifications
+        result = await yachtService.updateYachtSpecs(selectedYacht.id, data)
+      } else if (section === 'owner') {
+        // Update yacht owner details
+        result = await yachtService.updateYachtOwnerDetails(selectedYacht.id, data)
+      }
       
-      // Mock successful save for now
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      console.log(`[YachtManagement] ${section} data saved successfully`)
+      console.log(`[YachtManagement] ${section} data saved successfully:`, result)
       
     } catch (saveError) {
       console.error(`[YachtManagement] Error saving ${section} data:`, saveError)

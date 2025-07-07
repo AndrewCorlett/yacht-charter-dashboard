@@ -184,15 +184,22 @@ function YachtTimelineCalendar({ onCreateBooking, onEditBooking }) {
       })
       window.dispatchEvent(navigationEvent)
     } else if (availability?.isAvailable) {
-      // Handle empty cell click - show create booking modal
-      if (onCreateBooking) {
-        onCreateBooking({ date, yachtId })
-      }
+      // Handle empty cell click - auto-populate quick create booking widget
+      console.log('Auto-populating quick create booking with date:', date, 'and yacht:', yachtId)
+      
+      // Dispatch custom event to auto-populate the quick create booking widget
+      const autoPopulateEvent = new CustomEvent('autoPopulateBooking', {
+        detail: {
+          date: date,
+          yachtId: yachtId
+        }
+      })
+      window.dispatchEvent(autoPopulateEvent)
     } else {
       // Cell is not available
       console.log('Cell not available:', availability)
     }
-  }, [onCreateBooking, onEditBooking])
+  }, [onEditBooking])
 
 
   const handleRetry = useCallback(() => {

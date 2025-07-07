@@ -13,6 +13,8 @@ import { BookingNumberGenerator, BookingNumberFormat, YachtCodes } from '../../m
 class BookingService {
   constructor() {
     this.subscriptions = new Map()
+    this.yachtMappingCache = null
+    this.yachtMappingCacheTime = null
   }
 
   /**
@@ -29,9 +31,11 @@ class BookingService {
       
       // Generate booking number if not provided
       if (!booking.booking_number) {
-        // Use yacht name for booking number generation, fallback to yacht_id
-        const yachtIdentifier = booking.yacht_name || booking.yacht_id
-        booking.booking_number = await this.generateBookingNumber(yachtIdentifier, booking.start_date)
+        // Convert yacht UUID to yacht name for booking number generation
+        const yachtIdentifier = booking.yacht_id
+        console.log('[BookingService] Using yacht identifier for booking number:', yachtIdentifier)
+        const yachtName = await this.getYachtNameFromId(yachtIdentifier)
+        booking.booking_number = await this.generateBookingNumber(yachtName, booking.start_date)
       }
 
       // Set timestamps
@@ -344,6 +348,105 @@ class BookingService {
   }
 
   /**
+   * Create an external booking placeholder
+   * @param {Object} externalBookingData - External booking data
+   * @returns {Promise<Object>} Created external booking
+   */
+  async createExternalBooking(externalBookingData) {
+    if (!supabase) throw new Error('Supabase not initialized')
+
+    try {
+      // Ensure it's marked as external
+      const bookingData = {
+        ...externalBookingData,
+        booking_type: 'external',
+        booking_status: 'confirmed', // External bookings are assumed confirmed
+        notes: `External booking${externalBookingData.notes ? ': ' + externalBookingData.notes : ''}`
+      }
+
+      // Create the booking
+      return await this.createBooking(bookingData)
+    } catch (error) {
+      console.error('Create external booking error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Update booking number with conflict checking
+   * @param {string} id - Booking ID
+   * @param {string} newBookingNumber - New booking number
+   * @returns {Promise<Object>} Updated booking
+   */
+  async updateBookingNumber(id, newBookingNumber) {
+    if (!supabase) throw new Error('Supabase not initialized')
+    if (!newBookingNumber || typeof newBookingNumber !== 'string') {
+      throw new Error('Valid booking number is required')
+    }
+
+    // Validate booking number format (YYWWBCNN)
+    const BOOKING_NUMBER_PATTERN = /^\d{2}\d{2}[A-Z]{2}\d{2}$/
+    if (!BOOKING_NUMBER_PATTERN.test(newBookingNumber)) {
+      throw new Error('Invalid booking number format. Expected: YYWWBCNN (e.g., 2528DD01)')
+    }
+
+    // Extract and validate components
+    const yy = newBookingNumber.substring(0, 2)
+    const ww = newBookingNumber.substring(2, 4)
+    const boatCode = newBookingNumber.substring(4, 6)
+    const nn = newBookingNumber.substring(6, 8)
+
+    // Validate yacht code
+    const validYachtCodes = ['CM', 'SP', 'AL', 'DD', 'ZA']
+    if (!validYachtCodes.includes(boatCode)) {
+      throw new Error(`Invalid yacht code: ${boatCode}. Must be one of: ${validYachtCodes.join(', ')}`)
+    }
+
+    // Validate week number (01-53)
+    const weekNum = parseInt(ww, 10)
+    if (weekNum < 1 || weekNum > 53) {
+      throw new Error(`Invalid week number: ${ww}. Must be between 01 and 53`)
+    }
+
+    try {
+      // Check if the new booking number already exists
+      const { data: existingBookings, error: checkError } = await supabase
+        .from(TABLES.BOOKINGS)
+        .select('id')
+        .eq('booking_number', newBookingNumber)
+        .neq('id', id) // Exclude current booking
+
+      if (checkError) {
+        queryHelpers.handleError(checkError, 'checkBookingNumberConflict')
+      }
+
+      if (existingBookings && existingBookings.length > 0) {
+        throw new Error(`Booking number ${newBookingNumber} is already in use`)
+      }
+
+      // Update the booking number
+      const updates = {
+        booking_number: newBookingNumber,
+        updated_at: new Date().toISOString()
+      }
+
+      const { data, error } = await supabase
+        .from(TABLES.BOOKINGS)
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+
+      queryHelpers.handleError(error, 'updateBookingNumber')
+      
+      return new BookingModel(data)
+    } catch (error) {
+      console.error('Update booking number error:', error)
+      throw error
+    }
+  }
+
+  /**
    * Subscribe to booking changes
    * @param {Function} callback - Callback for changes
    * @param {Object} filter - Optional filter
@@ -438,6 +541,103 @@ class BookingService {
   }
 
   /**
+   * Helper: Build and cache yacht UUID to name mapping
+   */
+  async buildYachtMapping() {
+    console.log('[BookingService] Building yacht UUID to name mapping')
+    
+    try {
+      const { data, error } = await supabase
+        .from('yachts')
+        .select('id, name')
+      
+      if (error) throw error
+      
+      const mapping = {}
+      if (data) {
+        data.forEach(yacht => {
+          const normalizedName = yacht.name.toLowerCase().replace(/\s+/g, '-')
+          mapping[yacht.id] = normalizedName
+          console.log(`[BookingService] Mapped ${yacht.id} -> ${normalizedName}`)
+        })
+      }
+      
+      // Cache the mapping for 5 minutes
+      this.yachtMappingCache = mapping
+      this.yachtMappingCacheTime = Date.now()
+      
+      console.log(`[BookingService] Built mapping for ${Object.keys(mapping).length} yachts`)
+      return mapping
+      
+    } catch (error) {
+      console.error('[BookingService] Failed to build yacht mapping:', error)
+      
+      // Fallback mapping with known UUIDs (discovered from database)
+      const fallbackMapping = {
+        'c2c363c7-ca98-43e9-901d-630ea62ccdce': 'alrisha',
+        '0693ac17-4197-4039-964a-93b312c39750': 'spectre', 
+        '9f9a76fb-21ff-43bd-b2bc-b9ca8efef866': 'mridula-sarwar',
+        '234a2f45-1e79-44fb-b5aa-3c058f777255': 'disk-drive',
+        '3ffa9ca5-bd8e-4050-8b49-e5230fb23c73': 'zavaria',
+        '50dba171-b830-4d88-9cb0-c14a37c4d58a': 'calico-moon'
+      }
+      
+      console.log('[BookingService] Using fallback mapping with', Object.keys(fallbackMapping).length, 'entries')
+      this.yachtMappingCache = fallbackMapping
+      this.yachtMappingCacheTime = Date.now()
+      
+      return fallbackMapping
+    }
+  }
+
+  /**
+   * Helper: Convert yacht UUID to yacht name for booking number generation
+   */
+  async getYachtNameFromId(yachtId) {
+    console.log('[BookingService] Converting yacht UUID to name:', yachtId)
+    
+    try {
+      // Check if it's already a yacht name (not a UUID)
+      if (!yachtId.includes('-')) {
+        console.log('[BookingService] Already a yacht name:', yachtId)
+        return yachtId
+      }
+      
+      // Check cache (refresh if older than 5 minutes)
+      const cacheAge = Date.now() - (this.yachtMappingCacheTime || 0)
+      if (!this.yachtMappingCache || cacheAge > 5 * 60 * 1000) {
+        console.log('[BookingService] Cache expired or missing, rebuilding yacht mapping')
+        await this.buildYachtMapping()
+      }
+      
+      // Look up UUID in cached mapping
+      const yachtName = this.yachtMappingCache[yachtId]
+      if (yachtName) {
+        console.log('[BookingService] Found yacht name in mapping:', yachtId, '->', yachtName)
+        return yachtName
+      }
+      
+      // If not found, try to refresh the mapping once more
+      console.log('[BookingService] UUID not found in cache, refreshing mapping')
+      await this.buildYachtMapping()
+      
+      const refreshedName = this.yachtMappingCache[yachtId]
+      if (refreshedName) {
+        console.log('[BookingService] Found yacht name after refresh:', yachtId, '->', refreshedName)
+        return refreshedName
+      }
+      
+      // If still not found, throw error with helpful information
+      const availableUUIDs = Object.keys(this.yachtMappingCache)
+      throw new Error(`Unknown yacht ID: ${yachtId}. Valid yacht IDs: ${availableUUIDs.join(', ')}`)
+      
+    } catch (error) {
+      console.error('[BookingService] Failed to convert yacht UUID to name:', error)
+      throw error
+    }
+  }
+
+  /**
    * Helper: Generate booking number using new YYWWBCNN format
    */
   async generateBookingNumber(yachtId = null, startDate = null) {
@@ -474,13 +674,17 @@ class BookingService {
       const existingBookingsProvider = async (yy, boatCode) => {
         console.log(`[BookingService] Querying existing bookings for year ${yy} and boat ${boatCode}`)
         
+        // Use precise pattern: YYWWBCNN where YY=year, WW=week (2 digits), BC=boat code, NN=sequence
+        // The underscore _ in PostgreSQL LIKE matches exactly one character
+        const pattern = `${yy}__${boatCode}__`
+        
         const { data } = await supabase
           .from(TABLES.BOOKINGS)
           .select('booking_number')
-          .like('booking_number', `${yy}%${boatCode}%`)
+          .like('booking_number', pattern)
         
         const existingCodes = data ? data.map(b => b.booking_number).filter(Boolean) : []
-        console.log(`[BookingService] Found existing codes:`, existingCodes)
+        console.log(`[BookingService] Found existing codes for pattern ${pattern}:`, existingCodes)
         return existingCodes
       }
 
@@ -539,6 +743,9 @@ class BookingService {
       'totalAmount': 'total_amount',
       'depositAmount': 'deposit_amount',
       'baseRate': 'base_rate',
+      'charterCost': 'total_amount', // Map charterCost to total_amount in database
+      'deposit': 'deposit_amount', // Map deposit to deposit_amount in database
+      'securityDeposit': 'security_deposit', // Map securityDeposit to security_deposit in database
       
       // Customer fields
       'firstName': 'customer_first_name',
@@ -552,11 +759,16 @@ class BookingService {
       
       // Booking details
       'charterType': 'charter_type',
+      'tripType': 'charter_type', // Legacy field name mapping
+      'yacht': 'yacht_id', // Legacy field name mapping
       'startDate': 'start_date',
       'endDate': 'end_date',
       'portOfDeparture': 'port_of_departure',
       'portOfArrival': 'port_of_arrival',
       'yachtId': 'yacht_id',
+      'yachtName': 'yacht_name',
+      'yachtType': 'yacht_type', 
+      'yachtLocation': 'yacht_location', // Fix for yachtLocation field mapping error
       'customerId': 'customer_id',
       'bookingNumber': 'booking_number',
       
@@ -574,6 +786,15 @@ class BookingService {
       // Timestamp fields
       'createdAt': 'created_at',
       'updatedAt': 'updated_at',
+      
+      // Status timestamp fields
+      'bookingConfirmedAt': 'booking_confirmed_at',
+      'depositPaidAt': 'deposit_paid_at',
+      'finalPaymentMadeAt': 'final_payment_paid_at', // Note: frontend uses "Made", database uses "paid"
+      'contractSentAt': 'contract_sent_at',
+      'contractSignedAt': 'contract_signed_at',
+      'depositInvoiceSentAt': 'deposit_invoice_sent_at',
+      'receiptIssuedAt': 'receipt_issued_at',
       
       // File fields
       'crewExperienceFileName': 'crew_experience_file_name',
@@ -593,19 +814,27 @@ class BookingService {
         continue
       }
       
-      // Handle crewExperienceFile object decomposition
-      if (key === 'crewExperienceFile' && value && typeof value === 'object') {
-        // Decompose the file object into individual database fields
-        if (value.name) {
-          transformed.crew_experience_file_name = value.name
+      // Skip documentStates object - we use individual timestamp fields instead
+      if (key === 'documentStates' && typeof value === 'object') {
+        continue
+      }
+      
+      
+      // Handle crewExperienceFile - ALWAYS skip this field, never pass to database
+      if (key === 'crewExperienceFile') {
+        // If it's an object, decompose it into individual database fields
+        if (value && typeof value === 'object') {
+          if (value.name) {
+            transformed.crew_experience_file_name = value.name
+          }
+          if (value.url) {
+            transformed.crew_experience_file_url = value.url
+          }
+          if (value.size) {
+            transformed.crew_experience_file_size = value.size
+          }
         }
-        if (value.url) {
-          transformed.crew_experience_file_url = value.url
-        }
-        if (value.size) {
-          transformed.crew_experience_file_size = value.size
-        }
-        // Don't include the original object field
+        // Always skip the original crewExperienceFile field regardless of value
         continue
       }
       

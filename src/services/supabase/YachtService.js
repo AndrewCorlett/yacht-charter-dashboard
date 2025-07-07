@@ -28,19 +28,31 @@ class YachtService {
       // Get all yachts from the yachts table
       const { data, error } = await supabase
         .from('yachts')
-        .select('id, name, length_feet, cabins, berths, location')
+        .select('*')
         .order('name', { ascending: true })
 
       queryHelpers.handleError(error, 'getYachts')
 
-      // Return yacht data directly from yachts table
+      // Return yacht data with all fields needed by Settings components
       return (data || []).map(yacht => ({
         id: yacht.id,
         name: yacht.name,
-        length: yacht.length_feet,
+        yacht_type: yacht.yacht_type || 'Unknown',
+        location: yacht.location,
+        length_feet: yacht.length_feet,
+        length: yacht.length_feet, // Keep both for compatibility
         cabins: yacht.cabins,
         berths: yacht.berths,
-        location: yacht.location,
+        max_pob: yacht.max_pob,
+        year_built: yacht.year_built,
+        description: yacht.description,
+        beam_meters: yacht.beam_meters,
+        draft_meters: yacht.draft_meters,
+        fuel_capacity_liters: yacht.fuel_capacity_liters,
+        water_capacity_liters: yacht.water_capacity_liters,
+        engine_type: yacht.engine_type,
+        insurance_policy_number: yacht.insurance_policy_number,
+        insurance_expiry_date: yacht.insurance_expiry_date,
         status: 'active'
       }))
     } catch (error) {
@@ -336,6 +348,123 @@ class YachtService {
       : 0
 
     return report
+  }
+
+  /**
+   * Update yacht specifications
+   * @param {string} yachtId - Yacht ID
+   * @param {Object} specs - Yacht specifications to update
+   * @returns {Promise<Object>} Updated yacht data
+   */
+  async updateYachtSpecs(yachtId, specs) {
+    if (!supabase) throw new Error('Supabase not initialized')
+
+    try {
+      // Remove read-only fields
+      delete specs.id
+      delete specs.created_at
+      
+      // Update timestamp
+      specs.updated_at = new Date().toISOString()
+
+      const { data, error } = await supabase
+        .from('yachts')
+        .update(specs)
+        .eq('id', yachtId)
+        .select()
+        .single()
+
+      queryHelpers.handleError(error, 'updateYachtSpecs')
+      
+      return data
+    } catch (error) {
+      console.error('Update yacht specs error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Update yacht owner details
+   * @param {string} yachtId - Yacht ID
+   * @param {Object} ownerData - Owner details to update
+   * @returns {Promise<Object>} Updated owner data
+   */
+  async updateYachtOwnerDetails(yachtId, ownerData) {
+    if (!supabase) throw new Error('Supabase not initialized')
+
+    try {
+      // Remove read-only fields
+      delete ownerData.id
+      delete ownerData.created_at
+      
+      // Update timestamp
+      ownerData.updated_at = new Date().toISOString()
+      
+      // Ensure yacht_id is set
+      ownerData.yacht_id = yachtId
+
+      // Check if owner details already exist
+      const { data: existing } = await supabase
+        .from('yacht_owner_details')
+        .select('id')
+        .eq('yacht_id', yachtId)
+        .single()
+
+      let result
+      if (existing) {
+        // Update existing record
+        const { data, error } = await supabase
+          .from('yacht_owner_details')
+          .update(ownerData)
+          .eq('yacht_id', yachtId)
+          .select()
+          .single()
+        
+        queryHelpers.handleError(error, 'updateYachtOwnerDetails')
+        result = data
+      } else {
+        // Create new record
+        const { data, error } = await supabase
+          .from('yacht_owner_details')
+          .insert([ownerData])
+          .select()
+          .single()
+        
+        queryHelpers.handleError(error, 'createYachtOwnerDetails')
+        result = data
+      }
+      
+      return result
+    } catch (error) {
+      console.error('Update yacht owner details error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get yacht owner details
+   * @param {string} yachtId - Yacht ID
+   * @returns {Promise<Object|null>} Owner details or null if not found
+   */
+  async getYachtOwnerDetails(yachtId) {
+    if (!supabase) throw new Error('Supabase not initialized')
+
+    try {
+      const { data, error } = await supabase
+        .from('yacht_owner_details')
+        .select('*')
+        .eq('yacht_id', yachtId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        queryHelpers.handleError(error, 'getYachtOwnerDetails')
+      }
+      
+      return data || null
+    } catch (error) {
+      console.error('Get yacht owner details error:', error)
+      throw error
+    }
   }
 
   /**

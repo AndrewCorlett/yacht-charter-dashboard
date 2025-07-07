@@ -59,6 +59,9 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [createdBooking, setCreatedBooking] = useState(null)
 
+  // Flash animation state
+  const [flashField, setFlashField] = useState('')
+
   // Load yachts from database
   useEffect(() => {
     const loadYachts = async () => {
@@ -79,6 +82,30 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     loadYachts()
   }, [])
 
+  // Handle auto-population from calendar clicks
+  useEffect(() => {
+    if (prefilledData && prefilledData.date && prefilledData.trigger) {
+      console.log('Auto-populating quick create booking with:', prefilledData)
+      
+      // Format date for input (YYYY-MM-DD)
+      const selectedDate = new Date(prefilledData.date)
+      const formattedDate = selectedDate.toISOString().split('T')[0]
+      
+      // Find yacht name from yacht ID
+      const selectedYacht = yachts.find(y => y.id === prefilledData.yachtId)
+      const yachtName = selectedYacht ? selectedYacht.name : prefilledData.yachtId || ''
+      
+      setFormData(prev => ({
+        ...prev,
+        startDate: formattedDate,
+        yacht: yachtName
+      }))
+      
+      // Trigger red flash animation
+      setFlashField('startDate')
+      setTimeout(() => setFlashField(''), 1000)
+    }
+  }, [prefilledData, yachts])
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -113,18 +140,43 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Basic validation
+    // Get current form values from DOM (more reliable than React state for programmatic testing)
+    const formElement = e.target
+    const currentFormData = {}
+    const inputs = formElement.querySelectorAll('input, select')
+    inputs.forEach(input => {
+      currentFormData[input.name] = input.value
+    })
+    
+    // Use DOM values for validation (fallback to React state)
+    const validationData = {
+      firstName: currentFormData.firstName || formData.firstName,
+      surname: currentFormData.surname || formData.surname,
+      email: currentFormData.email || formData.email,
+      phone: currentFormData.phone || formData.phone,
+      addressLine1: currentFormData.addressLine1 || formData.addressLine1,
+      city: currentFormData.city || formData.city,
+      postcode: currentFormData.postcode || formData.postcode,
+      yacht: currentFormData.yacht || formData.yacht,
+      startDate: currentFormData.startDate || formData.startDate,
+      endDate: currentFormData.endDate || formData.endDate,
+      tripType: currentFormData.tripType || formData.tripType,
+      portOfDeparture: currentFormData.portOfDeparture || formData.portOfDeparture,
+      portOfArrival: currentFormData.portOfArrival || formData.portOfArrival
+    }
+    
+    // Basic validation using actual current values
     const errors = {}
-    if (!formData.firstName.trim()) errors.firstName = 'First name is required'
-    if (!formData.surname.trim()) errors.surname = 'Surname is required'
-    if (!formData.email.trim()) errors.email = 'Email is required'
-    if (!formData.phone.trim()) errors.phone = 'Phone is required'
-    if (!formData.addressLine1.trim()) errors.addressLine1 = 'Address line 1 is required'
-    if (!formData.city.trim()) errors.city = 'City is required'
-    if (!formData.postcode.trim()) errors.postcode = 'Postcode is required'
-    if (!formData.yacht.trim()) errors.yacht = 'Yacht selection is required'
-    if (!formData.startDate) errors.startDate = 'Start date is required'
-    if (!formData.endDate) errors.endDate = 'End date is required'
+    if (!validationData.firstName.trim()) errors.firstName = 'First name is required'
+    if (!validationData.surname.trim()) errors.surname = 'Surname is required'
+    if (!validationData.email.trim()) errors.email = 'Email is required'
+    if (!validationData.phone.trim()) errors.phone = 'Phone is required'
+    if (!validationData.addressLine1.trim()) errors.addressLine1 = 'Address line 1 is required'
+    if (!validationData.city.trim()) errors.city = 'City is required'
+    if (!validationData.postcode.trim()) errors.postcode = 'Postcode is required'
+    if (!validationData.yacht.trim()) errors.yacht = 'Yacht selection is required'
+    if (!validationData.startDate) errors.startDate = 'Start date is required'
+    if (!validationData.endDate) errors.endDate = 'End date is required'
     
     if (Object.keys(errors).length > 0) {
       setErrors(errors)
@@ -135,39 +187,40 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
     
     try {
       // Get selected yacht info
-      const selectedYacht = yachts.find(y => y.id === formData.yacht)
+      const selectedYacht = yachts.find(y => y.id === validationData.yacht)
       
       // Prepare form data in the format expected by BookingModel.fromFrontend()
       const frontendData = {
         // Customer Information 
-        firstName: formData.firstName,
-        surname: formData.surname,
-        email: formData.email,
-        phone: formData.phone,
-        street: formData.addressLine1,
-        city: formData.city,
-        postcode: formData.postcode,
+        firstName: validationData.firstName,
+        surname: validationData.surname,
+        email: validationData.email,
+        phone: validationData.phone,
+        street: validationData.addressLine1,
+        city: validationData.city,
+        postcode: validationData.postcode,
         country: 'United Kingdom',
         
         // Yacht and Booking Details
-        yacht: formData.yacht,
+        yacht: validationData.yacht,
         yachtName: selectedYacht ? selectedYacht.name : '', // Include yacht name for Supabase
-        tripType: formData.tripType,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        portOfDeparture: formData.portOfDeparture || 'Marina Bay',
-        portOfArrival: formData.portOfArrival || 'Harbor Point'
+        tripType: validationData.tripType,
+        startDate: validationData.startDate,
+        endDate: validationData.endDate,
+        portOfDeparture: validationData.portOfDeparture || 'Marina Bay',
+        portOfArrival: validationData.portOfArrival || 'Harbor Point'
       }
       
       // Default payment status for new bookings - will be managed in booking details
       let paymentStatus = PaymentStatus.PENDING
       
       // Status data - simplified for quick create
+      // BookingConfirmed is automatically set to true for Quick Create bookings
       const statusData = {
         depositPaid: false,
         finalPaymentPaid: false,
         paymentStatus: paymentStatus,
-        bookingConfirmed: false
+        bookingConfirmed: true
       }
       
       // Create and validate booking model using the correct method signature
@@ -313,7 +366,7 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
               <input
                 data-testid="input-firstName"
                 type="text"
-                id="firstName"
+                id="quick-create-first-name"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
@@ -487,12 +540,14 @@ function CreateBookingSection({ onCreateBooking, prefilledData = {} }) {
               <input
                 data-testid="input-startDate"
                 type="date"
-                id="startDate"
+                id="quick-create-start-date"
                 name="startDate"
                 value={formData.startDate}
                 onChange={handleInputChange}
-                className={`ios-input text-sm ${
+                className={`ios-input text-sm transition-all duration-300 ${
                   errors.startDate ? 'border-red-500' : ''
+                } ${
+                  flashField === 'startDate' ? 'bg-red-100 border-red-500 animate-pulse' : ''
                 }`}
               />
               {errors.startDate && <p data-testid="error-startDate" className="mt-1 text-xs" style={{ color: 'var(--color-ios-red)' }}>{errors.startDate}</p>}

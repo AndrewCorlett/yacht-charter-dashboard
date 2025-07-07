@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
 import { pricingService } from '../../services/supabase/pricingService'
 import YachtPricingConfigService from '../../services/supabase/yachtPricingConfigService'
+import unifiedDataService from '../../services/UnifiedDataService'
 
-function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefresh }) {
+function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefresh, bookingId, onSave, initialCosts }) {
   const [costs, setCosts] = useState({
-    charterCost: 0,
-    deposit: 0,
-    securityDeposit: 0
+    charterCost: initialCosts?.charterCost || 0,
+    deposit: initialCosts?.deposit || 0,
+    securityDeposit: initialCosts?.securityDeposit || 0
   })
   
   const [originalCosts, setOriginalCosts] = useState({
-    charterCost: 0,
-    deposit: 0,
-    securityDeposit: 0
+    charterCost: initialCosts?.charterCost || 0,
+    deposit: initialCosts?.deposit || 0,
+    securityDeposit: initialCosts?.securityDeposit || 0
   })
   
   const [isOverridden, setIsOverridden] = useState({
@@ -23,6 +24,24 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  // Update costs when initialCosts prop changes
+  useEffect(() => {
+    if (initialCosts) {
+      setCosts({
+        charterCost: initialCosts.charterCost || 0,
+        deposit: initialCosts.deposit || 0,
+        securityDeposit: initialCosts.securityDeposit || 0
+      })
+      setOriginalCosts({
+        charterCost: initialCosts.charterCost || 0,
+        deposit: initialCosts.deposit || 0,
+        securityDeposit: initialCosts.securityDeposit || 0
+      })
+    }
+  }, [initialCosts])
 
   // Load pricing data when yacht or dates change, or when forced to refresh
   useEffect(() => {
@@ -44,9 +63,14 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
       setError(null)
       
       console.log('Loading pricing for yacht:', yacht, 'dates:', startDate, 'to', endDate)
+      console.log('Yacht type:', typeof yacht, 'Start date type:', typeof startDate, 'End date type:', typeof endDate)
       
       if (!yacht || !startDate || !endDate) {
-        console.log('Missing required data for pricing calculation')
+        console.log('Missing required data for pricing calculation:', {
+          yacht: yacht || 'missing',
+          startDate: startDate || 'missing', 
+          endDate: endDate || 'missing'
+        })
         const defaultCosts = getDefaultCosts()
         setCosts(defaultCosts)
         setOriginalCosts(defaultCosts)
@@ -55,7 +79,7 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
       }
 
       try {
-        // First, let's try to get the yacht ID from the yacht name
+        // First, let's try to get the yacht ID from the yacht identifier (name or ID)
         const yachtId = await getYachtIdByName(yacht)
         
         if (yachtId) {
@@ -111,8 +135,10 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
         
         // Fallback: No rules found or yacht ID not found, calculate based on yacht name
         console.log('No pricing rules found, using fallback calculation')
+        const yachtInfo = await getYachtInfo(yacht)
+        const yachtName = yachtInfo?.name || yacht
         const days = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))
-        const baseRate = getBaseRateForYacht(yacht)
+        const baseRate = getBaseRateForYacht(yachtName)
         const charterCost = baseRate * days
         const deposit = charterCost * 0.3
         const securityDeposit = 500
@@ -137,7 +163,9 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
         const days = startDate && endDate ? 
           Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) : 7
         
-        const baseRate = getBaseRateForYacht(yacht)
+        const yachtInfo = await getYachtInfo(yacht)
+        const yachtName = yachtInfo?.name || yacht
+        const baseRate = getBaseRateForYacht(yachtName)
         const charterCost = baseRate * days
         const deposit = charterCost * 0.3
         const securityDeposit = 500
@@ -170,17 +198,31 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
     }
   }
 
-  const getYachtIdByName = async (yachtName) => {
+  const getYachtInfo = async (yachtIdentifier) => {
     try {
-      // Import yacht service to get yacht ID by name
+      // Import yacht service to get yacht info by name or ID
       const yachtService = await import('../../services/supabase/YachtService')
       const yachts = await yachtService.default.getYachts()
-      const yacht = yachts.find(y => y.name === yachtName)
-      return yacht?.id || null
+      
+      // Check if yachtIdentifier is already a UUID (contains hyphens)
+      if (yachtIdentifier && yachtIdentifier.includes('-')) {
+        // It's likely a UUID, find by ID
+        const yacht = yachts.find(y => y.id === yachtIdentifier)
+        return yacht ? { id: yacht.id, name: yacht.name } : null
+      } else {
+        // It's a yacht name, find by name
+        const yacht = yachts.find(y => y.name === yachtIdentifier)
+        return yacht ? { id: yacht.id, name: yacht.name } : null
+      }
     } catch (error) {
-      console.error('Error getting yacht ID:', error)
+      console.error('Error getting yacht info:', error)
       return null
     }
+  }
+
+  const getYachtIdByName = async (yachtIdentifier) => {
+    const yachtInfo = await getYachtInfo(yachtIdentifier)
+    return yachtInfo?.id || null
   }
 
   const getBaseRateForYacht = (yachtName) => {
@@ -332,7 +374,12 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
           setError('Could not fetch pricing configuration. Using fallback calculation.')
         }
       } else {
-        console.warn('Missing yacht ID or dates for pricing calculation')
+        console.warn('Missing yacht ID or dates for pricing calculation:', {
+          yacht: yacht || 'missing',
+          yachtId: yachtId || 'missing',
+          startDate: startDate || 'missing',
+          endDate: endDate || 'missing'
+        })
         setError('Missing yacht or date information for pricing calculation.')
       }
       
@@ -358,27 +405,79 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
 
   const hasAnyOverrides = Object.values(isOverridden).some(override => override)
 
+  const handleSave = async () => {
+    if (!bookingId) {
+      console.warn('No booking ID provided, cannot save charter costs')
+      setError('Cannot save: No booking ID provided')
+      return
+    }
+
+    try {
+      setSaving(true)
+      setError(null)
+      setSaveSuccess(false)
+      
+      console.log('Saving charter costs to booking:', bookingId, costs)
+      
+      // Prepare the update data with charter cost fields mapped to database schema
+      const updateData = {
+        total_amount: costs.charterCost,
+        deposit_amount: costs.deposit,
+        security_deposit: costs.securityDeposit
+      }
+      
+      // Update the booking via UnifiedDataService
+      await unifiedDataService.updateBooking(bookingId, updateData)
+      
+      // Show success feedback
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+      
+      // Call parent onSave callback if provided
+      if (onSave) {
+        onSave(costs)
+      }
+      
+      console.log('Charter costs saved successfully')
+      
+    } catch (error) {
+      console.error('Failed to save charter costs:', error)
+      setError(`Failed to save charter costs: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="bg-gray-800 p-4 rounded-lg">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">Charter Costs</h3>
         <button
           onClick={resetToDefault}
-          className={`px-3 py-1 text-white text-sm rounded transition-colors ${
-            hasAnyOverrides 
-              ? 'bg-orange-600 hover:bg-orange-700' 
-              : 'bg-blue-600 hover:bg-blue-700'
-          }`}
+          className="px-3 py-1 text-white text-sm rounded transition-colors bg-blue-600 hover:bg-blue-700"
           disabled={loading}
-          title={hasAnyOverrides ? 'Reset overridden values to pricing configuration' : 'Refresh costs from pricing configuration'}
+          title="Refresh costs from pricing configuration"
         >
-          {loading ? '⏳ Loading...' : hasAnyOverrides ? '🔄 Reset to Config' : '🔄 Refresh from Config'}
+          🔄 Refresh from Config
         </button>
       </div>
+
+      {/* Orange "differs from default" indicator */}
+      {hasAnyOverrides && (
+        <div className="mb-4 p-2 bg-orange-900/30 border border-orange-600 rounded text-orange-300 text-sm">
+          ⚠️ Differs from default
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-3 bg-red-900/20 border border-red-500 rounded text-red-300 text-sm">
           {error}
+        </div>
+      )}
+
+      {saveSuccess && (
+        <div className="mb-4 p-3 bg-green-900/20 border border-green-500 rounded text-green-300 text-sm">
+          ✓ Charter costs saved successfully
         </div>
       )}
 
@@ -389,67 +488,55 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Charter Cost */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Charter Cost (£)
-              {isOverridden.charterCost && (
-                <span className="ml-2 text-xs bg-yellow-600 text-yellow-100 px-2 py-1 rounded">
-                  Modified
-                </span>
-              )}
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={costs.charterCost}
-              onChange={(e) => handleCostChange('charterCost', e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-              placeholder="0.00"
-            />
-          </div>
+          {/* Three-column grid layout for cost fields */}
+          <div className="grid grid-cols-3 gap-4">
+            {/* Charter Cost */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Charter Cost (£)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={costs.charterCost}
+                onChange={(e) => handleCostChange('charterCost', e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                placeholder="0.00"
+              />
+            </div>
 
-          {/* Deposit */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Deposit (£)
-              {isOverridden.deposit && (
-                <span className="ml-2 text-xs bg-yellow-600 text-yellow-100 px-2 py-1 rounded">
-                  Modified
-                </span>
-              )}
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={costs.deposit}
-              onChange={(e) => handleCostChange('deposit', e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-              placeholder="0.00"
-            />
-          </div>
+            {/* Deposit */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Deposit (£)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={costs.deposit}
+                onChange={(e) => handleCostChange('deposit', e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                placeholder="0.00"
+              />
+            </div>
 
-          {/* Security Deposit */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Security Deposit (£)
-              {isOverridden.securityDeposit && (
-                <span className="ml-2 text-xs bg-yellow-600 text-yellow-100 px-2 py-1 rounded">
-                  Modified
-                </span>
-              )}
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={costs.securityDeposit}
-              onChange={(e) => handleCostChange('securityDeposit', e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
-              placeholder="0.00"
-            />
+            {/* Security Deposit */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Security Deposit (£)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={costs.securityDeposit}
+                onChange={(e) => handleCostChange('securityDeposit', e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                placeholder="0.00"
+              />
+            </div>
           </div>
 
           {/* Cost Summary */}
@@ -468,33 +555,24 @@ function CharterCostSection({ yacht, startDate, endDate, onCostChange, forceRefr
             </div>
           </div>
 
-          {/* Pricing Control Actions */}
-          <div className="pt-3 border-t border-gray-600">
-            <div className="text-xs text-gray-400 mb-2">
-              {hasAnyOverrides ? (
-                <span className="text-yellow-400">⚠️ Costs have been manually modified</span>
-              ) : (
-                <span>💡 Costs are from pricing configuration</span>
-              )}
-            </div>
+          {/* Save button */}
+          <div className="flex justify-end">
             <button
-              onClick={resetToDefault}
-              className={`w-full py-2 px-3 text-sm font-medium rounded transition-colors ${
-                hasAnyOverrides 
-                  ? 'bg-orange-600 hover:bg-orange-700 text-white' 
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-              }`}
-              disabled={loading}
+              onClick={handleSave}
+              className={`font-medium py-2 px-6 rounded transition-colors ${
+                saving
+                  ? 'bg-gray-600 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700'
+              } text-white`}
+              disabled={loading || saving || !bookingId}
             >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Updating...
-                </span>
-              ) : hasAnyOverrides ? (
-                '🔄 Reset to Pricing Configuration'
+              {saving ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Saving...
+                </div>
               ) : (
-                '🔄 Refresh from Pricing Configuration'
+                'Save Charter Costs'
               )}
             </button>
           </div>

@@ -346,6 +346,50 @@ export function useBookingOperations() {
     }
   }, [setLoading, setError, clearError, setOperationStatus])
 
+  // Update booking number operation
+  const updateBookingNumber = useCallback(async (id, newBookingNumber, options = {}) => {
+    try {
+      setLoading(true)
+      clearError()
+      setOperationStatus({ type: 'updating', message: 'Updating booking number...' })
+
+      const booking = await unifiedDataService.updateBookingNumber(id, newBookingNumber)
+      
+      setOperationStatus({ type: 'success', message: 'Booking number updated successfully' })
+      setTimeout(() => setOperationStatus(null), 3000)
+      
+      return booking
+    } catch (error) {
+      setError(error.message)
+      setOperationStatus({ type: 'error', message: error.message })
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [setLoading, setError, clearError, setOperationStatus])
+
+  // Create external booking operation
+  const createExternalBooking = useCallback(async (externalBookingData, options = {}) => {
+    try {
+      setLoading(true)
+      clearError()
+      setOperationStatus({ type: 'creating', message: 'Creating external booking...' })
+
+      const booking = await unifiedDataService.createExternalBooking(externalBookingData)
+      
+      setOperationStatus({ type: 'success', message: 'External booking created successfully' })
+      setTimeout(() => setOperationStatus(null), 3000)
+      
+      return booking
+    } catch (error) {
+      setError(error.message)
+      setOperationStatus({ type: 'error', message: error.message })
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }, [setLoading, setError, clearError, setOperationStatus])
+
   // Batch operations
   const batchUpdate = useCallback(async (operations, options = {}) => {
     try {
@@ -401,6 +445,8 @@ export function useBookingOperations() {
     updateBooking,
     deleteBooking,
     moveBooking,
+    updateBookingNumber,
+    createExternalBooking,
     batchUpdate,
     undoLastOperation,
     setLoading,

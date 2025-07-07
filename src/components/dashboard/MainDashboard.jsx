@@ -12,9 +12,7 @@ import Navigation from '../Layout/Navigation'
 import Sidebar from '../Layout/Sidebar'
 import SitRepSection from './SitRepSection'
 import YachtTimelineCalendar from '../calendar/YachtTimelineCalendar'
-import BookingFormModal from '../modals/BookingFormModal'
 import { CreateBookingSection } from '../booking'
-import AdminConfigPage from '../admin/AdminConfigPage'
 import Settings from '../settings/Settings'
 import BookingsList from '../booking/BookingsList'
 import BookingPanel from '../booking/BookingPanel'
@@ -25,17 +23,15 @@ import KeyboardShortcuts from '../common/KeyboardShortcuts'
 
 // Inner component that has access to BookingContext
 function MainDashboardInner() {
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
-  const [selectedBookingForModal, setSelectedBookingForModal] = useState(null)
-  const [prefilledData, setPrefilledData] = useState({})
   const [activeSection, setActiveSection] = useState('dashboard')
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [currentView, setCurrentView] = useState('list') // 'list' or 'panel'
+  const [quickCreateData, setQuickCreateData] = useState({})
   
   // Get booking operations from context
   const { getBooking, bookings } = useBookings()
 
-  // Listen for custom navigation events from child components
+  // Listen for custom navigation and auto-populate events from child components
   useEffect(() => {
     const handleNavigateToBooking = async (event) => {
       const { booking, section } = event.detail
@@ -66,17 +62,20 @@ function MainDashboardInner() {
       }
     }
 
+    const handleAutoPopulateBooking = (event) => {
+      const { date, yachtId } = event.detail
+      console.log('Auto-populating quick create booking with:', { date, yachtId })
+      setQuickCreateData({ date, yachtId, trigger: Date.now() }) // trigger forces re-render
+    }
+
     window.addEventListener('navigateToBooking', handleNavigateToBooking)
+    window.addEventListener('autoPopulateBooking', handleAutoPopulateBooking)
+    
     return () => {
       window.removeEventListener('navigateToBooking', handleNavigateToBooking)
+      window.removeEventListener('autoPopulateBooking', handleAutoPopulateBooking)
     }
   }, [bookings, getBooking])
-
-  const handleCreateBooking = (data) => {
-    setSelectedBookingForModal(null) // null for create mode
-    setPrefilledData(data)
-    setIsBookingModalOpen(true)
-  }
 
   const handleQuickCreateBooking = (booking) => {
     // When a booking is created via Quick Create and user clicks "Go to booking"
@@ -91,12 +90,6 @@ function MainDashboardInner() {
     }
   }
 
-  const handleEditBooking = (booking) => {
-    setSelectedBookingForModal(booking) // booking for edit mode
-    setPrefilledData({})
-    setIsBookingModalOpen(true)
-  }
-
   const handleSelectBooking = (booking) => {
     setSelectedBooking(booking)
     setCurrentView('panel')
@@ -107,26 +100,14 @@ function MainDashboardInner() {
     setCurrentView('list')
   }
 
-  const handleCloseModal = () => {
-    setIsBookingModalOpen(false)
-    setSelectedBookingForModal(null)
-    setPrefilledData({})
-  }
-
-  const handleBookingSaved = (booking) => {
-    console.log('Booking saved:', booking)
-    // Additional success handling if needed
-  }
-
-  const handleBookingDeleted = (bookingId) => {
-    console.log('Booking deleted:', bookingId)
-    // Additional cleanup if needed
-  }
-
   const handleKeyboardAction = (action) => {
     switch (action) {
       case 'create-booking':
-        handleCreateBooking({})
+        // Focus on the quick create booking section instead of opening modal
+        const quickCreateInput = document.querySelector('#quick-create-first-name')
+        if (quickCreateInput) {
+          quickCreateInput.focus()
+        }
         break
       case 'search': {
         // Focus search input if available
@@ -137,8 +118,10 @@ function MainDashboardInner() {
         break
       }
       case 'escape':
-        if (isBookingModalOpen) {
-          handleCloseModal()
+        // No modal to close, maybe clear selection instead
+        if (selectedBooking) {
+          setSelectedBooking(null)
+          setCurrentView('list')
         }
         break
       case 'today':
@@ -192,8 +175,6 @@ function MainDashboardInner() {
 
   const renderMainContent = () => {
     switch (activeSection) {
-      case 'admin':
-        return <AdminConfigPage />
       case 'bookings':
         if (currentView === 'panel' && selectedBooking) {
           return (
@@ -220,17 +201,17 @@ function MainDashboardInner() {
               borderColor: 'var(--color-ios-gray-3)' 
             }}>
               <SitRepSection />
-              <CreateBookingSection onCreateBooking={handleQuickCreateBooking} />
+              <CreateBookingSection 
+                onCreateBooking={handleQuickCreateBooking} 
+                prefilledData={quickCreateData}
+              />
             </aside>
 
             {/* Calendar - Fixed to viewport */}
             <main className="calendar-container-fixed p-4 flex flex-col overflow-hidden flex-1 h-full min-w-0 -ml-4 -mr-4" style={{ 
               backgroundColor: 'var(--color-ios-bg-secondary)' 
             }}>
-              <YachtTimelineCalendar 
-                onCreateBooking={handleCreateBooking}
-                onEditBooking={handleEditBooking}
-              />
+              <YachtTimelineCalendar />
             </main>
           </div>
         )
@@ -254,16 +235,6 @@ function MainDashboardInner() {
           {renderMainContent()}
         </div>
       </div>
-
-      {/* Booking Form Modal */}
-      <BookingFormModal
-        isOpen={isBookingModalOpen}
-        onClose={handleCloseModal}
-        booking={selectedBookingForModal}
-        prefilledData={prefilledData}
-        onSave={handleBookingSaved}
-        onDelete={handleBookingDeleted}
-      />
 
       {/* Undo Manager */}
       <UndoManager />

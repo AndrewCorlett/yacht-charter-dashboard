@@ -5,9 +5,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true, // Listen on all addresses including LAN
-    port: 5173,
-    strictPort: true,
+    host: '0.0.0.0', // Listen on all interfaces (better for WSL2)
+    port: 3005, // Always use port 3005
+    strictPort: true, // Fail if port is not available
     watch: {
       usePolling: true // For WSL2
     }

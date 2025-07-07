@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UUID Mapping Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-form {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .log-output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .info {
+            color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Yacht UUID to Name Mapping Test</h1>
+        <p>This page tests the yacht UUID to name mapping fix for booking creation.</p>
+        
+        <div class="test-form">
+            <h2>Test Booking Form</h2>
+            <form id="testForm">
+                <div class="form-group">
+                    <label for="yacht_id">Yacht (UUID will be sent):</label>
+                    <select id="yacht_id" name="yacht_id" required>
+                        <option value="">Select a yacht</option>
+                        <option value="50dba171-b830-4d88-9cb0-c14a37c4d58a">Zavaria</option>
+                        <option value="3ffa9ca5-bd8e-4050-8b49-e5230fb23c73">Zavaria (Alternative UUID)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer_first_name">First Name:</label>
+                    <input type="text" id="customer_first_name" name="customer_first_name" value="UUIDTest" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer_surname">Surname:</label>
+                    <input type="text" id="customer_surname" name="customer_surname" value="User" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer_email">Email:</label>
+                    <input type="email" id="customer_email" name="customer_email" value="uuidtest@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer_phone">Phone:</label>
+                    <input type="tel" id="customer_phone" name="customer_phone" value="+44 1234 567893" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer_street">Address:</label>
+                    <input type="text" id="customer_street" name="customer_street" value="126 Test Street" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer_city">City:</label>
+                    <input type="text" id="customer_city" name="customer_city" value="Test City" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer_postcode">Postcode:</label>
+                    <input type="text" id="customer_postcode" name="customer_postcode" value="TC1 2ST" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="2025-07-08" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="2025-07-15" required>
+                </div>
+                
+                <button type="submit">Create Test Booking</button>
+            </form>
+        </div>
+        
+        <div class="test-form">
+            <h2>Test Results</h2>
+            <div id="logOutput" class="log-output">
+                Click "Create Test Booking" to test the UUID mapping fix...
+            </div>
+        </div>
+        
+        <div class="test-form">
+            <h2>Expected Console Logs</h2>
+            <div class="log-output">
+✓ Expected logs in browser console:
+- "[BookingService] Converting yacht UUID to name: [UUID]"
+- "[BookingService] Building yacht UUID to name mapping" 
+- "[BookingService] Mapped [UUID] -> zavaria"
+- "[BookingService] Found yacht name in mapping: [UUID] -> zavaria"
+- "[BookingService] Generated booking code: 2528ZA##" (or similar YYWWBCNN format)
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import BookingService from './src/services/supabase/BookingService.js';
+        
+        const form = document.getElementById('testForm');
+        const logOutput = document.getElementById('logOutput');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            const logEntry = `[${timestamp}] ${message}\n`;
+            
+            const span = document.createElement('span');
+            span.className = className;
+            span.textContent = logEntry;
+            logOutput.appendChild(span);
+            
+            // Also log to console
+            console.log(message);
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Clear previous logs
+            logOutput.innerHTML = '';
+            
+            log('Starting UUID mapping test...', 'info');
+            
+            try {
+                const formData = new FormData(form);
+                const bookingData = Object.fromEntries(formData.entries());
+                
+                // Add additional fields
+                bookingData.charter_type = 'bareboat';
+                bookingData.booking_status = 'tentative';
+                bookingData.payment_status = 'pending';
+                bookingData.guest_count = 4;
+                bookingData.total_price = 2500;
+                bookingData.deposit_amount = 500;
+                bookingData.special_requirements = 'Test booking for UUID mapping verification';
+                
+                log(`Selected yacht UUID: ${bookingData.yacht_id}`, 'info');
+                
+                // Test UUID conversion first
+                log('Testing UUID to name conversion...', 'info');
+                const yachtName = await BookingService.getYachtNameFromId(bookingData.yacht_id);
+                log(`✓ Successfully converted UUID to yacht name: ${yachtName}`, 'success');
+                
+                // Test booking number generation
+                log('Testing booking number generation...', 'info');
+                const bookingNumber = await BookingService.generateBookingNumber(yachtName, bookingData.start_date);
+                log(`✓ Successfully generated booking number: ${bookingNumber}`, 'success');
+                
+                // Verify format
+                const formatMatch = bookingNumber.match(/^(\d{2})(\d{2})([A-Z]{2})(\d{2})$/);
+                if (formatMatch) {
+                    const [, year, week, boatCode, sequence] = formatMatch;
+                    log(`✓ Booking number format is correct: YY=${year}, WW=${week}, BC=${boatCode}, NN=${sequence}`, 'success');
+                } else {
+                    log(`✗ Booking number format is incorrect. Expected YYWWBCNN, got: ${bookingNumber}`, 'error');
+                }
+                
+                // Test full booking creation
+                log('Testing full booking creation...', 'info');
+                const booking = await BookingService.createBooking(bookingData);
+                
+                log(`✓ Successfully created booking!`, 'success');
+                log(`✓ Booking ID: ${booking.id}`, 'success');
+                log(`✓ Booking Number: ${booking.booking_number}`, 'success');
+                log(`✓ Yacht ID: ${booking.yacht_id}`, 'success');
+                log(`✓ Customer: ${booking.customer_first_name} ${booking.customer_surname}`, 'success');
+                
+                log('\n=== TEST RESULTS ===', 'success');
+                log('✓ UUID to name mapping: WORKING', 'success');
+                log('✓ Booking number generation: WORKING', 'success');
+                log('✓ Full booking creation: WORKING', 'success');
+                log(`✓ Generated booking code: ${booking.booking_number}`, 'success');
+                
+            } catch (error) {
+                log(`✗ Test failed: ${error.message}`, 'error');
+                console.error('Full error:', error);
+                
+                // Show specific error details
+                if (error.message.includes('Unknown yacht ID')) {
+                    log('This indicates the UUID mapping is not working correctly.', 'error');
+                } else if (error.message.includes('booking number')) {
+                    log('This indicates an issue with booking number generation.', 'error');
+                } else {
+                    log('This indicates a general booking creation error.', 'error');
+                }
+            }
+        });
+        
+        // Override console.log to also show in the log output
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            if (args[0] && args[0].includes && args[0].includes('[BookingService]')) {
+                log(args.join(' '), 'info');
+            }
+        };
+    </script>
+</body>
+</html>

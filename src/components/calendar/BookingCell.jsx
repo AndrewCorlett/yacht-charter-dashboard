@@ -248,32 +248,15 @@ const BookingCell = memo(function BookingCell({
             {bookingInfo.yachtName || bookingInfo.yacht_name}
           </div>
           
-          {/* Date Range */}
+          {/* Charterer Name */}
           <div className="text-white/90 text-center truncate" 
+               title={bookingInfo.customerName || bookingInfo.chartererName || bookingInfo.customer_first_name || 'Unknown Customer'}
                style={{ 
                  textShadow: '0 1px 2px rgba(0,0,0,0.5)',
                  fontSize: '8px'
                }}>
-            {(() => {
-              try {
-                const startDate = bookingInfo.startDate || bookingInfo.start_datetime
-                const endDate = bookingInfo.endDate || bookingInfo.end_datetime
-                
-                if (!startDate || !endDate) return 'Invalid Date'
-                
-                const start = new Date(startDate)
-                const end = new Date(endDate)
-                
-                if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                  return 'Invalid Date'
-                }
-                
-                return `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`
-              } catch (error) {
-                console.error('Date formatting error:', error)
-                return 'Date Error'
-              }
-            })()}
+            {bookingInfo.customerName || bookingInfo.chartererName || 
+             (bookingInfo.customer_first_name ? `${bookingInfo.customer_first_name} ${bookingInfo.customer_surname || ''}`.trim() : 'Unknown Customer')}
           </div>
           
           {/* Drag indicator */}
